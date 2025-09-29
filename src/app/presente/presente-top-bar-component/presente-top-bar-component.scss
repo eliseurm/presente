@@ -1,0 +1,111 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+/* Layout padrão (desktop/tablet): esquerda e direita em linha */
+.presente-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem 1rem;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.right {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .25rem;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    text-decoration: none;
+    flex: 0 0 auto;
+}
+
+.logo svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+.nome {
+    flex: 1 1 auto;
+    min-width: 80px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    opacity: .9;
+}
+
+/* Ações (botões) */
+.topbar-action {
+    border: 0;
+    background: transparent;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    cursor: pointer;
+}
+.topbar-action:hover {
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+.topbar-action-highlight {
+    color: var(--primary-color);
+}
+
+/* MUITO estreita: empilhar e centralizar tudo */
+@media (max-width: 560px) {
+    .presente-topbar {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center; /* centraliza textos como o nome */
+        gap: .5rem;
+    }
+
+    .left,
+    .right {
+        width: 100%;
+        justify-content: center; /* centraliza conteúdo interno */
+    }
+
+    .right {
+        margin-top: .25rem; /* pequeno espaçamento abaixo do bloco esquerdo */
+    }
+
+    .nome {
+        max-width: min(480px, 90vw);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

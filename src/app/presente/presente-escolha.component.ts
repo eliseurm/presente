@@ -2,12 +2,11 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { PresenteService } from './presente.service';
-import { AppTopbar } from '@/layout/component/app.topbar';
 import { ProdutoComponent } from '@/presente/produto-component/produto-component';
+import { PresenteTopbarComponent } from '@/presente/presente-top-bar-component/presente-top-bar-component';
 
 type Produto = {
     id: number;
@@ -27,7 +26,7 @@ type Produto = {
         RouterModule,
         FormsModule,
         ProgressSpinnerModule,
-        AppTopbar,
+        PresenteTopbarComponent,
         ProdutoComponent
     ],
     templateUrl: './presente-escolha.component.html',
@@ -41,6 +40,9 @@ export class PresenteEscolhaComponent {
     valido = false;
     carregando = true;
     erroMsg = '';
+
+    // opcional: nome que pode vir por query param ?nome=Fulano
+    nomeExibicao: string | null = null;
 
     selectedProductId: number | null = null;
 
@@ -59,6 +61,8 @@ export class PresenteEscolhaComponent {
 
     ngOnInit() {
         this.keyMagico = this.route.snapshot.paramMap.get('keyMagico') ?? '';
+        this.nomeExibicao = this.route.snapshot.queryParamMap.get('nome');
+
         this.service
             .validarKey(this.keyMagico)
             .then((ok) => {
