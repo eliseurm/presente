@@ -1,0 +1,58 @@
+<p-card class="produto-card" [class.disabled]="disabled">
+    <ng-template pTemplate="header">
+        <div class="card-header">
+            <h3 class="titulo">{{ produto.nome }}</h3>
+            <span class="preco">{{ produto.preco | currency:'BRL':'symbol-narrow':'1.2-2':'pt' }}</span>
+        </div>
+    </ng-template>
+
+    <div class="produto-content">
+        <div class="media">
+            <p-galleria
+                [value]="produto.imagens"
+                [showThumbnails]="false"
+                [showIndicators]="true"
+                [circular]="true"
+                [autoPlay]="true"
+                [transitionInterval]="3500"
+                [containerStyle]="{ width: '100%' }"
+            >
+                <ng-template pTemplate="item" let-src>
+                    <img [src]="src" [alt]="produto.nome" class="galleria-img" />
+                </ng-template>
+            </p-galleria>
+        </div>
+
+        <div class="info">
+            <p class="descricao">{{ produto.descricao }}</p>
+
+            <div class="acoes">
+                <div class="tamanho">
+                    <span [attr.id]="'lbl-tam-' + produto.id">Tamanho:</span>
+                    <p-selectButton
+                        [attr.aria-labelledby]="'lbl-tam-' + produto.id"
+                        [options]="tamanhoOptions"
+                        [(ngModel)]="produto.tamanhoSelecionado"
+                        [disabled]="disabled"
+                    ></p-selectButton>
+                </div>
+
+                <button
+                    pButton
+                    type="button"
+                    class="p-button-rounded p-button-lg selecionar-btn"
+                    [label]="selected ? 'Desmarcar' : 'Selecionar'"
+                    [icon]="selected ? 'pi pi-check' : 'pi pi-gift'"
+                    [severity]="selected ? 'success' : 'primary'"
+                    (click)="onToggleClick()"
+                    [disabled]="!selected && disabled"
+                    [attr.aria-pressed]="selected ? 'true' : 'false'"
+                ></button>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <small class="nota" *ngIf="selected">Este é o seu presente selecionado.</small>
+    </ng-template>
+</p-card>

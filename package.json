@@ -1,5 +1,5 @@
 {
-    "name": "sakai-ng",
+    "name": "presente",
     "version": "20.0.0",
     "scripts": {
         "ng": "ng",
@@ -21,7 +21,6 @@
         "@angular/router": "^20",
         "@primeuix/themes": "^1.2.1",
         "@tailwindcss/postcss": "^4.1.11",
-        "chart.js": "4.4.2",
         "primeclt": "^0.1.5",
         "primeicons": "^7.0.0",
         "primeng": "^20",

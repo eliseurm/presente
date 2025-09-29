@@ -1,20 +1,37 @@
+<div class="presente-page">
+    <app-topbar></app-topbar>
 
-<div class="container" *ngIf="!carregando && valido">
-  <h1>Escolha seu presente 🎁</h1>
-  <p>Link: /presente/{{keyMagico}}</p>
-  <ul>
-    <li *ngFor="let o of opcoes">
-      <button>{{ o.nome }}</button>
-    </li>
-  </ul>
-</div>
+    <main class="content">
+        <div class="container">
 
-<div class="container" *ngIf="!carregando && !valido">
-  <h1>Ops…</h1>
-  <p>{{ erroMsg }}</p>
-  <p>Mantenha este endereço: /presente/{{keyMagico}}</p>
-</div>
+            <section *ngIf="carregando" class="status">
+                <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
+                <p>Validando seu link…</p>
+            </section>
 
-<div class="container" *ngIf="carregando">
-  Validando seu link…
+            <section *ngIf="!carregando && !valido" class="status">
+                <h2>Ops…</h2>
+                <p>{{ erroMsg }}</p>
+                <p class="hint">Mantenha este endereço: /presente/{{ keyMagico }}</p>
+            </section>
+
+            <section *ngIf="!carregando && valido">
+                <header class="page-header">
+                    <h1>Escolha seu presente</h1>
+                    <p class="sub">Você pode selecionar apenas 1 item. Link: /presente/{{ keyMagico }}</p>
+                </header>
+
+                <div class="produtos-grid">
+                    <app-produto
+                        *ngFor="let p of produtos | slice:0:10"
+                        [produto]="p"
+                        [selected]="isSelecionado(p)"
+                        [disabled]="isDesabilitado(p)"
+                        (toggle)="alternarSelecao(p)"
+                    ></app-produto>
+                </div>
+            </section>
+
+        </div>
+    </main>
 </div>

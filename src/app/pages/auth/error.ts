@@ -6,7 +6,7 @@ import { AppFloatingConfigurator } from '../../layout/component/app.floatingconf
 
 @Component({
     selector: 'app-error',
-    imports: [ButtonModule, RippleModule, RouterModule, AppFloatingConfigurator, ButtonModule],
+    imports: [ButtonModule, RippleModule, RouterModule, AppFloatingConfigurator],
     standalone: true,
     template: ` <app-floating-configurator />
         <div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">

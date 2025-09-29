@@ -7,8 +7,9 @@ import { AppFloatingConfigurator } from '../../layout/component/app.floatingconf
 @Component({
     selector: 'app-access',
     standalone: true,
-    imports: [ButtonModule, RouterModule, RippleModule, AppFloatingConfigurator, ButtonModule],
-    template: ` <app-floating-configurator />
+    imports: [ButtonModule, RouterModule, RippleModule, AppFloatingConfigurator],
+    template: `
+        <app-floating-configurator />
         <div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
             <div class="flex flex-col items-center justify-center">
                 <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, rgba(247, 149, 48, 0.4) 10%, rgba(247, 149, 48, 0) 30%)">
@@ -27,6 +28,7 @@ import { AppFloatingConfigurator } from '../../layout/component/app.floatingconf
                     </div>
                 </div>
             </div>
-        </div>`
+        </div>
+    `
 })
 export class Access {}

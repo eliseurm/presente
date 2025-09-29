@@ -1,0 +1,11 @@
+{
+    "login.welcome": "¡Bienvenido a PrimeLand!",
+    "login.subtitle": "Inicia sesión para continuar",
+    "login.email": "Correo electrónico",
+    "login.emailPlaceholder": "Dirección de correo",
+    "login.password": "Contraseña",
+    "login.passwordPlaceholder": "Tu contraseña",
+    "login.rememberMe": "Recuérdame",
+    "login.forgotPassword": "¿Olvidaste tu contraseña?",
+    "login.signIn": "Iniciar sesión"
+}
