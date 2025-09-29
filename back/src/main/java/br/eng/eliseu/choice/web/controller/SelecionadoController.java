@@ -1,20 +1,15 @@
-package br.eng.eliseu.choice.web;
+package br.eng.eliseu.choice.web.controller;
 
-import br.eng.eliseu.choice.repo.PersonRepository;
 import br.eng.eliseu.choice.service.SelectionService;
-import br.eng.eliseu.choice.web.dto.SelectionDTO;
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/selections")
-public class SelectionController {
+public class SelecionadoController {
 
     private final SelectionService service;
 
-    public SelectionController(SelectionService service) {
+    public SelecionadoController(SelectionService service) {
         this.service = service;
     }
 
@@ -22,6 +17,7 @@ public class SelectionController {
         return Long.parseLong(subject);
     }
 
+/*
     @GetMapping("/me")
     public SelectionDTO mySelection(@RequestAttribute(name="jwt-subject", required=false) String subject){
         Long personId = personIdFromSubject(subject);
@@ -34,4 +30,6 @@ public class SelectionController {
         Long personId = personIdFromSubject(subject);
         return service.upsert(personId, dto);
     }
+*/
+
 }

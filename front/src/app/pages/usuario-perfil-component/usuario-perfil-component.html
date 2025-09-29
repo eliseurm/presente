@@ -1,0 +1,36 @@
+<div class="card">
+    <h2 class="mb-3">Perfil do Usuário</h2>
+
+    <div class="grid gap-3">
+        <div><strong>Usuário:</strong> {{ auth.user?.username || auth.user?.email }}</div>
+        <div><strong>Papel:</strong> {{ auth.user?.role }}</div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <h3 class="mb-3">Alterar senha</h3>
+
+    <div class="grid gap-3 max-w-30rem">
+        <div>
+            <label class="block mb-2">Senha atual</label>
+            <p-password [(ngModel)]="currentPassword" [feedback]="false" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+        </div>
+
+        <div>
+            <label class="block mb-2">Nova senha</label>
+            <p-password [(ngModel)]="newPassword" [feedback]="true" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+        </div>
+
+        <div>
+            <label class="block mb-2">Confirmar nova senha</label>
+            <p-password [(ngModel)]="confirmPassword" [feedback]="false" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+        </div>
+
+        <small class="text-red-500" *ngIf="error">{{ error }}</small>
+        <small class="text-green-600" *ngIf="success">{{ success }}</small>
+
+        <div class="mt-2">
+            <p-button label="Salvar nova senha" (onClick)="submit()" [loading]="loading" [disabled]="loading"></p-button>
+        </div>
+    </div>
+</div>

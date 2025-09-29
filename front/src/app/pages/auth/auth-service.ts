@@ -1,26 +1,42 @@
 // TypeScript
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+export type Role = 'ADMINISTRADOR' | 'CLIENTE';
 
 export interface IUser {
+    id?: number;
+    username?: string;
     email: string;
+    role?: Role;
     avatarUrl?: string;
 }
 
-const defaultUser: IUser = {
-    email: 'user@example.com',
-    avatarUrl: 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'
-};
+const defaultAvatar = 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png';
+const API_BASE = 'http://localhost:8080';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-    // Destino padrão após login (ajuste se desejar outra rota)
     readonly defaultPath = '/home';
 
-    private _user: IUser | null = null;
+    private http = inject(HttpClient);
+    private router = inject(Router);
+
+    private storageKey = 'auth.user';
+    private _user: IUser | null = this.restoreFromStorage();
 
     get loggedIn(): boolean {
         return !!this._user;
+    }
+
+    get user(): IUser | null {
+        return this._user;
+    }
+
+    get userRole() {
+        return this._user?.role;
     }
 
     private _lastAuthenticatedPath = this.defaultPath;
@@ -28,46 +44,133 @@ export class AuthService {
         this._lastAuthenticatedPath = value || this.defaultPath;
     }
 
-    constructor(private router: Router) {}
-
-    async logIn(email: string, password: string) {
+    private restoreFromStorage(): IUser | null {
         try {
-            // Simulação de autenticação. Substitua por chamada HTTP quando tiver backend.
+            const raw = localStorage.getItem(this.storageKey);
+            return raw ? (JSON.parse(raw) as IUser) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    private persist(user: IUser | null) {
+        this._user = user;
+        if (user) localStorage.setItem(this.storageKey, JSON.stringify(user));
+        else localStorage.removeItem(this.storageKey);
+    }
+
+    async logIn(email: string, password: string, remember = false) {
+        try {
             if (!email || !password) {
                 return { isOk: false, message: 'Credenciais inválidas' };
             }
 
-            this._user = { ...defaultUser, email };
-            await this.router.navigate([this._lastAuthenticatedPath]);
+            const body = { username: email, password };
+            const res = await firstValueFrom(
+                this.http.post<{ id: number; username: string; role: Role }>(
+                    `${API_BASE}/auth/login?remember=${remember}`,
+                    body,
+                    { withCredentials: true }
+                )
+            );
 
-            return {
-                isOk: true,
-                data: this._user
+            const user: IUser = {
+                id: res.id,
+                username: res.username,
+                email: res.username,
+                role: res.role,
+                avatarUrl: defaultAvatar
             };
-        } catch {
-            return {
-                isOk: false,
-                message: 'Falha de autenticação'
-            };
+
+            this.persist(user);
+            await this.router.navigate([this._lastAuthenticatedPath]);
+            return { isOk: true, data: user };
+        } catch (e: any) {
+            const msg = e?.error?.message || 'Falha de autenticação';
+            return { isOk: false, message: msg };
         }
     }
 
     async getUser() {
         try {
-            return {
-                isOk: true,
-                data: this._user
+            if (this._user) {
+                return { isOk: true, data: this._user };
+            }
+            const res = await firstValueFrom(
+                this.http.get<{ id: number; username: string; role: Role }>(`${API_BASE}/auth/me`, {
+                    withCredentials: true
+                })
+            );
+            const user: IUser = {
+                id: res.id,
+                username: res.username,
+                email: res.username,
+                role: res.role,
+                avatarUrl: defaultAvatar
             };
+            this.persist(user);
+            return { isOk: true, data: user };
         } catch {
-            return {
-                isOk: false,
-                data: null
-            };
+            this.persist(null);
+            return { isOk: false, data: null };
+        }
+    }
+
+    async changePassword(currentPassword: string, newPassword: string) {
+        try {
+            await firstValueFrom(
+                this.http.put(
+                    `${API_BASE}/users/me/password`,
+                    { currentPassword, newPassword },
+                    { withCredentials: true }
+                )
+            );
+            return { isOk: true };
+        } catch (e: any) {
+            const msg = e?.error?.message || 'Não foi possível alterar a senha.';
+            return { isOk: false, message: msg };
         }
     }
 
     async logOut() {
-        this._user = null;
-        await this.router.navigate(['/login-form']);
+        try {
+            // Solicita ao backend que expire o cookie httpOnly do JWT
+            await firstValueFrom(this.http.post(`${API_BASE}/auth/logout`, {}, { withCredentials: true }));
+        } catch {
+            // ignora erro de rede/logout
+        } finally {
+            // Limpa artefatos do lado do cliente e navega para login
+            this.clearClientAuthArtifacts();
+            this.persist(null);
+            await this.router.navigate(['/auth/login']);
+        }
+    }
+
+    private clearClientAuthArtifacts() {
+        try {
+            // limpa possíveis dados locais da sessão
+            sessionStorage.clear();
+        } catch {}
+        try {
+            // remove qualquer token ou cache relacionado (best-effort)
+            localStorage.removeItem(this.storageKey);
+            localStorage.removeItem('auth.token');
+        } catch {}
+        try {
+            // tentativa best-effort de expirar cookie não httpOnly com o mesmo nome (se existir)
+            const expire = 'Thu, 01 Jan 1970 00:00:00 GMT';
+            const paths = ['/', ''];
+            for (const p of paths) {
+                document.cookie = `AUTH=; Expires=${expire}; Max-Age=0; Path=${p}; SameSite=Lax`;
+                const host = location.hostname;
+                const parts = host.split('.');
+                if (parts.length > 1) {
+                    const base = '.' + parts.slice(-2).join('.');
+                    document.cookie = `AUTH=; Expires=${expire}; Max-Age=0; Path=${p}; Domain=${base}; SameSite=Lax`;
+                }
+            }
+        } catch {
+            // ambiente sem acesso a document (SSR), ignore
+        }
     }
 }

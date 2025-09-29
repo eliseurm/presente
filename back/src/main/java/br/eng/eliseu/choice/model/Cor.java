@@ -5,15 +5,18 @@ import lombok.*;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class SelectionItem {
+@Table(name="cor")
+public class Cor {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    private Selection selection;
+    private String nome;
 
-    @ManyToOne(optional = false)
-    private Product product;
+    private Integer r;
 
-    private int quantity;
+    private Integer g;
+
+    private Integer b;
+
 }

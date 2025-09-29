@@ -7,21 +7,25 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class AccessKey {
+public class ChaveMagica {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional=false)
-    private Person person;
+    private Pessoa pessoa;
 
     private String tokenHash;
 
     @Column(name = "token_lookup", length = 255)
     private String tokenLookup; // sha256 truncado (16 chars) para lookup indexado
 
-    private LocalDateTime expiresAt;
+    private LocalDateTime expiraEm;
 
-    private boolean singleUse = true;
-    private LocalDateTime usedAt;
-    private int usesCount;
+    private boolean usoUnico = true;
+
+    private LocalDateTime utilizado;
+
+    private int quantidadeAcesso;
+
 }

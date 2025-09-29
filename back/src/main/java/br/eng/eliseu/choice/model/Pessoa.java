@@ -7,19 +7,31 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Person {
+public class Pessoa {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    private String nome;
+
     private String email;
+
+    private String telefone;
+
     private String status; // INVITED, ACTIVE, COMPLETED
 
-    private LocalDateTime createdAt;
+
+    private LocalDateTime criadoEm;
+    private LocalDateTime alteradoEm;
 
     @PrePersist
     public void prePersist(){
-        if(createdAt==null) createdAt = LocalDateTime.now();
-        if(status==null) status = "INVITED";
+        if(criadoEm==null) criadoEm = LocalDateTime.now();
+        if(alteradoEm==null) alteradoEm = criadoEm;
     }
+
+    @PreUpdate
+    public void preUpdate(){
+        alteradoEm = LocalDateTime.now();
+    }
+
 }

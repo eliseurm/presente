@@ -1,7 +1,7 @@
 package br.eng.eliseu.choice;
 
 import br.eng.eliseu.choice.model.*;
-import br.eng.eliseu.choice.repo.*;
+import br.eng.eliseu.choice.repository.*;
 import br.eng.eliseu.choice.service.TokenUtil;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -16,15 +16,15 @@ import java.util.List;
 public class SampleDataLoader {
 
     @Bean
-    CommandLineRunner initData(ProductRepository productRepo,
-                               PersonRepository personRepo,
-                               AccessKeyRepository accessKeyRepo,
-                               AdminUserRepository adminRepo,
+    CommandLineRunner initData(ProdutoRepository productRepo,
+                               PessoaRepository personRepo,
+                               ChaveMagicaRepository accessKeyRepo,
+                               UsuarioRepository adminRepo,
                                TokenUtil tokenUtil,
                                BCryptPasswordEncoder encoder){
         return args -> {
             if(adminRepo.findByUsername("admin").isEmpty()){
-                AdminUser adm = AdminUser.builder()
+                Usuario adm = Usuario.builder()
                         .username("admin")
                         .passwordHash(encoder.encode("changeme123"))
                         .build();
@@ -34,23 +34,22 @@ public class SampleDataLoader {
 
             if(productRepo.count()==0){
                 productRepo.saveAll(List.of(
-                        Product.builder().name("Produto A").description("Descrição A").price(BigDecimal.valueOf(10.0)).build(),
-                        Product.builder().name("Produto B").description("Descrição B").price(BigDecimal.valueOf(20.0)).build(),
-                        Product.builder().name("Produto C").description("Descrição C").price(BigDecimal.valueOf(30.0)).build()
+                        Produto.builder().nome("Produto A").descricao("Descrição A").preco(BigDecimal.valueOf(10.0)).build(),
+                        Produto.builder().nome("Produto B").descricao("Descrição B").preco(BigDecimal.valueOf(20.0)).build(),
+                        Produto.builder().nome("Produto C").descricao("Descrição C").preco(BigDecimal.valueOf(30.0)).build()
                 ));
             }
 
             if(personRepo.count()==0){
-                Person p = Person.builder().name("Participante Exemplo").email("exemplo@teste.com").status("INVITED").build();
+                Pessoa p = Pessoa.builder().nome("Participante Exemplo").email("exemplo@teste.com").status("INVITED").build();
                 personRepo.save(p);
                 String token = tokenUtil.generateToken(16);
                 String lookup = tokenUtil.lookup(token);
-                AccessKey ak = AccessKey.builder()
-                        .person(p)
+                ChaveMagica ak = ChaveMagica.builder()
+                        .pessoa(p)
                         .tokenHash(tokenUtil.bcrypt(token))
                         .tokenLookup(lookup)
-                        .expiresAt(LocalDateTime.now().plusDays(30))
-                        .singleUse(false)
+                        .expiraEm(LocalDateTime.now().plusDays(30))
                         .build();
                 accessKeyRepo.save(ak);
                 System.out.println("===> SAMPLE_MAGIC_LINK: http://localhost:4200/a/" + token);

@@ -2,11 +2,14 @@ package br.eng.eliseu.choice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class AdminUser {
+@Table(name="usuario")
+public class Usuario {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -16,10 +19,22 @@ public class AdminUser {
     @Column(nullable = false)
     private String passwordHash;
 
-    private LocalDateTime createdAt;
+    private PapelEnum papel;
+
+    private boolean status;
+
+
+    private LocalDateTime criadoEm;
+    private LocalDateTime alteradoEm;
 
     @PrePersist
     public void prePersist(){
-        if(createdAt==null) createdAt = LocalDateTime.now();
+        if(criadoEm==null) criadoEm = LocalDateTime.now();
+        if(alteradoEm==null) alteradoEm = criadoEm;
+    }
+
+    @PreUpdate
+    public void preUpdate(){
+        alteradoEm = LocalDateTime.now();
     }
 }

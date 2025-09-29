@@ -1,5 +1,5 @@
 -- V1__init.sql
-CREATE TABLE person (
+/*CREATE TABLE pessoa (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(120) NOT NULL,
   email VARCHAR(160),
@@ -16,7 +16,7 @@ CREATE TABLE access_key (
   single_use BOOLEAN NOT NULL DEFAULT TRUE,
   used_at TIMESTAMP NULL,
   uses_count INT NOT NULL DEFAULT 0,
-  CONSTRAINT fk_key_person FOREIGN KEY (person_id) REFERENCES person(id),
+  CONSTRAINT fk_key_person FOREIGN KEY (person_id) REFERENCES pessoa(id),
   INDEX idx_token_lookup (token_lookup)
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE selection (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   notes TEXT NULL,
-  CONSTRAINT fk_selection_person FOREIGN KEY (person_id) REFERENCES person(id),
+  CONSTRAINT fk_selection_person FOREIGN KEY (person_id) REFERENCES pessoa(id),
   UNIQUE KEY uq_person (person_id)
 );
 
@@ -54,3 +54,4 @@ CREATE TABLE selection_item (
   CONSTRAINT fk_sel_item_prod FOREIGN KEY (product_id) REFERENCES product(id),
   UNIQUE KEY uq_sel_prod (selection_id, product_id)
 );
+*/
