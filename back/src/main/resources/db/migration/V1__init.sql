@@ -1,0 +1,56 @@
+-- V1__init.sql
+CREATE TABLE person (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(160),
+  status VARCHAR(20) NOT NULL DEFAULT 'INVITED',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE access_key (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  person_id BIGINT NOT NULL,
+  token_hash VARCHAR(100) NOT NULL,
+  token_lookup VARCHAR(255) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  single_use BOOLEAN NOT NULL DEFAULT TRUE,
+  used_at TIMESTAMP NULL,
+  uses_count INT NOT NULL DEFAULT 0,
+  CONSTRAINT fk_key_person FOREIGN KEY (person_id) REFERENCES person(id),
+  INDEX idx_token_lookup (token_lookup)
+);
+
+CREATE TABLE admin_user (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(60) NOT NULL UNIQUE,
+  password_hash VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(120) NOT NULL,
+  description TEXT NULL,
+  price DECIMAL(12,2) NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE selection (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  person_id BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  notes TEXT NULL,
+  CONSTRAINT fk_selection_person FOREIGN KEY (person_id) REFERENCES person(id),
+  UNIQUE KEY uq_person (person_id)
+);
+
+CREATE TABLE selection_item (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  selection_id BIGINT NOT NULL,
+  product_id BIGINT NOT NULL,
+  quantity INT NOT NULL DEFAULT 1,
+  CONSTRAINT fk_sel_item_sel FOREIGN KEY (selection_id) REFERENCES selection(id) ON DELETE CASCADE,
+  CONSTRAINT fk_sel_item_prod FOREIGN KEY (product_id) REFERENCES product(id),
+  UNIQUE KEY uq_sel_prod (selection_id, product_id)
+);
