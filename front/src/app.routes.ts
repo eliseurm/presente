@@ -12,7 +12,7 @@ export const appRoutes: Routes = [
         children: [
             { path: '', redirectTo: '/home', pathMatch: 'full' },
             { path: 'home', loadComponent: () => import('./app/pages/home/home-component').then(m => m.HomeComponent) },
-            // Perfil do Usuário (protegido)
+            { path: 'pessoa', loadComponent: () => import('./app/pages/pessoa-component/pessoa-component').then(m => m.PessoaComponent) },
             { path: 'usuario/perfil', loadComponent: () => import('./app/pages/usuario-perfil-component/usuario-perfil-component').then(m => m.UsuarioPerfilComponent) }
         ]
     },

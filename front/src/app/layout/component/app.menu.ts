@@ -28,10 +28,12 @@ export class AppMenu {
                 ]
             },
             {
-                label: 'Pages',
+                label: 'Cadastros',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/pages'],
-                items: []
+                items: [
+                    { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
+                ]
             },
         ];
     }

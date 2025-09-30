@@ -15,7 +15,7 @@ export interface IUser {
 }
 
 const defaultAvatar = 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png';
-const API_BASE = 'http://localhost:8080';
+const API_BASE = '/api';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -59,6 +59,7 @@ export class AuthService {
         else localStorage.removeItem(this.storageKey);
     }
 
+
     async logIn(email: string, password: string, remember = false) {
         try {
             if (!email || !password) {
@@ -67,18 +68,29 @@ export class AuthService {
 
             const body = { username: email, password };
             const res = await firstValueFrom(
-                this.http.post<{ id: number; username: string; role: Role }>(
-                    `${API_BASE}/auth/login?remember=${remember}`,
-                    body,
-                    { withCredentials: true }
-                )
+                this.http.post<{
+                    token: string;
+                    id: number;
+                    username: string;
+                    role: string;
+                    remember: boolean;
+                }>(`${API_BASE}/auth/login?remember=${remember}`, body)
             );
+
+            // Armazenar o token JWT baseado no remember
+            if (res.remember || remember) {
+                localStorage.setItem('auth.token', res.token);
+                sessionStorage.removeItem('auth.token'); // Garante que não fica duplicado
+            } else {
+                sessionStorage.setItem('auth.token', res.token);
+                localStorage.removeItem('auth.token'); // Garante que não fica duplicado
+            }
 
             const user: IUser = {
                 id: res.id,
                 username: res.username,
                 email: res.username,
-                role: res.role,
+                role: res.role as Role,
                 avatarUrl: defaultAvatar
             };
 
@@ -96,18 +108,19 @@ export class AuthService {
             if (this._user) {
                 return { isOk: true, data: this._user };
             }
+
             const res = await firstValueFrom(
-                this.http.get<{ id: number; username: string; role: Role }>(`${API_BASE}/auth/me`, {
-                    withCredentials: true
-                })
+                this.http.get<{ id: number; username: string; role: Role }>(`${API_BASE}/auth/me`)
             );
+
             const user: IUser = {
                 id: res.id,
                 username: res.username,
                 email: res.username,
-                role: res.role,
+                role: res.role as Role,
                 avatarUrl: defaultAvatar
             };
+
             this.persist(user);
             return { isOk: true, data: user };
         } catch {
@@ -116,30 +129,14 @@ export class AuthService {
         }
     }
 
-    async changePassword(currentPassword: string, newPassword: string) {
-        try {
-            await firstValueFrom(
-                this.http.put(
-                    `${API_BASE}/users/me/password`,
-                    { currentPassword, newPassword },
-                    { withCredentials: true }
-                )
-            );
-            return { isOk: true };
-        } catch (e: any) {
-            const msg = e?.error?.message || 'Não foi possível alterar a senha.';
-            return { isOk: false, message: msg };
-        }
-    }
-
     async logOut() {
         try {
-            // Solicita ao backend que expire o cookie httpOnly do JWT
-            await firstValueFrom(this.http.post(`${API_BASE}/auth/logout`, {}, { withCredentials: true }));
+            await firstValueFrom(
+                this.http.post(`${API_BASE}/auth/logout`, {})
+            );
         } catch {
             // ignora erro de rede/logout
         } finally {
-            // Limpa artefatos do lado do cliente e navega para login
             this.clearClientAuthArtifacts();
             this.persist(null);
             await this.router.navigate(['/auth/login']);
@@ -173,4 +170,22 @@ export class AuthService {
             // ambiente sem acesso a document (SSR), ignore
         }
     }
+
+        async changePassword(currentPassword: string, newPassword: string) {
+            try {
+                await firstValueFrom(
+                    this.http.put(
+                        `${API_BASE}/users/me/password`,
+                        { currentPassword, newPassword },
+                        { withCredentials: true }
+                    )
+                );
+                return { isOk: true };
+            } catch (e: any) {
+                const msg = e?.error?.message || 'Não foi possível alterar a senha.';
+                return { isOk: false, message: msg };
+            }
+        }
+
+
 }
