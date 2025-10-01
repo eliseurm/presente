@@ -2,7 +2,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
@@ -101,6 +101,7 @@ import { AuthService } from '@/pages/auth/auth-service';
 })
 export class Login {
     private auth = inject(AuthService);
+    private router = inject(Router);
 
     email = '';
     password = '';

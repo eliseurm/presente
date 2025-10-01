@@ -39,4 +39,4 @@ import { RouterModule } from '@angular/router';
     </section>
   `
 })
-export class HomeComponent {}
+export class HomePageComponent {}

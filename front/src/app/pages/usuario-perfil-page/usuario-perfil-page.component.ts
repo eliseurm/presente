@@ -9,10 +9,10 @@ import { AuthService } from '@/pages/auth/auth-service';
 @Component({
   selector: 'usuario-perfil',
   imports: [CommonModule, FormsModule, PasswordModule, InputTextModule, ButtonModule],
-  templateUrl: './usuario-perfil-component.html',
-  styleUrl: './usuario-perfil-component.scss'
+  templateUrl: './usuario-perfil-page.component.html',
+  styleUrl: './usuario-perfil-page.component.scss'
 })
-export class UsuarioPerfilComponent {
+export class UsuarioPerfilPageComponent {
 
     auth = inject(AuthService);
 

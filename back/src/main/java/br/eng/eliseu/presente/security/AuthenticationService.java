@@ -18,7 +18,8 @@ public class AuthenticationService {
 
     public String authenticate(Authentication authentication, boolean remember) {
         // Se remember = true, token válido por 7 dias, senão 10 horas
-        long expiry = remember ? 60L * 60L * 24L * 7L : 60L * 60L * 10L;
+        long expiry = remember ? 60L * 60L * 24L * 7L : 60L * 60L * 10L; // com remember 7 dias, sem remember 10 horas
+//        long expiry = remember ? 120L : 60L; // 1 minuto normal, 2 minutos com remember
         return jwtService.generateToken(authentication, expiry);
     }
 }

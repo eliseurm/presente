@@ -5,8 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { PresenteService } from './presente.service';
-import { ProdutoComponent } from '@/presente/produto-component/produto-component';
-import { PresenteTopbarComponent } from '@/presente/presente-top-bar-component/presente-top-bar-component';
+import { ProdutoComponent } from '@/presente-page/produto-component/produto-component';
+import { PresenteTopbarComponent } from '@/presente-page/presente-top-bar-component/presente-top-bar-component';
 
 type Produto = {
     id: number;

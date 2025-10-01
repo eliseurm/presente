@@ -11,16 +11,17 @@ export const appRoutes: Routes = [
         canActivate: [AuthGuardService],
         children: [
             { path: '', redirectTo: '/home', pathMatch: 'full' },
-            { path: 'home', loadComponent: () => import('./app/pages/home/home-component').then(m => m.HomeComponent) },
-            { path: 'pessoa', loadComponent: () => import('./app/pages/pessoa-component/pessoa-component').then(m => m.PessoaComponent) },
-            { path: 'usuario/perfil', loadComponent: () => import('./app/pages/usuario-perfil-component/usuario-perfil-component').then(m => m.UsuarioPerfilComponent) }
+            { path: 'home', loadComponent: () => import('@/pages/home-page/home-page.component').then(m => m.HomePageComponent) },
+            { path: 'pessoa', loadComponent: () => import('@/pages/pessoa-page/pessoa-page.component').then(m => m.PessoaPageComponent) },
+            { path: 'usuario/perfil', loadComponent: () => import('@/pages/usuario-perfil-page/usuario-perfil-page.component').then(m => m.UsuarioPerfilPageComponent) },
+            { path: 'cor', loadComponent: () => import('@/pages/cor-page/cor-page.component').then(m => m.CorPageComponent) },
         ]
     },
 
     { path: 'login-form', redirectTo: '/auth/login', pathMatch: 'full' },
 
-    { path: 'presente/:keyMagico', loadComponent: () => import('./app/presente/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
-    { path: 'presente/erro', loadComponent: () => import('./app/presente/presente-erro.component').then(m => m.PresenteErroComponent) },
+    { path: 'presente/:keyMagico', loadComponent: () => import('@/presente-page/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
+    { path: 'presente/erro', loadComponent: () => import('@/presente-page/presente-erro.component').then(m => m.PresenteErroComponent) },
 
     { path: 'auth', canActivate: [AuthGuardService], loadChildren: () => import('./app/pages/auth/auth.routes') },
 

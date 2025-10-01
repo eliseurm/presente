@@ -1,0 +1,222 @@
+<div class="crud-container">
+    <p-toast />
+    <p-confirmDialog />
+
+    <!-- Card de Filtros -->
+    <p-card class="filter-card">
+        <div class="filter-content">
+            <div class="filter-fields">
+                <div class="field">
+                    <label for="filtroNome">Nome da Cor</label>
+                    <input
+                        pInputText
+                        id="filtroNome"
+                        [(ngModel)]="filtro.nome"
+                        placeholder="Buscar por nome"
+                        (keyup.enter)="filtrar()"
+                    />
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <p-button
+                    icon="pi pi-search"
+                    label="Pesquisar"
+                    (onClick)="filtrar()"
+                    [loading]="loading"
+                />
+                <p-button
+                    icon="pi pi-filter-slash"
+                    label="Limpar"
+                    severity="secondary"
+                    (onClick)="limpar()"
+                    [disabled]="loading"
+                />
+            </div>
+        </div>
+    </p-card>
+
+    <!-- Card de Resultados -->
+    <p-card class="results-card">
+        <ng-template pTemplate="header">
+            <div class="card-header-content">
+                <h3>Lista de {{ getEntityLabelPlural() }}</h3>
+                <div class="header-actions">
+                    <p-button
+                        *ngIf="selectedItems.length > 0"
+                        icon="pi pi-trash"
+                        label="Excluir Selecionados ({{ selectedItems.length }})"
+                        severity="danger"
+                        (onClick)="confirmarExclusaoEmLote()"
+                        [disabled]="loading"
+                    />
+                    <p-button
+                        icon="pi pi-plus"
+                        label="Novo"
+                        (onClick)="novo()"
+                        [disabled]="loading"
+                    />
+                </div>
+            </div>
+        </ng-template>
+
+        <p-table
+            [value]="items"
+            [(selection)]="selectedItems"
+            [loading]="loading"
+            [lazy]="true"
+            [paginator]="true"
+            [rows]="filtro.size"
+            [totalRecords]="totalRecords"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            (onLazyLoad)="carregar($event)"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            styleClass="p-datatable-gridlines"
+            dataKey="id"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 4rem">
+                        <p-tableHeaderCheckbox />
+                    </th>
+                    <th pSortableColumn="nome">
+                        Nome
+                        <p-sortIcon field="nome" />
+                    </th>
+                    <th style="width: 150px">Exemplo</th>
+                    <th style="width: 120px">Código Hex</th>
+                    <th style="width: 180px">Ações</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-cor>
+                <tr>
+                    <td>
+                        <p-tableCheckbox [value]="cor" />
+                    </td>
+                    <td>{{ cor.nome }}</td>
+                    <td>
+                        <div class="color-preview" [style.background-color]="cor.corHex">
+                        </div>
+                    </td>
+                    <td>
+                        <span class="color-code">{{ cor.corHex }}</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button
+                                icon="pi pi-pencil"
+                                [rounded]="true"
+                                [text]="true"
+                                severity="info"
+                                pTooltip="Editar"
+                                tooltipPosition="top"
+                                (onClick)="editar(cor)"
+                            />
+                            <p-button
+                                icon="pi pi-trash"
+                                [rounded]="true"
+                                [text]="true"
+                                severity="danger"
+                                pTooltip="Excluir"
+                                tooltipPosition="top"
+                                (onClick)="confirmarExclusao(cor)"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="getColumnCount()" class="empty-message">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox empty-icon"></i>
+                            <p>Nenhuma cor encontrada</p>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+
+    <!-- Dialog de Edição/Criação -->
+    <p-dialog
+        [(visible)]="displayDialog"
+        [header]="getDialogHeader()"
+        [modal]="true"
+        [style]="{ width: '600px', maxHeight: '90vh' }"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [contentStyle]="{ overflow: 'visible' }"
+    >
+        <div class="dialog-content">
+            <div class="field">
+                <label for="nome" class="required">Nome</label>
+                <input
+                    pInputText
+                    id="nome"
+                    [(ngModel)]="currentItem.nome"
+                    placeholder="Digite o nome da cor"
+                    class="w-full"
+                />
+            </div>
+
+            <div class="field">
+                <label for="corPicker" class="required">Selecione a Cor</label>
+                <div class="color-picker-wrapper">
+                    <p-colorPicker
+                        [(ngModel)]="currentItem.corHex"
+                        [inline]="true"
+                        (onChange)="onColorChange($event)"
+                    />
+
+                    <div class="color-info">
+                        <div class="color-preview-large" [style.background-color]="currentItem.corHex">
+                        </div>
+
+                        <div class="color-codes">
+                            <div class="field-inline">
+                                <label for="corHex">HEX</label>
+                                <input
+                                    pInputText
+                                    id="corHex"
+                                    [(ngModel)]="currentItem.corHex"
+                                    placeholder="#000000"
+                                    class="color-input"
+                                    (ngModelChange)="onHexChange($any($event))"
+                                />
+                            </div>
+
+                            <div class="field-inline">
+                                <label for="corRgba">RGBA</label>
+                                <input
+                                    pInputText
+                                    id="corRgba"
+                                    [(ngModel)]="currentItem.corRgbA"
+                                    placeholder="rgba(0, 0, 0, 1)"
+                                    class="color-input"
+                                    readonly
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Cancelar"
+                severity="secondary"
+                (onClick)="displayDialog = false"
+            />
+            <p-button
+                label="Salvar"
+                (onClick)="salvar()"
+                [disabled]="!isFormularioValido()"
+            />
+        </ng-template>
+    </p-dialog>
+</div>

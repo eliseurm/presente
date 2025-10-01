@@ -33,6 +33,7 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
+                    { label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor'] },
                 ]
             },
         ];

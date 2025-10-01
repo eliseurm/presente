@@ -44,6 +44,25 @@ export class AuthService {
         this._lastAuthenticatedPath = value || this.defaultPath;
     }
 
+    /**
+     * Obtém a URL salva para redirecionamento após login
+     */
+    private getRedirectUrl(): string {
+        const savedUrl = sessionStorage.getItem('auth.redirectUrl');
+        if (savedUrl) {
+            sessionStorage.removeItem('auth.redirectUrl');
+            return savedUrl;
+        }
+        return this._lastAuthenticatedPath;
+    }
+
+    /**
+     * Limpa o usuário da memória (usado pelo interceptor)
+     */
+    clearUser() {
+        this._user = null;
+    }
+
     private restoreFromStorage(): IUser | null {
         try {
             const raw = localStorage.getItem(this.storageKey);
@@ -95,7 +114,11 @@ export class AuthService {
             };
 
             this.persist(user);
-            await this.router.navigate([this._lastAuthenticatedPath]);
+
+            // Redireciona para a URL salva ou para a rota padrão
+            const redirectUrl = this.getRedirectUrl();
+            await this.router.navigate([redirectUrl]);
+
             return { isOk: true, data: user };
         } catch (e: any) {
             const msg = e?.error?.message || 'Falha de autenticação';

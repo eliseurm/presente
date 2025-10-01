@@ -85,8 +85,8 @@
     <!-- Botões acima da grid - Responsivo -->
     <div class="mb-3 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
         <p-button
-            *ngIf="pessoasSelecionadas.length > 0"
-            label="Excluir Selecionados ({{pessoasSelecionadas.length}})"
+            *ngIf="selectedItems.length > 0"
+            label="Excluir Selecionados ({{ selectedItems.length }})"
             icon="pi pi-trash"
             severity="danger"
             (onClick)="confirmarExclusaoEmLote()"
@@ -107,14 +107,14 @@
     <!-- Grid/Tabela Responsiva -->
     <div class="card overflow-x-auto">
         <p-table
-            [value]="pessoas"
+            [value]="items"
             [loading]="loading"
             [paginator]="true"
             [rows]="filtro.size"
             [totalRecords]="totalRecords"
             [lazy]="true"
-            (onLazyLoad)="carregarPessoas($event)"
-            [(selection)]="pessoasSelecionadas"
+            (onLazyLoad)="carregar($event)"
+            [(selection)]="selectedItems"
             dataKey="id"
             styleClass="p-datatable-striped p-datatable-sm"
             [tableStyle]="{'min-width': '50rem'}"
@@ -208,7 +208,7 @@
     <!-- Dialog/Popup de Edição - Responsivo -->
     <p-dialog
         [(visible)]="displayDialog"
-        [header]="pessoaSelecionada.id ? 'Editar Pessoa' : 'Nova Pessoa'"
+        [header]="getDialogHeader()"
         [modal]="true"
         [style]="{width: '95vw', maxWidth: '600px'}"
         [closable]="true"
@@ -222,7 +222,7 @@
                 <input
                     pInputText
                     id="nome"
-                    [(ngModel)]="pessoaSelecionada.nome"
+                    [(ngModel)]="currentItem.nome"
                     required
                     placeholder="Digite o nome"
                     class="w-full"
@@ -236,7 +236,7 @@
                 <input
                     pInputText
                     id="email"
-                    [(ngModel)]="pessoaSelecionada.email"
+                    [(ngModel)]="currentItem.email"
                     type="email"
                     required
                     placeholder="Digite o e-mail"
@@ -249,7 +249,7 @@
                 <input
                     pInputText
                     id="telefone"
-                    [(ngModel)]="pessoaSelecionada.telefone"
+                    [(ngModel)]="currentItem.telefone"
                     placeholder="Digite o telefone"
                     class="w-full"
                 />
@@ -261,7 +261,7 @@
                 </label>
                 <p-select
                     id="status"
-                    [(ngModel)]="pessoaSelecionada.status"
+                    [(ngModel)]="currentItem.status"
                     [options]="statusOptions"
                     placeholder="Selecione o status"
                     optionLabel="label"
