@@ -84,14 +84,15 @@
 
     <!-- Botões acima da grid - Responsivo -->
     <div class="mb-3 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
-        <p-button
-            *ngIf="selectedItems.length > 0"
-            label="Excluir Selecionados ({{ selectedItems.length }})"
-            icon="pi pi-trash"
-            severity="danger"
-            (onClick)="confirmarExclusaoEmLote()"
-            styleClass="w-full sm:w-auto"
-        ></p-button>
+        @if (selectedItems.length > 0){
+            <p-button
+                label="Excluir Selecionados ({{ selectedItems.length }})"
+                icon="pi pi-trash"
+                severity="danger"
+                (onClick)="confirmarExclusaoEmLote()"
+                styleClass="w-full sm:w-auto"
+            ></p-button>
+        }
 
         <p-button
             icon="pi pi-plus"

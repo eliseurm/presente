@@ -11,15 +11,16 @@ import {ToastModule} from 'primeng/toast';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {TooltipModule} from 'primeng/tooltip';
 
-import {BaseCrudComponent} from '@/shared/components/base-crud.component';
+import {CrudBaseComponent} from '@/shared/components/crud-base/crud-base.component';
 import {PessoaService} from '@/services/pessoa.service';
 import {Pessoa} from '@/shared/model/pessoa';
 import {PessoaFilter} from '@/shared/model/filter/pessoa-filter';
 import {Select} from "primeng/select";
 import {Tag} from "primeng/tag";
+import {FilterField} from "@/shared/components/crud-filter/filter-field";
 
 @Component({
-    selector: 'app-pessoa',
+    selector: 'pessoa-page',
     standalone: true,
     imports: [
         CommonModule,
@@ -37,12 +38,12 @@ import {Tag} from "primeng/tag";
     ],
     templateUrl: './pessoa-page.component.html',
     styleUrls: [
-        '../../shared/components/base-crud.component.scss',
+        '../../shared/components/crud-base/crud-base.component.scss',
         './pessoa-page.component.scss'
     ],
     providers: [MessageService, ConfirmationService]
 })
-export class PessoaPageComponent extends BaseCrudComponent<Pessoa, PessoaFilter> {
+export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter> {
     statusOptions = [
         { label: 'Ativo', value: 'ATIVO' },
         { label: 'Inativo', value: 'INATIVO' }
@@ -54,6 +55,36 @@ export class PessoaPageComponent extends BaseCrudComponent<Pessoa, PessoaFilter>
         confirmationService: ConfirmationService
     ) {
         super(pessoaService, messageService, confirmationService);
+    }
+
+    protected getFilterFields(): FilterField[] {
+        return [
+            {
+                key: 'nome',
+                label: 'Nome',
+                type: 'text',
+                placeholder: 'Filtrar por nome'
+            },
+            {
+                key: 'email',
+                label: 'E-mail',
+                type: 'text',
+                placeholder: 'Filtrar por e-mail'
+            },
+            {
+                key: 'telefone',
+                label: 'Telefone',
+                type: 'text',
+                placeholder: 'Filtrar por telefone'
+            },
+            {
+                key: 'status',
+                label: 'Status',
+                type: 'select',
+                placeholder: 'Selecione o status',
+                options: this.statusOptions
+            }
+        ];
     }
 
     protected criarInstancia(): Pessoa {

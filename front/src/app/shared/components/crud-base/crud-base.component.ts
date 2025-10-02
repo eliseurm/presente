@@ -1,13 +1,11 @@
-
-// src/app/shared/components/base-crud.component.ts
-import { Directive, OnInit } from '@angular/core';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { BaseCrudService } from '../services/base-crud.service';
-import { BaseFilter } from '../model/filter/base-filter';
+import {Directive, OnInit} from '@angular/core';
+import {TableLazyLoadEvent} from 'primeng/table';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {BaseCrudService} from '../../services/base-crud.service';
+import {BaseFilter} from '../../model/filter/base-filter';
 
 @Directive()
-export abstract class BaseCrudComponent<T, F extends BaseFilter> implements OnInit {
+export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
     // Dados e estados comuns
     protected itemsInternal: T[] = [];
     protected selectedItemsInternal: T[] = [];

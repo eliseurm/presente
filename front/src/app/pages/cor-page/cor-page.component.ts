@@ -12,10 +12,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ColorPickerModule } from 'primeng/colorpicker';
 import { MessageService } from 'primeng/api';
 import { ConfirmationService } from 'primeng/api';
-import { BaseCrudComponent } from '@/shared/components/base-crud.component';
+import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
 import {Cor} from "@/shared/model/cor";
 import {CorFilter} from "@/shared/model/filter/cor-filter";
 import {CorService} from "@/services/cor.service";
+import {FilterField} from "@/shared/components/crud-filter/filter-field";
+import {CrudFilterComponent} from "@/shared/components/crud-filter/crud-filter.component";
 
 @Component({
     selector: 'cor-page',
@@ -31,16 +33,26 @@ import {CorService} from "@/services/cor.service";
         ToastModule,
         ConfirmDialogModule,
         TooltipModule,
-        ColorPickerModule
+        ColorPickerModule,
+        CrudFilterComponent
     ],
     templateUrl: './cor-page.component.html',
     styleUrls: [
-        '../../shared/components/base-crud.component.scss',
+        '../../shared/components/crud-base/crud-base.component.scss',
         './cor-page.component.scss'
     ],
     providers: [MessageService, ConfirmationService]
 })
-export class CorPageComponent extends BaseCrudComponent<Cor, CorFilter> {
+export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
+
+    readonly filterFields: FilterField[] = [
+        {
+            key: 'nome',
+            label: 'Nome da Cor',
+            type: 'text',
+            placeholder: 'Buscar por nome'
+        }
+    ];
 
     constructor(
         corService: CorService,
@@ -48,6 +60,10 @@ export class CorPageComponent extends BaseCrudComponent<Cor, CorFilter> {
         confirmationService: ConfirmationService
     ) {
         super(corService, messageService, confirmationService);
+    }
+
+    protected getFilterFields(): FilterField[] {
+        return this.filterFields;
     }
 
     protected criarInstancia(): Cor {

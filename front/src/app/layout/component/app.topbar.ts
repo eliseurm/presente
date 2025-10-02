@@ -63,6 +63,7 @@ import { filter } from 'rxjs/operators';
         </div>
 
         <div class="layout-topbar-actions">
+
             <div class="layout-config-menu">
 
                 <language-select class="ml-2"></language-select>
@@ -96,17 +97,18 @@ import { filter } from 'rxjs/operators';
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
-                    </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-inbox"></i>
-                        <span>Messages</span>
-                    </button>
+<!--                    <button type="button" class="layout-topbar-action">-->
+<!--                        <i class="pi pi-calendar"></i>-->
+<!--                        <span>Calendar</span>-->
+<!--                    </button>-->
+<!--                    <button type="button" class="layout-topbar-action">-->
+<!--                        <i class="pi pi-inbox"></i>-->
+<!--                        <span>Messages</span>-->
+<!--                    </button>-->
 
                     <!-- Botão Profile com menu suspenso (apenas se logado) -->
-                    <div class="relative" *ngIf="auth.loggedIn" (click)="$event.stopPropagation()">
+                    @if (auth.loggedIn) {
+                    <div class="relative" (click)="$event.stopPropagation()">
                         <button
                             type="button"
                             class="layout-topbar-action"
@@ -157,9 +159,11 @@ import { filter } from 'rxjs/operators';
                             </button>
                         </div>
                     </div>
+                    }
                     <!-- Fim Profile -->
                 </div>
             </div>
+
         </div>
     </div>`
 })

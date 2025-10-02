@@ -4,33 +4,41 @@
     <main class="content">
         <div class="container">
 
-            <section *ngIf="carregando" class="status">
-                <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
-                <p>Validando seu link…</p>
-            </section>
+            @if (carregando) {
+                <section class="status">
+                    <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
+                    <p>Validando seu link…</p>
+                </section>
+            }
 
-            <section *ngIf="!carregando && !valido" class="status">
-                <h2>Ops…</h2>
-                <p>{{ erroMsg }}</p>
-                <p class="hint">Mantenha este endereço: /presente/{{ keyMagico }}</p>
-            </section>
+            @if (!carregando && !valido) {
+                <section class="status">
+                    <h2>Ops…</h2>
+                    <p>{{ erroMsg }}</p>
+                    <p class="hint">Mantenha este endereço: /presente/{{ keyMagico }}</p>
+                </section>
+            }
 
-            <section *ngIf="!carregando && valido">
-                <header class="page-header">
-                    <h1>Escolha seu presente</h1>
-                    <p class="sub">Você pode selecionar apenas 1 item. Link: /presente/{{ keyMagico }}</p>
-                </header>
+            @if (!carregando && valido) {
+                <section>
+                    <header class="page-header">
+                        <h1>Escolha seu presente</h1>
+                        <p class="sub">Você pode selecionar apenas 1 item. Link: /presente/{{ keyMagico }}</p>
+                    </header>
 
-                <div class="produtos-grid">
-                    <app-produto
-                        *ngFor="let p of produtos | slice:0:10"
-                        [produto]="p"
-                        [selected]="isSelecionado(p)"
-                        [disabled]="isDesabilitado(p)"
-                        (toggle)="alternarSelecao(p)"
-                    ></app-produto>
-                </div>
-            </section>
+                    <div class="produtos-grid">
+                        @let produtosFatiados = produtos.slice(0, 10);
+                        @for (p of produtosFatiados; track p.id) {
+                            <app-produto
+                                [produto]="p"
+                                [selected]="isSelecionado(p)"
+                                [disabled]="isDesabilitado(p)"
+                                (toggle)="alternarSelecao(p)"
+                            ></app-produto>
+                        }
+                    </div>
+                </section>
+            }
 
         </div>
     </main>

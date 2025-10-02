@@ -53,6 +53,8 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <small class="nota" *ngIf="selected">Este é o seu presente selecionado.</small>
+        @if (selected) {
+            <small class="nota">Este é o seu presente selecionado.</small>
+        }
     </ng-template>
 </p-card>

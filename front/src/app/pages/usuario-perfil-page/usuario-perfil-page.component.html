@@ -13,24 +13,32 @@
     <div class="grid gap-3 max-w-30rem">
         <div>
             <label class="block mb-2">Senha atual</label>
-            <p-password [(ngModel)]="currentPassword" [feedback]="false" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+            <p-password [(ngModel)]="currentPassword" [feedback]="false" [toggleMask]="true"
+                        inputStyleClass="w-full"></p-password>
         </div>
 
         <div>
             <label class="block mb-2">Nova senha</label>
-            <p-password [(ngModel)]="newPassword" [feedback]="true" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+            <p-password [(ngModel)]="newPassword" [feedback]="true" [toggleMask]="true"
+                        inputStyleClass="w-full"></p-password>
         </div>
 
         <div>
             <label class="block mb-2">Confirmar nova senha</label>
-            <p-password [(ngModel)]="confirmPassword" [feedback]="false" [toggleMask]="true" inputStyleClass="w-full"></p-password>
+            <p-password [(ngModel)]="confirmPassword" [feedback]="false" [toggleMask]="true"
+                        inputStyleClass="w-full"></p-password>
         </div>
 
-        <small class="text-red-500" *ngIf="error">{{ error }}</small>
-        <small class="text-green-600" *ngIf="success">{{ success }}</small>
+        @if (error) {
+            <small class="text-red-500">{{ error }}</small>
+        }
+        @if (success) {
+            <small class="text-green-600">{{ success }}</small>
+        }
 
         <div class="mt-2">
-            <p-button label="Salvar nova senha" (onClick)="submit()" [loading]="loading" [disabled]="loading"></p-button>
+            <p-button label="Salvar nova senha" (onClick)="submit()" [loading]="loading"
+                      [disabled]="loading"></p-button>
         </div>
     </div>
 </div>

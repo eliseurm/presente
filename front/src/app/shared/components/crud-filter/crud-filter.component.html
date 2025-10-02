@@ -1,0 +1,79 @@
+<p-card class="filter-card">
+    <div class="filter-content">
+        <div class="filter-fields">
+            @for (field of fields; track field.key) {
+            <div class="field">
+                <label [for]="'filter-' + field.key">{{ field.label }}</label>
+
+                <!-- Campo de Texto -->
+                @if (field.type === 'text') {
+                    <input
+                        pInputText
+                        [id]="'filter-' + field.key"
+                        [ngModel]="getFilterValue(field.key)"
+                        (ngModelChange)="setFilterValue(field.key, $event)"
+                        [placeholder]="field.placeholder || ''"
+                        (keyup.enter)="search()"
+                    />
+                }
+
+                <!-- Campo Select -->
+                @if (field.type === 'select') {
+                    <p-select
+                        [id]="'filter-' + field.key"
+                        [ngModel]="getFilterValue(field.key)"
+                        (ngModelChange)="setFilterValue(field.key, $event)"
+                        [options]="field.options || []"
+                        [placeholder]="field.placeholder || 'Selecione'"
+                        [showClear]="true"
+                        optionLabel="label"
+                        optionValue="value"
+                        styleClass="w-full"
+                    />
+                }
+
+                <!-- Campo Número -->
+                @if (field.type === 'number') {
+                    <input
+                        pInputText
+                        type="number"
+                        [id]="'filter-' + field.key"
+                        [ngModel]="getFilterValue(field.key)"
+                        (ngModelChange)="setFilterValue(field.key, $event)"
+                        [placeholder]="field.placeholder || ''"
+                        (keyup.enter)="search()"
+                    />
+                }
+
+                <!-- Campo Data -->
+                @if (field.type === 'date') {
+                    <input
+                        pInputText
+                        type="date"
+                        [id]="'filter-' + field.key"
+                        [ngModel]="getFilterValue(field.key)"
+                        (ngModelChange)="setFilterValue(field.key, $event)"
+                        (keyup.enter)="search()"
+                    />
+                }
+            </div>
+            }
+        </div>
+
+        <div class="filter-actions">
+            <p-button
+                icon="pi pi-search"
+                label="Pesquisar"
+                (onClick)="search()"
+                [loading]="loading"
+            />
+            <p-button
+                icon="pi pi-filter-slash"
+                label="Limpar"
+                severity="secondary"
+                (onClick)="clear()"
+                [disabled]="loading"
+            />
+        </div>
+    </div>
+</p-card>

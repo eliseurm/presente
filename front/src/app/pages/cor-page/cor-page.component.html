@@ -1,40 +1,16 @@
+
 <div class="crud-container">
     <p-toast />
     <p-confirmDialog />
 
-    <!-- Card de Filtros -->
-    <p-card class="filter-card">
-        <div class="filter-content">
-            <div class="filter-fields">
-                <div class="field">
-                    <label for="filtroNome">Nome da Cor</label>
-                    <input
-                        pInputText
-                        id="filtroNome"
-                        [(ngModel)]="filtro.nome"
-                        placeholder="Buscar por nome"
-                        (keyup.enter)="filtrar()"
-                    />
-                </div>
-            </div>
-
-            <div class="filter-actions">
-                <p-button
-                    icon="pi pi-search"
-                    label="Pesquisar"
-                    (onClick)="filtrar()"
-                    [loading]="loading"
-                />
-                <p-button
-                    icon="pi pi-filter-slash"
-                    label="Limpar"
-                    severity="secondary"
-                    (onClick)="limpar()"
-                    [disabled]="loading"
-                />
-            </div>
-        </div>
-    </p-card>
+    <!-- Card de Filtros (Componente Genérico) -->
+    <crud-filter
+        [filter]="filtro"
+        [fields]="filterFields"
+        [loading]="loading"
+        (onSearch)="filtrar()"
+        (onClear)="limpar()"
+    />
 
     <!-- Card de Resultados -->
     <p-card class="results-card">
@@ -42,14 +18,15 @@
             <div class="card-header-content">
                 <h3>Lista de {{ getEntityLabelPlural() }}</h3>
                 <div class="header-actions">
-                    <p-button
-                        *ngIf="selectedItems.length > 0"
-                        icon="pi pi-trash"
-                        label="Excluir Selecionados ({{ selectedItems.length }})"
-                        severity="danger"
-                        (onClick)="confirmarExclusaoEmLote()"
-                        [disabled]="loading"
-                    />
+                    @if (selectedItems.length > 0) {
+                        <p-button
+                            icon="pi pi-trash"
+                            label="Excluir Selecionados ({{ selectedItems.length }})"
+                            severity="danger"
+                            (onClick)="confirmarExclusaoEmLote()"
+                            [disabled]="loading"
+                        />
+                    }
                     <p-button
                         icon="pi pi-plus"
                         label="Novo"
