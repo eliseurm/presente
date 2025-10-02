@@ -1,0 +1,44 @@
+<erm-data-grid
+    #dataGrid
+    [dataSource]="notaList"
+    (onInitNewRow)="onInitNewRowNota($event)"
+    (onSaving)="onSavingNota($event)"
+    (onSaved)="onSavedNota($event)">
+
+    <erm-editing
+        mode="popup"
+        [allowAdding]="true"
+        [allowUpdating]="true"
+        [allowDeleting]="true"
+        [confirmDelete]="false">
+
+        <erm-popup title="Informações notas" [showTitle]="true" width="80%" height="80%"></erm-popup>
+
+        <erm-form [colCount]="2">
+            <erm-item dataField="id"></erm-item>
+            <erm-item dataField="data"></erm-item>
+            <erm-item dataField="numero">
+                <erm-validation-rule type="required" message="Número é obrigatório"></erm-validation-rule>
+            </erm-item>
+            <erm-item dataField="cliente">
+                <erm-validation-rule type="required" message="Cliente é obrigatório"></erm-validation-rule>
+            </erm-item>
+            <erm-item dataField="items" [colSpan]="2"></erm-item>
+        </erm-form>
+
+    </erm-editing>
+
+    <erm-column dataField="id"></erm-column>
+    <erm-column dataField="numero"></erm-column>
+    <erm-column dataField="cliente">
+        <erm-lookup [dataSource]="clienteList" displayExpr="nome" valueExpr="nome"></erm-lookup>
+    </erm-column>
+    <erm-column dataField="data" dataType="date"></erm-column>
+    <erm-column dataField="items" [visible]="false" editCellTemplate="editCellTemplateItens"></erm-column>
+
+    <div *ermTemplate="'editCellTemplateItens'; let data">
+        <!-- Template customizado aqui -->
+        <p>Items: {{ data.items }}</p>
+    </div>
+
+</erm-data-grid>

@@ -1,0 +1,164 @@
+.erm-data-grid {
+    .erm-toolbar {
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+
+        ::ng-deep .p-datatable {
+            .p-datatable-wrapper {
+                overflow-x: auto;
+            }
+        }
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .empty-message {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-color-secondary);
+    }
+
+    .erm-form {
+        padding: 1rem 0;
+
+        .erm-form-grid {
+            display: grid;
+            gap: 1.5rem;
+
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            .erm-form-item {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+
+                label {
+                    font-weight: 600;
+                    color: var(--text-color);
+                    font-size: 0.875rem;
+
+                    .required-mark {
+                        color: var(--red-500);
+                        margin-left: 0.25rem;
+                    }
+                }
+
+                input, p-inputnumber, p-datepicker, p-select {
+                    width: 100%;
+                }
+
+                // Estilo para campos com erro
+                &.has-error {
+                    input.ng-invalid {
+                        border-color: var(--red-500);
+                    }
+
+                    .field-error {
+                        ::ng-deep {
+                            input {
+                                border-color: var(--red-500) !important;
+                            }
+
+                            .p-inputnumber-input {
+                                border-color: var(--red-500) !important;
+                            }
+
+                            .p-datepicker-input {
+                                border-color: var(--red-500) !important;
+                            }
+
+                            .p-select {
+                                border-color: var(--red-500) !important;
+                            }
+                        }
+                    }
+                }
+
+                .p-error {
+                    margin-top: 0.25rem;
+                    display: block;
+                    font-size: 0.875rem;
+                    color: var(--red-500);
+                }
+            }
+        }
+    }
+
+    ::ng-deep .erm-dialog {
+        .p-dialog-content {
+            overflow-y: auto;
+            max-height: calc(90vh - 180px);
+
+            @media (max-width: 768px) {
+                max-height: calc(90vh - 150px);
+            }
+        }
+
+        .p-dialog-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+
+            .validation-message-container {
+                width: 100%;
+                margin-bottom: 0.5rem;
+
+                ::ng-deep .p-message {
+                    width: 100%;
+
+                    .p-message-wrapper {
+                        padding: 0.75rem 1rem;
+                    }
+                }
+            }
+
+            .dialog-footer-buttons {
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.5rem;
+                width: 100%;
+
+                @media (max-width: 640px) {
+                    flex-direction: column-reverse;
+
+                    p-button {
+                        width: 100%;
+
+                        ::ng-deep .p-button {
+                            width: 100%;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Responsividade da tabela
+    @media (max-width: 768px) {
+        ::ng-deep .p-datatable {
+            font-size: 0.875rem;
+
+            .p-datatable-thead > tr > th {
+                padding: 0.5rem;
+            }
+
+            .p-datatable-tbody > tr > td {
+                padding: 0.5rem;
+            }
+        }
+    }
+}

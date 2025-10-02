@@ -1,9 +1,5 @@
-
 <div class="crud-container">
-    <p-toast />
-    <p-confirmDialog />
-
-    <!-- Card de Filtros (Componente Genérico) -->
+    <!-- Card de Filtros -->
     <crud-filter
         [filter]="filtro"
         [fields]="filterFields"
@@ -12,146 +8,69 @@
         (onClear)="limpar()"
     />
 
-    <!-- Card de Resultados -->
+    <!-- Card de Resultados com ERM Data Grid -->
     <p-card class="results-card">
         <ng-template pTemplate="header">
             <div class="card-header-content">
                 <h3>Lista de {{ getEntityLabelPlural() }}</h3>
-                <div class="header-actions">
-                    @if (selectedItems.length > 0) {
-                        <p-button
-                            icon="pi pi-trash"
-                            label="Excluir Selecionados ({{ selectedItems.length }})"
-                            severity="danger"
-                            (onClick)="confirmarExclusaoEmLote()"
-                            [disabled]="loading"
-                        />
-                    }
-                    <p-button
-                        icon="pi pi-plus"
-                        label="Novo"
-                        (onClick)="novo()"
-                        [disabled]="loading"
-                    />
-                </div>
             </div>
         </ng-template>
 
-        <p-table
-            [value]="items"
-            [(selection)]="selectedItems"
+        <erm-data-grid
+            [dataSource]="corList"
             [loading]="loading"
-            [lazy]="true"
-            [paginator]="true"
-            [rows]="filtro.size"
-            [totalRecords]="totalRecords"
-            [rowsPerPageOptions]="[10, 25, 50]"
-            (onLazyLoad)="carregar($event)"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-            styleClass="p-datatable-gridlines"
-            dataKey="id"
-        >
-            <ng-template pTemplate="header">
-                <tr>
-                    <th style="width: 4rem">
-                        <p-tableHeaderCheckbox />
-                    </th>
-                    <th pSortableColumn="nome">
-                        Nome
-                        <p-sortIcon field="nome" />
-                    </th>
-                    <th style="width: 150px">Exemplo</th>
-                    <th style="width: 120px">Código Hex</th>
-                    <th style="width: 180px">Ações</th>
-                </tr>
+            (onInitNewRow)="onInitNewRow($event)"
+            (onSaving)="onSavingCor($event)"
+            (onDeleting)="onDeletingCor($event)">
+
+            <erm-editing
+                mode="popup"
+                [allowAdding]="true"
+                [allowUpdating]="true"
+                [allowDeleting]="true"
+                [confirmDelete]="true">
+
+                <erm-popup
+                    title="Gerenciar Cor"
+                    [showTitle]="true"
+                    width="700px"
+                    height="auto">
+                </erm-popup>
+
+                <erm-form [colCount]="1">
+                    <erm-item dataField="nome" label="Nome da Cor">
+                        <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
+                    </erm-item>
+                    <erm-item dataField="corHex" label="Selecione a Cor">
+                        <erm-validation-rule type="required" message="Cor é obrigatória"></erm-validation-rule>
+                    </erm-item>
+                </erm-form>
+
+            </erm-editing>
+
+            <!-- Colunas da Grid -->
+            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
+            <erm-column dataField="nome" caption="Nome"></erm-column>
+            <erm-column dataField="corHex" caption="Exemplo" cellTemplate="colorPreview"></erm-column>
+            <erm-column dataField="corHex" caption="Código Hex" editCellTemplate="colorEditor"></erm-column>
+            <erm-column dataField="corRgbA" caption="Código RGBA" [visible]="false"></erm-column>
+
+            <!-- Template para preview da cor na grid -->
+            <ng-template ermTemplate="colorPreview" let-cor>
+                <div class="color-preview" [style.background-color]="cor.corHex"></div>
             </ng-template>
 
-            <ng-template pTemplate="body" let-cor>
-                <tr>
-                    <td>
-                        <p-tableCheckbox [value]="cor" />
-                    </td>
-                    <td>{{ cor.nome }}</td>
-                    <td>
-                        <div class="color-preview" [style.background-color]="cor.corHex">
-                        </div>
-                    </td>
-                    <td>
-                        <span class="color-code">{{ cor.corHex }}</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <p-button
-                                icon="pi pi-pencil"
-                                [rounded]="true"
-                                [text]="true"
-                                severity="info"
-                                pTooltip="Editar"
-                                tooltipPosition="top"
-                                (onClick)="editar(cor)"
-                            />
-                            <p-button
-                                icon="pi pi-trash"
-                                [rounded]="true"
-                                [text]="true"
-                                severity="danger"
-                                pTooltip="Excluir"
-                                tooltipPosition="top"
-                                (onClick)="confirmarExclusao(cor)"
-                            />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-
-            <ng-template pTemplate="emptymessage">
-                <tr>
-                    <td [attr.colspan]="getColumnCount()" class="empty-message">
-                        <div class="empty-state">
-                            <i class="pi pi-inbox empty-icon"></i>
-                            <p>Nenhuma cor encontrada</p>
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
-    </p-card>
-
-    <!-- Dialog de Edição/Criação -->
-    <p-dialog
-        [(visible)]="displayDialog"
-        [header]="getDialogHeader()"
-        [modal]="true"
-        [style]="{ width: '600px', maxHeight: '90vh' }"
-        [closable]="true"
-        [closeOnEscape]="true"
-        [contentStyle]="{ overflow: 'visible' }"
-    >
-        <div class="dialog-content">
-            <div class="field">
-                <label for="nome" class="required">Nome</label>
-                <input
-                    pInputText
-                    id="nome"
-                    [(ngModel)]="currentItem.nome"
-                    placeholder="Digite o nome da cor"
-                    class="w-full"
-                />
-            </div>
-
-            <div class="field">
-                <label for="corPicker" class="required">Selecione a Cor</label>
+            <!-- Template customizado para edição de cor no popup -->
+            <ng-template ermTemplate="colorEditor" let-cor="data">
                 <div class="color-picker-wrapper">
                     <p-colorPicker
-                        [(ngModel)]="currentItem.corHex"
+                        [(ngModel)]="cor.corHex"
                         [inline]="true"
-                        (onChange)="onColorChange($event)"
-                    />
+                        (onChange)="onColorChange(cor, $event)">
+                    </p-colorPicker>
 
                     <div class="color-info">
-                        <div class="color-preview-large" [style.background-color]="currentItem.corHex">
-                        </div>
+                        <div class="color-preview-large" [style.background-color]="cor.corHex"></div>
 
                         <div class="color-codes">
                             <div class="field-inline">
@@ -159,10 +78,10 @@
                                 <input
                                     pInputText
                                     id="corHex"
-                                    [(ngModel)]="currentItem.corHex"
+                                    [(ngModel)]="cor.corHex"
                                     placeholder="#000000"
                                     class="color-input"
-                                    (ngModelChange)="onHexChange($any($event))"
+                                    (ngModelChange)="onHexChange(cor, $any($event))"
                                 />
                             </div>
 
@@ -171,7 +90,7 @@
                                 <input
                                     pInputText
                                     id="corRgba"
-                                    [(ngModel)]="currentItem.corRgbA"
+                                    [(ngModel)]="cor.corRgbA"
                                     placeholder="rgba(0, 0, 0, 1)"
                                     class="color-input"
                                     readonly
@@ -180,20 +99,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </ng-template>
 
-        <ng-template pTemplate="footer">
-            <p-button
-                label="Cancelar"
-                severity="secondary"
-                (onClick)="displayDialog = false"
-            />
-            <p-button
-                label="Salvar"
-                (onClick)="salvar()"
-                [disabled]="!isFormularioValido()"
-            />
-        </ng-template>
-    </p-dialog>
+        </erm-data-grid>
+    </p-card>
 </div>

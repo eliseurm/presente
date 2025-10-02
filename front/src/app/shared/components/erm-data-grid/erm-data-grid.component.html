@@ -1,0 +1,199 @@
+
+<div class="erm-data-grid">
+    <p-toast />
+
+    <!-- Toolbar com botão de adicionar -->
+    <div class="erm-toolbar" *ngIf="editingConfig.allowAdding">
+        <p-button
+            label="Adicionar"
+            icon="pi pi-plus"
+            (onClick)="addNewRow()"
+            [disabled]="loading"
+            severity="success">
+        </p-button>
+    </div>
+
+    <!-- Tabela de dados - Responsiva -->
+    <div class="table-responsive">
+        <p-table
+            [value]="dataSource"
+            [loading]="loading"
+            [tableStyle]="{ 'min-width': '50rem' }"
+            [scrollable]="true" scrollHeight="400px"
+            styleClass="p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th *ngFor="let col of visibleColumns">
+                        {{ col.caption || col.dataField }}
+                    </th>
+                    <th *ngIf="editingConfig.allowUpdating || editingConfig.allowDeleting" style="width: 120px">
+                        Ações
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowData>
+                <tr>
+                    <td *ngFor="let col of visibleColumns">
+                        <ng-container *ngIf="!col.cellTemplate; else customCell">
+                            {{ getCellValue(rowData, col) }}
+                        </ng-container>
+                        <ng-template #customCell>
+                            <ng-container
+                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: rowData, data: rowData }">
+                            </ng-container>
+                        </ng-template>
+                    </td>
+                    <td *ngIf="editingConfig.allowUpdating || editingConfig.allowDeleting">
+                        <div class="action-buttons">
+                            <p-button
+                                *ngIf="editingConfig.allowUpdating"
+                                icon="pi pi-pencil"
+                                (onClick)="editRow(rowData)"
+                                [text]="true"
+                                severity="info"
+                                size="small">
+                            </p-button>
+                            <p-button
+                                *ngIf="editingConfig.allowDeleting"
+                                icon="pi pi-trash"
+                                (onClick)="deleteRow(rowData)"
+                                [text]="true"
+                                severity="danger"
+                                size="small">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="visibleColumns.length + 1" class="empty-message">
+                        Nenhum registro encontrado
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Dialog de edição - Responsivo -->
+    <p-dialog
+        [(visible)]="displayDialog"
+        [header]="popupConfig.title"
+        [modal]="true"
+        [style]="{ width: popupConfig.width, maxWidth: '95vw', height: popupConfig.height }"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [breakpoints]="{ '960px': '90vw', '640px': '95vw' }"
+        styleClass="erm-dialog">
+
+        <div class="erm-form" *ngIf="editingRow && formItems">
+            <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
+                <div
+                    *ngFor="let item of formItems"
+                    class="erm-form-item"
+                    [class.has-error]="hasError(item.dataField)"
+                    [style.grid-column]="item.colSpan ? 'span ' + item.colSpan : 'span 1'">
+
+                    <label [for]="item.dataField">
+                        {{ getFormItemLabel(item) }}
+                        <span *ngIf="isFieldRequired(item)" class="required-mark">*</span>
+                    </label>
+
+                    <!-- Campo de texto -->
+                    <input
+                        *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && (!getColumnByDataField(item.dataField)?.dataType || getColumnByDataField(item.dataField)?.dataType === 'string')"
+                        pInputText
+                        [id]="item.dataField"
+                        [(ngModel)]="editingRow[item.dataField]"
+                        (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                        [disabled]="item.dataField === 'id' && !isNewRow"
+                        [class.ng-invalid]="hasError(item.dataField)"
+                        [class.ng-dirty]="hasError(item.dataField)"
+                        class="w-full" />
+
+                    <!-- Campo numérico -->
+                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'number'"
+                         [class.field-error]="hasError(item.dataField)">
+                        <p-inputnumber
+                            [inputId]="item.dataField"
+                            [(ngModel)]="editingRow[item.dataField]"
+                            (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                            styleClass="w-full">
+                        </p-inputnumber>
+                    </div>
+
+                    <!-- Campo de data -->
+                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'date'"
+                         [class.field-error]="hasError(item.dataField)">
+                        <p-datepicker
+                            [inputId]="item.dataField"
+                            [(ngModel)]="editingRow[item.dataField]"
+                            (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                            dateFormat="dd/mm/yy"
+                            [showIcon]="true"
+                            styleClass="w-full">
+                        </p-datepicker>
+                    </div>
+
+                    <!-- Campo com lookup (dropdown) -->
+                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.lookup"
+                         [class.field-error]="hasError(item.dataField)">
+                        <p-select
+                            [inputId]="item.dataField"
+                            [(ngModel)]="editingRow[item.dataField]"
+                            (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                            [options]="getColumnByDataField(item.dataField)!.lookup!.dataSource"
+                            [optionLabel]="getColumnByDataField(item.dataField)!.lookup!.displayExpr"
+                            [optionValue]="getColumnByDataField(item.dataField)!.lookup!.valueExpr"
+                            [showClear]="true"
+                            placeholder="Selecione..."
+                            styleClass="w-full">
+                        </p-select>
+                    </div>
+
+                    <!-- Template customizado -->
+                    <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
+                        <ng-container
+                            *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow }">
+                        </ng-container>
+                    </ng-container>
+
+                    <!-- Mensagens de validação inline -->
+                    <small *ngFor="let error of getErrors(item.dataField)" class="p-error">
+                        {{ error }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <!-- Mensagem de validação animada -->
+            <div class="validation-message-container" *ngIf="showValidationMessage" [@slideDown]>
+                <p-message severity="error" [text]="validationMessage"></p-message>
+            </div>
+
+            <div class="dialog-footer-buttons">
+                <p-button
+                    label="Cancelar"
+                    icon="pi pi-times"
+                    (onClick)="closeDialog()"
+                    severity="secondary">
+                </p-button>
+                <p-button
+                    label="Salvar"
+                    icon="pi pi-check"
+                    (onClick)="saveRow()"
+                    severity="success">
+                </p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Confirmation Dialog -->
+    <p-confirmdialog></p-confirmdialog>
+</div>

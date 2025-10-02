@@ -18,6 +18,8 @@ export const appRoutes: Routes = [
         ]
     },
 
+    { path: 'teste', loadComponent: () => import('@/pages/teste-page/teste-page.component').then(m => m.TestePageComponent) },
+
     { path: 'login-form', redirectTo: '/auth/login', pathMatch: 'full' },
 
     { path: 'presente/:keyMagico', loadComponent: () => import('@/presente-page/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
