@@ -1,0 +1,86 @@
+<div class="crud-container">
+  <crud-filter
+    [filter]="filter"
+    [fields]="filterFields"
+    [loading]="loading"
+    (onSearch)="filtrar()"
+    (onClear)="limpar()"
+  />
+
+  <p-card class="results-card">
+    <ng-template pTemplate="header">
+      <div class="card-header-content">
+        <h3>Lista de {{ getEntityLabelPlural() }}</h3>
+      </div>
+    </ng-template>
+
+    <erm-data-grid
+      [dataSource]="dataSource"
+      [loading]="loading"
+      (onInitNewRow)="onInitNewRow($event)"
+      (onSaving)="onSavingItem($event)"
+      (onDeleting)="onDeletingItem($event)">
+
+      <erm-editing
+        mode="popup"
+        [allowAdding]="true"
+        [allowUpdating]="true"
+        [allowDeleting]="true"
+        [confirmDelete]="true">
+
+        <erm-popup title="Gerenciar Produto" [showTitle]="true" width="900px" height="auto"></erm-popup>
+
+        <erm-form [colCount]="2">
+          <erm-item dataField="nome" label="Nome">
+            <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
+          </erm-item>
+          <erm-item dataField="preco" label="Preço">
+            <input type="number" pInputText [(ngModel)]="model.preco" min="0" step="0.01" />
+          </erm-item>
+          <erm-item dataField="descricao" label="Descrição" editorType="template" editCellTemplate="descricaoEditor"></erm-item>
+          <erm-item dataField="status" label="Ativo?" editorType="template" editCellTemplate="statusEditor"></erm-item>
+          <erm-item dataField="cores" label="Cores" editorType="template" editCellTemplate="coresEditor"></erm-item>
+          <erm-item dataField="tamanhos" label="Tamanhos" editorType="template" editCellTemplate="tamanhosEditor"></erm-item>
+          <erm-item dataField="imagens" label="Imagens" editorType="template" editCellTemplate="imagensEditor"></erm-item>
+        </erm-form>
+      </erm-editing>
+
+      <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
+      <erm-column dataField="nome" caption="Nome"></erm-column>
+      <erm-column dataField="preco" caption="Preço"></erm-column>
+      <erm-column dataField="cores" caption="Cores" cellTemplate="coresCell"></erm-column>
+      <erm-column dataField="tamanhos" caption="Tamanhos" cellTemplate="tamanhosCell"></erm-column>
+      <erm-column dataField="imagens" caption="Imagens" cellTemplate="imagensCell"></erm-column>
+
+      <ng-template ermTemplate="descricaoEditor" let-data="data">
+        <textarea pInputTextarea [(ngModel)]="data.descricao" rows="4" class="w-full"></textarea>
+      </ng-template>
+      <ng-template ermTemplate="statusEditor" let-data="data">
+        <input type="checkbox" [(ngModel)]="data.status" /> Ativo
+      </ng-template>
+      <ng-template ermTemplate="coresEditor" let-data="data">
+        <p-multiSelect [options]="coresOptions" optionLabel="nome" [(ngModel)]="data.cores" display="chip"></p-multiSelect>
+      </ng-template>
+      <ng-template ermTemplate="tamanhosEditor" let-data="data">
+        <p-multiSelect [options]="tamanhosOptions" optionLabel="tamanho" [(ngModel)]="data.tamanhos" display="chip"></p-multiSelect>
+      </ng-template>
+      <ng-template ermTemplate="imagensEditor" let-data="data">
+        <p-multiSelect [options]="imagensOptions" optionLabel="nome" [(ngModel)]="data.imagens" display="chip"></p-multiSelect>
+      </ng-template>
+
+      <ng-template ermTemplate="coresCell" let-data="data">
+        <span>{{ getCoresTexto(data) }}</span>
+      </ng-template>
+      <ng-template ermTemplate="tamanhosCell" let-data="data">
+        <span>{{ getTamanhosTexto(data) }}</span>
+      </ng-template>
+      <ng-template ermTemplate="imagensCell" let-data="data">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <img *ngFor="let img of (data.imagens || [])" [src]="getImagemUrl(img)" style="width:32px;height:32px;object-fit:cover;border-radius:3px;border:1px solid #ddd;" />
+        </div>
+      </ng-template>
+
+    </erm-data-grid>
+  </p-card>
+  <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+</div>

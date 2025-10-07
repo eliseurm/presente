@@ -1,0 +1,158 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
+import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { ToastModule } from 'primeng/toast';
+
+import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
+import { ImagemService } from '@/services/imagem.service';
+import { Imagem } from '@/shared/model/imagem';
+import { ImagemFilter } from '@/shared/model/filter/imagem-filter';
+import { FilterField } from '@/shared/components/crud-filter/filter-field';
+import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
+import {
+  ErmColumnComponent,
+  ErmDataGridComponent,
+  ErmEditingComponent,
+  ErmFormComponent,
+  ErmItemComponent,
+  ErmPopupComponent,
+  ErmTemplateDirective,
+  ErmValidationRuleComponent
+} from '@/shared/components/erm-data-grid';
+
+@Component({
+  selector: 'imagem-page',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    ButtonModule,
+    InputTextModule,
+    ToastModule,
+    CrudFilterComponent,
+    ErmDataGridComponent,
+    ErmEditingComponent,
+    ErmPopupComponent,
+    ErmFormComponent,
+    ErmItemComponent,
+    ErmColumnComponent,
+    ErmValidationRuleComponent,
+    ErmTemplateDirective
+  ],
+  templateUrl: './imagem-page.component.html',
+  styleUrls: [
+    '../../shared/components/crud-base/crud-base.component.scss'
+  ],
+  providers: [MessageService]
+})
+export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter> {
+
+  // Campo de arquivo temporário para upload
+  tempFile: File | null = null;
+  previewUrl: string | null = null;
+
+  readonly filterFields: FilterField[] = [
+    { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' }
+  ];
+
+  constructor(
+    private imagemService: ImagemService,
+    messageService: MessageService
+  ) {
+    super(imagemService, messageService, null as any);
+  }
+
+  override criarInstancia(): Imagem {
+    return { nome: '' } as Imagem;
+  }
+
+  override isFormularioValido(): boolean {
+    return !!(this.model?.nome?.trim());
+  }
+
+  override getEntityLabelSingular(): string { return 'Imagem'; }
+  override getEntityLabelPlural(): string { return 'Imagens'; }
+
+  override buildDefaultFilter(): ImagemFilter {
+    return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as ImagemFilter;
+  }
+
+  override getDeleteConfirmMessage(item: Imagem): string {
+    return `Deseja realmente excluir a imagem "${item.nome}"?`;
+  }
+  override getBatchDeleteConfirmMessage(count: number): string {
+    return `Deseja realmente excluir ${count} imagem(ns) selecionada(s)?`;
+  }
+  override getTableColumnCount(): number { return 3; }
+
+  onInitNewRow(event: any) {
+    this.tempFile = null;
+    this.previewUrl = null;
+  }
+
+  onFileSelected(event: any) {
+    const file = event?.target?.files?.[0] as File | undefined;
+    if (file) {
+      this.tempFile = file;
+      // Gera preview local
+      const reader = new FileReader();
+      reader.onload = () => this.previewUrl = reader.result as string;
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onSavingItem(event: any) {
+    const data: Imagem = event.data as Imagem;
+    const id = (data as any).id as number | undefined;
+
+    const afterPersist = () => {
+      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizada' : 'criada'} com sucesso` });
+      this.tempFile = null;
+      this.previewUrl = null;
+      this.carregar();
+    };
+
+    if (this.tempFile) {
+      // Se há arquivo, faz upload primeiro
+      this.imagemService.upload(this.tempFile, data?.nome || this.tempFile.name).subscribe({
+        next: () => afterPersist(),
+        error: (error) => {
+          const detail = error?.error?.message || 'Erro ao fazer upload da imagem';
+          this.messageService.add({ severity: 'error', summary: 'Erro', detail });
+        }
+      });
+      return;
+    }
+
+    // Sem arquivo: salva somente metadados
+    const op$ = id ? this.imagemService.atualizar(id, data) : this.imagemService.criar(data);
+    op$.subscribe({
+      next: () => afterPersist(),
+      error: (error) => {
+        const detail = error?.error?.message || 'Erro ao salvar imagem';
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail });
+      }
+    });
+  }
+
+  onDeletingItem(event: any) {
+    const id = (event?.data as any)?.id;
+    if (!id) return;
+    this.imagemService.deletar(id).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluída com sucesso` });
+        this.carregar();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir imagem' })
+    });
+  }
+
+  getThumbUrl(img: Imagem): string | null {
+    return this.imagemService.getArquivoUrl(img?.id);
+  }
+}

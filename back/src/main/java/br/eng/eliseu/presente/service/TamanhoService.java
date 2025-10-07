@@ -53,8 +53,9 @@ public class TamanhoService extends AbstractCrudService<Tamanho, Long, TamanhoFi
 
     @Override
     protected void prepararParaAtualizacao(Long aLong, Tamanho entidade, Tamanho entidadeExistente) {
-        entidadeExistente.setTipo(entidadeExistente.getTipo());
-        entidadeExistente.setTamanho(entidadeExistente.getTamanho());
+        // Copia os valores do DTO de entrada para a entidade persistida
+        entidadeExistente.setTipo(entidade.getTipo());
+        entidadeExistente.setTamanho(entidade.getTamanho());
     }
 
 }

@@ -39,6 +39,8 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     {label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa']},
+                    {label: 'Produto', icon: 'pi pi-fw pi-box', routerLink: ['/produto']},
+                    {label: 'Imagem', icon: 'pi pi-fw pi-image', routerLink: ['/imagem']},
                     {label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor']},
                     {label: 'Tamanho', icon: 'pi pi-fw pi-arrows-v', routerLink: ['/tamanho']},
                 ]

@@ -127,38 +127,58 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
     }
 
     onSavingItem(event: ErmDataGridEvent) {
-        console.log('Dados do evento:', event.data); // Debug 1
-
-        // Extrai apenas a key do enum para enviar ao backend
+        // Normaliza o enum para enviar no formato aceito pelo backend.
+        // Observação: Alguns ambientes estão configurados para ler enums via toString (descrição),
+        // por isso vamos preferir enviar a descrição; se não houver, enviamos a key.
         let tipoKey: string | undefined;
-
-        if (event.data.tipo) {
-            if (typeof event.data.tipo === 'string') {
-                // Já é uma string
-                tipoKey = event.data.tipo;
-            } else if (event.data.tipo.key) {
-                // É um objeto enum do TypeScript
-                tipoKey = event.data.tipo.key;
+        let tipoDescricao: string | undefined;
+        const tipoValor = event?.data?.tipo;
+        if (tipoValor) {
+            const valoresEnum = Object.values(ProdutoTipoEnum) as any[];
+            if (typeof tipoValor === 'string') {
+                // Pode vir como a chave (ex.: 'ROUPA_ADULTO') ou a descrição (ex.: 'Roupa Adulto')
+                const matchByKey = valoresEnum.find(v => v.key === tipoValor);
+                if (matchByKey) {
+                    tipoKey = matchByKey.key;
+                    tipoDescricao = matchByKey.descricao;
+                } else {
+                    const alvo = (tipoValor || '').toString().toLowerCase();
+                    const matchByDesc = valoresEnum.find(v => (v.descricao || '').toLowerCase() === alvo);
+                    if (matchByDesc) {
+                        tipoKey = matchByDesc.key;
+                        tipoDescricao = matchByDesc.descricao;
+                    }
+                }
+            } else if (typeof tipoValor === 'object') {
+                // Pode vir como { key, descricao }
+                tipoKey = (tipoValor as any).key ?? undefined;
+                tipoDescricao = (tipoValor as any).descricao ?? undefined;
             }
         }
 
-        const tamanho: any = {
-            id: event.data.id,
-            tipo: tipoKey, // Envia apenas a string do enum
-            tamanho: event.data.tamanho
+        const tamanhoStr = (event?.data?.tamanho ?? '').toString().trim();
+        const tipoParaBack = tipoDescricao || tipoKey; // Preferimos descricao
+        const payload: any = {
+            id: event?.data?.id,
+            tipo: tipoParaBack,
+            tamanho: tamanhoStr
         };
 
-        console.log('Dados a serem enviados:', tamanho); // Debug 2
-        console.log('Tipo do campo tipo:', typeof tamanho.tipo); // Debug 3
+        // Validações simples antes de persistir
+        if (!payload.tipo) {
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione o tipo de produto' });
+            return;
+        }
+        if (!payload.tamanho) {
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Informe o tamanho' });
+            return;
+        }
 
-        const id = tamanho.id;
-        const operacao = id
-            ? this.service.atualizar(id, tamanho)
-            : this.service.criar(tamanho);
+        const id = payload.id;
+        const operacao = id ? this.service.atualizar(id, payload) : this.service.criar(payload);
 
         operacao.subscribe({
-            next: (response) => {
-                console.log('Resposta do servidor:', response);
+            next: () => {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Sucesso',
@@ -167,22 +187,54 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
                 this.carregar();
             },
             error: (error) => {
-                console.error('Erro completo:', error);
-                console.error('Status:', error.status);
-                console.error('Corpo do erro:', error.error);
-
                 let errorMessage = 'Erro ao salvar';
-                if (error.error?.message) {
+                if (error?.error?.message) {
                     errorMessage = error.error.message;
-                } else if (error.error?.error) {
+                } else if (error?.error?.error) {
                     errorMessage = error.error.error;
                 }
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: errorMessage });
+            }
+        });
+    }
 
+    // Normaliza os dados carregados para que o campo "tipo" fique compatível com o enum do frontend
+    override carregar(): void {
+        this.loading = true;
+        this.service.listar(this.filter).subscribe({
+            next: (response: any) => {
+                // Mapeia string vinda do backend para o objeto do enum (para o editor funcionar corretamente)
+                const valoresEnum = Object.values(ProdutoTipoEnum) as any[];
+                this._dataSource = (response.content || []).map((item: any) => {
+                    const novo = { ...item };
+                    if (typeof novo.tipo === 'string') {
+                        // Tenta mapear por key (ex.: 'ROUPA_ADULTO')
+                        let encontrado = valoresEnum.find(v => v.key === novo.tipo);
+                        if (!encontrado) {
+                            // Alguns backends podem serializar enum via toString() -> descricao (ex.: 'Roupa Adulto')
+                            encontrado = valoresEnum.find(v => v.descricao === novo.tipo);
+                        }
+                        if (!encontrado) {
+                            // Tenta comparação case-insensitive por descricao
+                            const alvo = (novo.tipo || '').toString().toLowerCase();
+                            encontrado = valoresEnum.find(v => (v.descricao || '').toLowerCase() === alvo);
+                        }
+                        if (encontrado) {
+                            novo.tipo = encontrado;
+                        }
+                    }
+                    return novo;
+                });
+                this.totalRecords = response.totalElements;
+                this.loading = false;
+            },
+            error: () => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erro',
-                    detail: errorMessage
+                    detail: `Erro ao carregar ${this.getEntityLabelPlural().toLowerCase()}`
                 });
+                this.loading = false;
             }
         });
     }

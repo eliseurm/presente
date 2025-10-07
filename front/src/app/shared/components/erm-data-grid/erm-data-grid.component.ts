@@ -393,7 +393,7 @@ export class ErmDataGridComponent implements AfterContentInit {
 
     getTemplate(templateName: string): TemplateRef<any> | null {
         const template = this.templatesMap.get(templateName);
-        console.log('Buscando template:', templateName, 'Encontrado:', !!template); // Debug
+        // console.log('Buscando template:', templateName, 'Encontrado:', !!template); // Debug
         return template || null;
     }
 

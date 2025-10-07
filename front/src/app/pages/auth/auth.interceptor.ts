@@ -5,22 +5,30 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth-service';
 
+// Evita múltiplos redirecionamentos simultâneos
+let isRedirectingToLogin = false;
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
     const authService = inject(AuthService);
     const token = localStorage.getItem('auth.token') || sessionStorage.getItem('auth.token');
 
-    if (token) {
-        const cloned = req.clone({
-            headers: req.headers.set('Authorization', `Bearer ${token}`)
-        });
+    const authReq = token
+        ? req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })
+        : req;
 
-        return next(cloned).pipe(
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 401) {
-                    // Token expirado ou inválido
-                    // Salva a rota atual antes de redirecionar
-                    const currentPath = window.location.pathname;
+    return next(authReq).pipe(
+        catchError((error: HttpErrorResponse) => {
+            // Evita intervir em chamadas de assets e na própria tela de login
+            const isAuthRoute = router.url?.startsWith('/auth');
+            const isAssets = (error.url || '').includes('/assets/');
+
+            if ((error.status === 401 || error.status === 403) && !isAuthRoute && !isAssets) {
+                if (!isRedirectingToLogin) {
+                    isRedirectingToLogin = true;
+
+                    // Salva a rota atual antes de redirecionar (se não estiver em /auth)
+                    const currentPath = window.location.pathname + window.location.search;
                     if (currentPath !== '/auth/login' && !currentPath.startsWith('/auth')) {
                         sessionStorage.setItem('auth.redirectUrl', currentPath);
                     }
@@ -34,13 +42,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                     // Marca que o usuário foi deslogado por expiração
                     authService.clearUser();
 
-                    // Redireciona para o login
-                    router.navigate(['/auth/login']);
+                    // Redireciona para o login e reseta a flag após navegação
+                    router.navigate(['/auth/login']).finally(() => {
+                        setTimeout(() => (isRedirectingToLogin = false), 300);
+                    });
                 }
-                return throwError(() => error);
-            })
-        );
-    }
-
-    return next(req);
+            }
+            return throwError(() => error);
+        })
+    );
 };

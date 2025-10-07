@@ -1,0 +1,62 @@
+<div class="crud-container">
+  <crud-filter
+    [filter]="filter"
+    [fields]="filterFields"
+    [loading]="loading"
+    (onSearch)="filtrar()"
+    (onClear)="limpar()"
+  />
+
+  <p-card class="results-card">
+    <ng-template pTemplate="header">
+      <div class="card-header-content">
+        <h3>Lista de {{ getEntityLabelPlural() }}</h3>
+      </div>
+    </ng-template>
+
+    <erm-data-grid
+      [dataSource]="dataSource"
+      [loading]="loading"
+      (onInitNewRow)="onInitNewRow($event)"
+      (onSaving)="onSavingItem($event)"
+      (onDeleting)="onDeletingItem($event)">
+
+      <erm-editing
+        mode="popup"
+        [allowAdding]="true"
+        [allowUpdating]="true"
+        [allowDeleting]="true"
+        [confirmDelete]="true">
+
+        <erm-popup title="Gerenciar Imagem" [showTitle]="true" width="700px" height="auto"></erm-popup>
+
+        <erm-form [colCount]="1">
+          <erm-item dataField="nome" label="Nome">
+            <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
+          </erm-item>
+          <erm-item dataField="upload" label="Arquivo" editorType="template" editCellTemplate="fileEditor"></erm-item>
+        </erm-form>
+      </erm-editing>
+
+      <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
+      <erm-column dataField="thumb" caption="Imagem" cellTemplate="thumbTemplate"></erm-column>
+      <erm-column dataField="nome" caption="Nome"></erm-column>
+
+      <ng-template ermTemplate="thumbTemplate" let-data="data">
+        <img *ngIf="getThumbUrl(data) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
+      </ng-template>
+
+      <ng-template ermTemplate="fileEditor" let-data="data">
+        <div class="field" style="display:flex;align-items:center;gap:12px;">
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+          <img *ngIf="previewUrl; else currentPreview" [src]="previewUrl" alt="preview" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
+          <ng-template #currentPreview>
+            <img *ngIf="getThumbUrl(data) as src" [src]="src" alt="atual" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
+          </ng-template>
+        </div>
+      </ng-template>
+
+    </erm-data-grid>
+  </p-card>
+  <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+</div>

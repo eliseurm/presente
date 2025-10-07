@@ -56,7 +56,7 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
         return getRepository().findById(id)
                 .map(entidadeExistente -> {
                     prepararParaAtualizacao(id, entidade, entidadeExistente);
-                    return getRepository().save(entidade);
+                    return getRepository().save(entidadeExistente);
                 })
                 .orElseThrow(() -> new RuntimeException("Entidade não encontrada com id: " + id));
     }
