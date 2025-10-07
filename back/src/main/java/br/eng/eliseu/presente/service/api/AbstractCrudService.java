@@ -1,4 +1,4 @@
-package br.eng.eliseu.presente.service;
+package br.eng.eliseu.presente.service.api;
 
 import br.eng.eliseu.presente.model.filter.BaseFilter;
 import jakarta.persistence.criteria.Predicate;

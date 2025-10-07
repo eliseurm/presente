@@ -15,6 +15,7 @@ export const appRoutes: Routes = [
             { path: 'pessoa', loadComponent: () => import('@/pages/pessoa-page/pessoa-page.component').then(m => m.PessoaPageComponent) },
             { path: 'usuario/perfil', loadComponent: () => import('@/pages/usuario-perfil-page/usuario-perfil-page.component').then(m => m.UsuarioPerfilPageComponent) },
             { path: 'cor', loadComponent: () => import('@/pages/cor-page/cor-page.component').then(m => m.CorPageComponent) },
+            { path: 'tamanho', loadComponent: () => import('@/pages/tamanho-page/tamanho-page.component').then(m => m.TamanhoPageComponent) },
         ]
     },
 

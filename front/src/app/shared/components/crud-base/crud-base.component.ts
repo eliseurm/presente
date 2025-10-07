@@ -1,20 +1,21 @@
-import {Directive, OnInit} from '@angular/core';
-import {TableLazyLoadEvent} from 'primeng/table';
-import {ConfirmationService, MessageService} from 'primeng/api';
-import {BaseCrudService} from '../../services/base-crud.service';
-import {BaseFilter} from '../../model/filter/base-filter';
+import { Directive, OnInit } from '@angular/core';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { BaseCrudService } from '../../services/base-crud.service';
+import { BaseFilter } from '../../model/filter/base-filter';
 
 @Directive()
-export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
-    // Dados e estados comuns
-    protected itemsInternal: T[] = [];
+// MODIFICADO: A classe não é mais abstrata
+export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
+    // ... (propriedades existentes não foram alteradas) ...
+    protected _dataSource: T[] = [];
     protected selectedItemsInternal: T[] = [];
-    protected currentItemInternal!: T;
+    protected _model!: T;
+    filter!: F;
 
     displayDialog = false;
     loading = false;
     totalRecords = 0;
-    filtro!: F;
 
     protected constructor(
         protected service: BaseCrudService<T, F>,
@@ -22,19 +23,20 @@ export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnIn
         protected confirmationService: ConfirmationService
     ) {}
 
-    // Aliases públicos para facilitar mapeamento nos componentes filhos
-    get items(): T[] { return this.itemsInternal; }
-    set items(v: T[]) { this.itemsInternal = v; }
+    get dataSource(): T[] { return this._dataSource; }
+    set dataSource(v: T[]) { this._dataSource = v; }
 
     get selectedItems(): T[] { return this.selectedItemsInternal; }
     set selectedItems(v: T[]) { this.selectedItemsInternal = v; }
 
-    get currentItem(): T { return this.currentItemInternal; }
-    set currentItem(v: T) { this.currentItemInternal = v; }
+    get model(): T { return this._model; }
+    set model(v: T) { this._model = v; }
 
+
+    // ... (métodos como ngOnInit, carregar, salvar, etc., continuam os mesmos) ...
     ngOnInit(): void {
-        this.filtro = this.buildDefaultFilter();
-        this.currentItemInternal = this.criarInstancia();
+        this.filter = this.buildDefaultFilter();
+        this._model = this.criarInstancia();
         this.carregar();
     }
 
@@ -44,18 +46,18 @@ export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnIn
 
         if (event) {
             if (event.first != null && event.rows != null) {
-                (this.filtro as any).page = Math.floor(event.first / event.rows);
-                (this.filtro as any).size = event.rows;
+                (this.filter as any).page = Math.floor(event.first / event.rows);
+                (this.filter as any).size = event.rows;
             }
             if (event.sortField) {
-                (this.filtro as any).sort = event.sortField as string;
-                (this.filtro as any).direction = event.sortOrder === 1 ? 'ASC' : 'DESC';
+                (this.filter as any).sort = event.sortField as string;
+                (this.filter as any).direction = event.sortOrder === 1 ? 'ASC' : 'DESC';
             }
         }
 
-        this.service.listar(this.filtro).subscribe({
+        this.service.listar(this.filter).subscribe({
             next: (response: any) => {
-                this.itemsInternal = response.content;
+                this._dataSource = response.content;
                 this.totalRecords = response.totalElements;
                 this.loading = false;
             },
@@ -72,23 +74,23 @@ export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnIn
 
     // Filtro
     filtrar() {
-        (this.filtro as any).page = 0;
+        (this.filter as any).page = 0;
         this.carregar();
     }
 
     limpar() {
-        this.filtro = this.buildDefaultFilter();
+        this.filter = this.buildDefaultFilter();
         this.carregar();
     }
 
     // Formulário
     novo() {
-        this.currentItemInternal = this.criarInstancia();
+        this._model = this.criarInstancia();
         this.displayDialog = true;
     }
 
     editar(item: T) {
-        this.currentItemInternal = { ...(item as any) };
+        this._model = { ...(item as any) };
         this.displayDialog = true;
     }
 
@@ -103,10 +105,10 @@ export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnIn
         }
 
         // @ts-ignore: id opcional
-        const id = (this.currentItemInternal as any).id as number | undefined;
+        const id = (this._model as any).id as number | undefined;
         const operacao = id
-            ? this.service.atualizar(id, this.currentItemInternal)
-            : this.service.criar(this.currentItemInternal);
+            ? this.service.atualizar(id, this._model)
+            : this.service.criar(this._model);
 
         operacao.subscribe({
             next: () => {
@@ -195,24 +197,59 @@ export abstract class CrudBaseComponent<T, F extends BaseFilter> implements OnIn
 
     // Métodos auxiliares para o template
     getDialogHeader(): string {
-        const id = (this.currentItemInternal as any)?.id;
+        const id = (this._model as any)?.id;
         return id
             ? `Editar ${this.getEntityLabelSingular()}`
             : `Nova ${this.getEntityLabelSingular()}`;
     }
 
-    // Este método deve retornar o número total de colunas (incluindo seleção e ações)
     getColumnCount(): number {
         return this.getTableColumnCount() + 2; // +2 para checkbox e ações
     }
 
-    // Métodos que cada CRUD deve implementar
-    protected abstract criarInstancia(): T;
-    protected abstract isFormularioValido(): boolean;
-    protected abstract getEntityLabelSingular(): string;
-    protected abstract getEntityLabelPlural(): string;
-    protected abstract buildDefaultFilter(): F;
-    protected abstract getDeleteConfirmMessage(item: T): string;
-    protected abstract getBatchDeleteConfirmMessage(count: number): string;
-    protected abstract getTableColumnCount(): number; // Número de colunas específicas da entidade
+    // ### MÉTODOS COM IMPLEMENTAÇÃO PADRÃO ###
+    // Agora você pode sobrescrevê-los na classe filha apenas quando necessário.
+
+    // MODIFICADO: Retorna um objeto vazio. Ideal para formulários simples.
+    protected criarInstancia(): T {
+        return {} as T;
+    }
+
+    // MODIFICADO: Assume que o formulário é válido por padrão.
+    protected isFormularioValido(): boolean {
+        return true;
+    }
+
+    // MODIFICADO: Retorna um nome genérico.
+    protected getEntityLabelSingular(): string {
+        return 'Registro';
+    }
+
+    // MODIFICADO: Retorna um nome genérico no plural.
+    protected getEntityLabelPlural(): string {
+        return 'Registros';
+    }
+
+    // MODIFICADO: Retorna um filtro vazio.
+    protected buildDefaultFilter(): F {
+        return {} as F;
+    }
+
+
+
+    // MODIFICADO: Gera uma mensagem de exclusão padrão.
+    protected getDeleteConfirmMessage(item: T): string {
+        return `Deseja realmente excluir este ${this.getEntityLabelSingular().toLowerCase()}?`;
+    }
+
+    // MODIFICADO: Gera uma mensagem de exclusão em lote padrão.
+    protected getBatchDeleteConfirmMessage(count: number): string {
+        const label = count > 1 ? this.getEntityLabelPlural() : this.getEntityLabelSingular();
+        return `Deseja realmente excluir ${count} ${label.toLowerCase()} selecionado(s)?`;
+    }
+
+    // MODIFICADO: Retorna 0 por padrão. Sobrescreva para definir o colspan correto na tabela.
+    protected getTableColumnCount(): number {
+        return 0;
+    }
 }

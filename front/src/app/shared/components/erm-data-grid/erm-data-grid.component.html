@@ -158,9 +158,11 @@
 
                     <!-- Template customizado -->
                     <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
-                        <ng-container
-                            *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow }">
-                        </ng-container>
+                        <div [class.field-error]="hasError(item.dataField)">
+                            <ng-container
+                                *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
+                            </ng-container>
+                        </div>
                     </ng-container>
 
                     <!-- Mensagens de validação inline -->

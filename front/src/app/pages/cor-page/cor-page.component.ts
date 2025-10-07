@@ -66,25 +66,13 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         }
     ];
 
-    corList: Cor[] = [];
-
-    constructor(
-        corService: CorService,
-        messageService: MessageService
+    constructor(corService: CorService,
+                messageService: MessageService
     ) {
         super(corService, messageService, null as any);
     }
 
-    override ngOnInit() {
-        super.ngOnInit();
-        this.carregarCores();
-    }
-
-    protected getFilterFields(): FilterField[] {
-        return this.filterFields;
-    }
-
-    protected criarInstancia(): Cor {
+    override criarInstancia(): Cor {
         const hexInicial = '#000000';
         return {
             nome: '',
@@ -93,19 +81,19 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         };
     }
 
-    protected isFormularioValido(): boolean {
-        return !!(this.currentItem.nome?.trim() && this.currentItem.corHex);
+    override isFormularioValido(): boolean {
+        return !!(this.model.nome?.trim() && this.model.corHex);
     }
 
-    protected getEntityLabelSingular(): string {
+    override getEntityLabelSingular(): string {
         return 'Cor';
     }
 
-    protected getEntityLabelPlural(): string {
+    override getEntityLabelPlural(): string {
         return 'Cores';
     }
 
-    protected buildDefaultFilter(): CorFilter {
+    override buildDefaultFilter(): CorFilter {
         return {
             page: 0,
             size: 10,
@@ -114,23 +102,23 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         };
     }
 
-    protected getDeleteConfirmMessage(item: Cor): string {
+    override getDeleteConfirmMessage(item: Cor): string {
         return `Deseja realmente excluir a cor "${item.nome}"?`;
     }
 
-    protected getBatchDeleteConfirmMessage(count: number): string {
+    override getBatchDeleteConfirmMessage(count: number): string {
         return `Deseja realmente excluir ${count} cor(es) selecionada(s)?`;
     }
 
-    protected getTableColumnCount(): number {
+    override getTableColumnCount(): number {
         return 3;
     }
 
     carregarCores() {
         this.loading = true;
-        this.service.listar(this.filtro).subscribe({
+        this.service.listar(this.filter).subscribe({
             next: (response) => {
-                this.corList = response.content;
+                this.dataSource = response.content;
                 this.totalRecords = response.totalElements;
                 this.loading = false;
             },
@@ -152,19 +140,19 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
     }
 
     onSavingCor(event: any) {
-        const cor = event.data;
+        const data = event.data;
 
-        if (!cor.nome || !cor.nome.trim()) {
+        if (!data.nome || !data.nome.trim()) {
             return;
         }
 
         // Garante que temos o RGBA
-        if (!cor.corRgbA && cor.corHex) {
-            cor.corRgbA = this.hexToRgba(cor.corHex);
+        if (!data.corRgbA && data.corHex) {
+            data.corRgbA = this.hexToRgba(data.corHex);
         }
 
         if (event.isNew) {
-            this.service.criar(cor).subscribe({
+            this.service.criar(data).subscribe({
                 next: () => {
                     this.carregarCores();
                 },
@@ -172,12 +160,12 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erro',
-                        detail: 'Erro ao criar cor'
+                        detail: 'Erro ao Salvar!!'
                     });
                 }
             });
         } else {
-            this.service.atualizar(cor.id, cor).subscribe({
+            this.service.atualizar(data.id, data).subscribe({
                 next: () => {
                     this.carregarCores();
                 },
@@ -185,7 +173,7 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erro',
-                        detail: 'Erro ao atualizar cor'
+                        detail: 'Erro ao atualizar!!'
                     });
                 }
             });
@@ -193,8 +181,8 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
     }
 
     onDeletingCor(event: any) {
-        const cor = event.data;
-        this.service.deletar(cor.id).subscribe({
+        const data = event.data;
+        this.service.deletar(data.id).subscribe({
             next: () => {
                 this.carregarCores();
             },
@@ -202,7 +190,7 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erro',
-                    detail: 'Erro ao excluir cor'
+                    detail: 'Erro ao excluir!!'
                 });
             }
         });
@@ -246,7 +234,7 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
     }
 
     override filtrar() {
-        this.filtro.page = 0;
+        this.filter.page = 0;
         this.carregarCores();
     }
 

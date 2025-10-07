@@ -1,0 +1,59 @@
+<div class="card">
+
+    <!-- Card de Filtros -->
+    <crud-filter
+        [filter]="filter"
+        [fields]="filterFields"
+        [loading]="loading"
+        (onSearch)="filtrar()"
+        (onClear)="limpar()"
+    />
+
+    <erm-data-grid
+        [dataSource]="dataSource"
+        [loading]="loading"
+        (onInitNewRow)="onInitNewRow($event)"
+        (onSaving)="onSavingItem($event)"
+        (onDeleting)="onDeletingItem($event)">
+
+        <erm-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true">
+            <!-- Altura auto para se ajustar ao conteúdo -->
+            <erm-popup title="Tamanho" [showTitle]="true" width="600px" height="auto"></erm-popup>
+
+            <erm-form [colCount]="1">
+                <erm-item dataField="tipo" label="Tipo de Produto">
+                    <erm-validation-rule type="required" message="O tipo é obrigatório"></erm-validation-rule>
+                </erm-item>
+                <erm-item dataField="tamanho" editorType="text" label="Tamanho">
+                    <erm-validation-rule type="required" message="O tamanho é obrigatório"></erm-validation-rule>
+                </erm-item>
+            </erm-form>
+
+        </erm-editing>
+
+        <erm-column dataField="id" caption="ID" [width]="80"></erm-column>
+        <erm-column
+            dataField="tipo"
+            caption="Tipo"
+            [width]="150"
+            cellTemplate="tipoCellTemplate"
+            editCellTemplate="tipoEditCellTemplate">
+        </erm-column>
+        <erm-column dataField="tamanho" caption="Tamanho"></erm-column>
+
+        <!-- Template para visualização da célula na tabela -->
+        <ng-template ermTemplate="tipoCellTemplate" let-data="data">
+            {{ getTipoDescricao(data.tipo) }}
+        </ng-template>
+
+        <!-- Template para edição -->
+        <ng-template ermTemplate="tipoEditCellTemplate" let-data="data">
+            <enum-select
+                [enumObject]="tipoProdutoEnumType"
+                [(ngModel)]="data.tipo"
+                label="Tipo de Produto">
+            </enum-select>
+        </ng-template>
+
+    </erm-data-grid>
+</div>

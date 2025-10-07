@@ -1,8 +1,7 @@
-// src/app/shared/services/base-crud.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PageResponse } from '../model/page-response';
-import { BaseFilter } from '../model/filter/base-filter';
+import { BaseFilter } from '@/shared/model/filter/base-filter';
+import { PageResponse } from '@/shared/model/page-response';
 
 export abstract class BaseCrudService<T, F extends BaseFilter> {
     protected abstract apiUrl: string;
@@ -47,12 +46,17 @@ export abstract class BaseCrudService<T, F extends BaseFilter> {
         if (filtro.sort) params['sort'] = filtro.sort;
         if (filtro.direction) params['direction'] = filtro.direction;
 
-        // Adiciona outros filtros (implementação específica em cada service)
+        // Adiciona outros filtros
         Object.keys(filtro).forEach(key => {
             if (!['page', 'size', 'sort', 'direction'].includes(key)) {
                 const value = (filtro as any)[key];
                 if (value !== undefined && value !== null && value !== '') {
-                    params[key] = value;
+                    // Se for um objeto enum, pega a propriedade 'key'
+                    if (typeof value === 'object' && value.key) {
+                        params[key] = value.key;
+                    } else {
+                        params[key] = value;
+                    }
                 }
             }
         });

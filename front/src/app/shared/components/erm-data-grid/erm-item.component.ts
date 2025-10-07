@@ -10,7 +10,7 @@ export class ErmItemComponent {
     @Input() dataField!: string;
     @Input() label?: string;
     @Input() colSpan?: number;
-    @Input() editorType?: 'text' | 'number' | 'date' | 'dropdown' | 'template';
+    @Input() editorType?: 'text' | 'number' | 'date' | 'dropdown' | 'template' | 'enum';
 
     @ContentChildren(ErmValidationRuleComponent) validationRules!: QueryList<ErmValidationRuleComponent>;
 }

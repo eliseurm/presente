@@ -1,7 +1,7 @@
 <div class="crud-container">
     <!-- Card de Filtros -->
     <crud-filter
-        [filter]="filtro"
+        [filter]="filter"
         [fields]="filterFields"
         [loading]="loading"
         (onSearch)="filtrar()"
@@ -17,7 +17,7 @@
         </ng-template>
 
         <erm-data-grid
-            [dataSource]="corList"
+            [dataSource]="dataSource"
             [loading]="loading"
             (onInitNewRow)="onInitNewRow($event)"
             (onSaving)="onSavingCor($event)"
@@ -51,9 +51,8 @@
             <!-- Colunas da Grid -->
             <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
             <erm-column dataField="nome" caption="Nome"></erm-column>
-            <erm-column dataField="corHex" caption="Exemplo" cellTemplate="colorPreview"></erm-column>
-            <erm-column dataField="corHex" caption="Código Hex" editCellTemplate="colorEditor"></erm-column>
             <erm-column dataField="corRgbA" caption="Código RGBA" [visible]="false"></erm-column>
+            <erm-column dataField="corHex" caption="Código Hex" cellTemplate="colorPreview" editCellTemplate="colorEditor"></erm-column>
 
             <!-- Template para preview da cor na grid -->
             <ng-template ermTemplate="colorPreview" let-cor>
@@ -89,6 +88,7 @@
                                 <label for="corRgba">RGBA</label>
                                 <input
                                     pInputText
+                                    [disabled]="true"
                                     id="corRgba"
                                     [(ngModel)]="cor.corRgbA"
                                     placeholder="rgba(0, 0, 0, 1)"

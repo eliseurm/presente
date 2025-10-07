@@ -57,7 +57,7 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         super(pessoaService, messageService, confirmationService);
     }
 
-    protected getFilterFields(): FilterField[] {
+    getFilterFields(): FilterField[] {
         return [
             {
                 key: 'nome',
@@ -87,7 +87,7 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         ];
     }
 
-    protected criarInstancia(): Pessoa {
+    override criarInstancia(): Pessoa {
         return {
             nome: '',
             email: '',
@@ -96,22 +96,22 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         };
     }
 
-    protected isFormularioValido(): boolean {
+    override isFormularioValido(): boolean {
         return !!(
-            this.currentItem.nome?.trim() &&
-            this.currentItem.email?.trim()
+            this.model.nome?.trim() &&
+            this.model.email?.trim()
         );
     }
 
-    protected getEntityLabelSingular(): string {
+    override getEntityLabelSingular(): string {
         return 'Pessoa';
     }
 
-    protected getEntityLabelPlural(): string {
+    override getEntityLabelPlural(): string {
         return 'Pessoas';
     }
 
-    protected buildDefaultFilter(): PessoaFilter {
+    override buildDefaultFilter(): PessoaFilter {
         return {
             page: 0,
             size: 10,
@@ -120,15 +120,15 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         };
     }
 
-    protected getDeleteConfirmMessage(item: Pessoa): string {
+    override getDeleteConfirmMessage(item: Pessoa): string {
         return `Deseja realmente excluir a pessoa "${item.nome}"?`;
     }
 
-    protected getBatchDeleteConfirmMessage(count: number): string {
+    override getBatchDeleteConfirmMessage(count: number): string {
         return `Deseja realmente excluir ${count} pessoa(s) selecionada(s)?`;
     }
 
-    protected getTableColumnCount(): number {
+    override getTableColumnCount(): number {
         return 4; // Nome, E-mail, Telefone, Status
     }
 

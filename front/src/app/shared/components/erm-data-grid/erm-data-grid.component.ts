@@ -231,6 +231,7 @@ export class ErmDataGridComponent implements AfterContentInit {
         this.closeDialog();
     }
 
+/*
     validateForm(): boolean {
         this.validationErrors.clear();
         let isValid = true;
@@ -247,6 +248,61 @@ export class ErmDataGridComponent implements AfterContentInit {
                 item.validationRules.forEach(rule => {
                     if (rule.type === 'required') {
                         if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
+                            errors.push(rule.message);
+                            isValid = false;
+                        }
+                    } else if (rule.type === 'email') {
+                        if (value && typeof value === 'string') {
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            if (!emailRegex.test(value)) {
+                                errors.push(rule.message);
+                                isValid = false;
+                            }
+                        }
+                    } else if (rule.type === 'pattern' && rule.pattern) {
+                        if (value && typeof value === 'string') {
+                            const regex = new RegExp(rule.pattern);
+                            if (!regex.test(value)) {
+                                errors.push(rule.message);
+                                isValid = false;
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (errors.length > 0) {
+                this.validationErrors.set(item.dataField, errors);
+            }
+        });
+
+        return isValid;
+    }
+*/
+
+    validateForm(): boolean {
+        this.validationErrors.clear();
+        let isValid = true;
+
+        if (!this.formItems) {
+            return true;
+        }
+
+        this.formItems.forEach(item => {
+            const errors: string[] = [];
+            const value = this.editingRow[item.dataField];
+
+            if (item.validationRules) {
+                item.validationRules.forEach(rule => {
+                    if (rule.type === 'required') {
+                        // Verifica valores vazios, incluindo objetos vazios
+                        const isEmpty = value === null ||
+                            value === undefined ||
+                            value === '' ||
+                            (typeof value === 'string' && value.trim() === '') ||
+                            (typeof value === 'object' && Object.keys(value).length === 0);
+
+                        if (isEmpty) {
                             errors.push(rule.message);
                             isValid = false;
                         }

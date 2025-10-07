@@ -3,6 +3,7 @@ package br.eng.eliseu.presente.service;
 import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.filter.PessoaFilter;
 import br.eng.eliseu.presente.repository.PessoaRepository;
+import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;

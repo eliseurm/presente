@@ -3,6 +3,7 @@ package br.eng.eliseu.presente.service;
 import br.eng.eliseu.presente.model.Cor;
 import br.eng.eliseu.presente.model.filter.CorFilter;
 import br.eng.eliseu.presente.repository.CorRepository;
+import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,16 +31,17 @@ public class CorService extends AbstractCrudService<Cor, Long, CorFilter> {
 
     @Override
     protected Specification<Cor> buildSpecification(CorFilter filtro) {
+
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (filtro.getNome() != null && !filtro.getNome().trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("nome")),
-                        "%" + filtro.getNome().toLowerCase() + "%"));
+                predicates.add(cb.like(cb.lower(root.get("nome")),"%" + filtro.getNome().toLowerCase() + "%"));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+
     }
 
     @Override

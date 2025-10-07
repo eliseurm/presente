@@ -1,0 +1,16 @@
+:host ::ng-deep {
+    // Garante que o select-box tenha espaço suficiente
+    .erm-dialog {
+        .p-dialog-content {
+            min-height: 400px;
+            overflow: visible !important;
+        }
+    }
+
+    // Estilo para o enum-select dentro do dialog
+    enum-select {
+        .p-select {
+            width: 100%;
+        }
+    }
+}

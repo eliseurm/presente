@@ -16,7 +16,7 @@
                 <input
                     pInputText
                     id="filtroNome"
-                    [(ngModel)]="filtro.nome"
+                    [(ngModel)]="filter.nome"
                     placeholder="Filtrar por nome"
                     (keyup.enter)="filtrar()"
                     class="w-full"
@@ -28,7 +28,7 @@
                 <input
                     pInputText
                     id="filtroEmail"
-                    [(ngModel)]="filtro.email"
+                    [(ngModel)]="filter.email"
                     placeholder="Filtrar por e-mail"
                     (keyup.enter)="filtrar()"
                     class="w-full"
@@ -40,7 +40,7 @@
                 <input
                     pInputText
                     id="filtroTelefone"
-                    [(ngModel)]="filtro.telefone"
+                    [(ngModel)]="filter.telefone"
                     placeholder="Filtrar por telefone"
                     (keyup.enter)="filtrar()"
                     class="w-full"
@@ -51,7 +51,7 @@
                 <label for="filtroStatus" class="text-sm font-medium">Status</label>
                 <p-select
                     id="filtroStatus"
-                    [(ngModel)]="filtro.status"
+                    [(ngModel)]="filter.status"
                     [options]="statusOptions"
                     placeholder="Selecione o status"
                     [showClear]="true"
@@ -108,10 +108,10 @@
     <!-- Grid/Tabela Responsiva -->
     <div class="card overflow-x-auto">
         <p-table
-            [value]="items"
+            [value]="dataSource"
             [loading]="loading"
             [paginator]="true"
-            [rows]="filtro.size"
+            [rows]="filter.size"
             [totalRecords]="totalRecords"
             [lazy]="true"
             (onLazyLoad)="carregar($event)"
@@ -223,7 +223,7 @@
                 <input
                     pInputText
                     id="nome"
-                    [(ngModel)]="currentItem.nome"
+                    [(ngModel)]="model.nome"
                     required
                     placeholder="Digite o nome"
                     class="w-full"
@@ -237,7 +237,7 @@
                 <input
                     pInputText
                     id="email"
-                    [(ngModel)]="currentItem.email"
+                    [(ngModel)]="model.email"
                     type="email"
                     required
                     placeholder="Digite o e-mail"
@@ -250,7 +250,7 @@
                 <input
                     pInputText
                     id="telefone"
-                    [(ngModel)]="currentItem.telefone"
+                    [(ngModel)]="model.telefone"
                     placeholder="Digite o telefone"
                     class="w-full"
                 />
@@ -262,7 +262,7 @@
                 </label>
                 <p-select
                     id="status"
-                    [(ngModel)]="currentItem.status"
+                    [(ngModel)]="model.status"
                     [options]="statusOptions"
                     placeholder="Selecione o status"
                     optionLabel="label"

@@ -40,6 +40,7 @@ export class AppMenu {
                 items: [
                     {label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa']},
                     {label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor']},
+                    {label: 'Tamanho', icon: 'pi pi-fw pi-arrows-v', routerLink: ['/tamanho']},
                 ]
             },
         ];
