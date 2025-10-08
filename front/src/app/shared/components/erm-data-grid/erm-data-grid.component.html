@@ -2,6 +2,23 @@
 <div class="erm-data-grid">
     <p-toast />
 
+    <style>
+        /* Mostrar o caption (rótulo da coluna) dentro da célula apenas em telas pequenas (stack) */
+        @media (max-width: 768px) {
+            .erm-data-grid .p-column-title {
+                display: inline-block;
+                font-weight: 600;
+                color: var(--text-color-secondary);
+                margin-right: .5rem;
+            }
+        }
+        @media (min-width: 769px) {
+            .erm-data-grid .p-column-title {
+                display: none !important;
+            }
+        }
+    </style>
+
     <!-- Toolbar com botão de adicionar -->
     <div class="erm-toolbar" *ngIf="editingConfig.allowAdding">
         <p-button
@@ -9,7 +26,7 @@
             icon="pi pi-plus"
             (onClick)="addNewRow()"
             [disabled]="loading"
-            severity="success">
+            severity="primary">
         </p-button>
     </div>
 
@@ -18,8 +35,8 @@
         <p-table
             [value]="dataSource"
             [loading]="loading"
-            [tableStyle]="{ 'min-width': '50rem' }"
-            [scrollable]="true" scrollHeight="400px"
+            responsiveLayout="stack"
+            breakpoint="768px"
             styleClass="p-datatable-striped">
 
             <ng-template pTemplate="header">
@@ -36,6 +53,7 @@
             <ng-template pTemplate="body" let-rowData>
                 <tr>
                     <td *ngFor="let col of visibleColumns">
+                        <span class="p-column-title">{{ col.caption || col.dataField }}</span>
                         <ng-container *ngIf="!col.cellTemplate; else customCell">
                             {{ getCellValue(rowData, col) }}
                         </ng-container>
@@ -46,6 +64,7 @@
                         </ng-template>
                     </td>
                     <td *ngIf="editingConfig.allowUpdating || editingConfig.allowDeleting">
+                        <span class="p-column-title">Ações</span>
                         <div class="action-buttons">
                             <p-button
                                 *ngIf="editingConfig.allowUpdating"
@@ -90,6 +109,23 @@
         [closeOnEscape]="true"
         [breakpoints]="{ '960px': '90vw', '640px': '95vw' }"
         styleClass="erm-dialog">
+
+        <style>
+            /* Layout do formulário no popup */
+            .erm-dialog .erm-form-grid {
+                display: grid;
+                gap: 1rem;
+            }
+            /* Telas pequenas: campos em coluna (vertical) */
+            @media (max-width: 768px) {
+                .erm-dialog .erm-form-grid {
+                    grid-template-columns: 1fr !important;
+                }
+                .erm-dialog .erm-form-item {
+                    grid-column: span 1 !important;
+                }
+            }
+        </style>
 
         <div class="erm-form" *ngIf="editingRow && formItems">
             <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
@@ -190,7 +226,7 @@
                     label="Salvar"
                     icon="pi pi-check"
                     (onClick)="saveRow()"
-                    severity="success">
+                    severity="primary">
                 </p-button>
             </div>
         </ng-template>

@@ -110,34 +110,55 @@ export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter>
     const data: Imagem = event.data as Imagem;
     const id = (data as any).id as number | undefined;
 
-    const afterPersist = () => {
-      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizada' : 'criada'} com sucesso` });
+    const afterPersist = (createdOrUpdated?: Imagem) => {
+      const wasUpdate = !!(id);
+      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${wasUpdate ? 'atualizada' : 'criada'} com sucesso` });
       this.tempFile = null;
       this.previewUrl = null;
+      this.closePopupIfAvailable();
       this.carregar();
     };
 
     if (this.tempFile) {
-      // Se há arquivo, faz upload primeiro
-      this.imagemService.upload(this.tempFile, data?.nome || this.tempFile.name).subscribe({
-        next: () => afterPersist(),
-        error: (error) => {
-          const detail = error?.error?.message || 'Erro ao fazer upload da imagem';
-          this.messageService.add({ severity: 'error', summary: 'Erro', detail });
-        }
-      });
+      // Se há arquivo:
+      if (id) {
+        // Atualiza arquivo mantendo o mesmo registro
+        this.imagemService.uploadForId(id, this.tempFile, data?.nome || this.tempFile.name).subscribe({
+          next: (resp) => afterPersist(resp),
+          error: (error) => {
+            const detail = error?.error?.message || 'Erro ao atualizar arquivo da imagem';
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail });
+          }
+        });
+      } else {
+        // Cria novo registro com arquivo
+        this.imagemService.upload(this.tempFile, data?.nome || this.tempFile.name).subscribe({
+          next: (resp) => afterPersist(resp),
+          error: (error) => {
+            const detail = error?.error?.message || 'Erro ao fazer upload da imagem';
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail });
+          }
+        });
+      }
       return;
     }
 
     // Sem arquivo: salva somente metadados
     const op$ = id ? this.imagemService.atualizar(id, data) : this.imagemService.criar(data);
     op$.subscribe({
-      next: () => afterPersist(),
+      next: (resp) => afterPersist(resp),
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao salvar imagem';
         this.messageService.add({ severity: 'error', summary: 'Erro', detail });
       }
     });
+  }
+
+  private closePopupIfAvailable() {
+    // Fecha o popup do grid, se exposto via método público. Como o componente
+    // é isolado, vamos apenas simular o fechamento provocando um reload que já
+    // oculta o dialog na implementação atual.
+    // Mantido para possível extensão futura.
   }
 
   onDeletingItem(event: any) {

@@ -20,6 +20,13 @@ export class ImagemService extends BaseCrudService<Imagem, ImagemFilter> {
     return this.http.post<Imagem>(`${this.apiUrl}/upload`, formData);
   }
 
+  uploadForId(id: number, file: File, nome?: string): Observable<Imagem> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (nome) formData.append('nome', nome);
+    return this.http.put<Imagem>(`${this.apiUrl}/${id}/upload`, formData);
+  }
+
   getArquivoUrl(id?: number): string | null {
     if (!id) return null;
     return `${this.apiUrl}/${id}/arquivo`;

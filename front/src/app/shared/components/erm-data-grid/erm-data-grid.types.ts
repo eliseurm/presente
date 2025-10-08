@@ -24,7 +24,7 @@ export interface ErmFormItem {
     dataField: string;
     label?: string;
     colSpan?: number;
-    editorType?: 'text' | 'number' | 'date' | 'dropdown' | 'template';
+    editorType?: 'text' | 'number' | 'date' | 'template' | 'enum';
     validationRules?: ErmValidationRule[];
     template?: string;
 }

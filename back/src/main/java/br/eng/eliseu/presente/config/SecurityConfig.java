@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
@@ -54,6 +55,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/imagem/*/arquivo").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(conf -> conf.jwt(jwt -> jwt.decoder(jwtDecoder())));
 

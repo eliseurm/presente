@@ -1,0 +1,87 @@
+<div class="crud-container">
+    <crud-filter
+        [filter]="filter"
+        [fields]="filterFields"
+        [loading]="loading"
+        (onSearch)="filtrar()"
+        (onClear)="limpar()"
+    />
+
+    <p-card class="results-card">
+        <ng-template pTemplate="header">
+            <div class="card-header-content">
+                <h3>Lista de {{ getEntityLabelPlural() }}</h3>
+            </div>
+        </ng-template>
+
+        <erm-data-grid
+            [dataSource]="dataSource"
+            [loading]="loading"
+            (onSaving)="onSavingItem($event)"
+            (onDeleting)="onDeletingItem($event)">
+
+            <erm-editing
+                mode="popup"
+                [allowAdding]="true"
+                [allowUpdating]="true"
+                [allowDeleting]="true"
+                [confirmDelete]="true">
+
+                <erm-popup title="Gerenciar Usuário" [showTitle]="true" width="700px" height="auto"></erm-popup>
+
+                <erm-form [colCount]="2">
+                    <erm-item dataField="username" label="Usuário">
+                        <erm-validation-rule type="required" message="Usuário é obrigatório"></erm-validation-rule>
+                    </erm-item>
+
+                    <erm-item dataField="papel" label="Papel" editorType="template"></erm-item>
+                    <erm-item dataField="status" label="Status" editorType="template"></erm-item>
+                    <erm-item dataField="senha" label="Senha" editorType="template"
+                              editCellTemplate="senhaEditor"></erm-item>
+                </erm-form>
+
+            </erm-editing>
+
+            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
+            <erm-column dataField="username" caption="Usuário"></erm-column>
+            <erm-column dataField="papel" caption="Papel" cellTemplate="papelCell" editCellTemplate="papelEditor"></erm-column>
+            <erm-column dataField="status" caption="Status" cellTemplate="statusCell" editCellTemplate="statusEditor"></erm-column>
+
+            <ng-template ermTemplate="papelCell" let-data="data">
+                {{ data?.papel?.descricao || data?.papel?.key || data?.papel || '-' }}
+            </ng-template>
+
+            <ng-template ermTemplate="statusCell" let-data="data">
+                {{ data?.status?.descricao || data?.status?.key || data?.status || '-' }}
+            </ng-template>
+
+            <ng-template ermTemplate="papelEditor" let-data="data" let-dataField="dataField" let-onChange="onChange">
+                <enum-select [enumObject]="papelEnumType"
+                             optionLabel="descricao"
+                             [(ngModel)]="data.papel"
+                             (ngModelChange)="onChange(dataField, $event)"
+                ></enum-select>
+            </ng-template>
+
+            <ng-template ermTemplate="statusEditor" let-data="data" let-dataField="dataField" let-onChange="onChange">
+                <enum-select [enumObject]="statusEnumType"
+                             optionLabel="descricao"
+                             [(ngModel)]="data.status"
+                             (ngModelChange)="onChange(dataField, $event)"
+                ></enum-select>
+            </ng-template>
+
+            <ng-template ermTemplate="senhaEditor" let-data="data" let-dataField="dataField" let-onChange="onChange">
+                <input type="password"
+                       pInputText
+                       [(ngModel)]="data.senha"
+                       (ngModelChange)="onChange(dataField, $event)"
+                       placeholder="Digite a senha"
+                       class="w-full"
+                />
+            </ng-template>
+
+        </erm-data-grid>
+    </p-card>
+    <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+</div>

@@ -7,27 +7,23 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@Table(name="usuario")
-public class Usuario {
+@Table(name="cliente")
+public class Cliente {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
+    private String nome;
 
-    @Column(nullable = false)
-    private String passwordHash;
+    private String email;
 
-    @Transient
-    private String senha; // campo transitório para receber a senha em texto puro do frontend
+    private String telefone;
 
-    @Enumerated(EnumType.STRING)
-    private PapelEnum papel;
-    
-    @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 
+    private String anotacoes;
 
     private LocalDateTime criadoEm;
     private LocalDateTime alteradoEm;
@@ -42,4 +38,5 @@ public class Usuario {
     public void preUpdate(){
         alteradoEm = LocalDateTime.now();
     }
+
 }

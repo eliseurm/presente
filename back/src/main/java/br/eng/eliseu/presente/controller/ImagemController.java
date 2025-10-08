@@ -78,6 +78,27 @@ public class ImagemController {
         return ResponseEntity.ok(criada);
     }
 
+    @PutMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Imagem> uploadToExisting(@PathVariable Long id,
+                                                   @RequestPart("file") MultipartFile file,
+                                                   @RequestPart(value = "nome", required = false) String nome) throws IOException {
+        var opt = imagemService.buscarPorId(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Imagem existing = opt.get();
+        try {
+            Imagem update = Imagem.builder()
+                    .nome(nome != null ? nome : existing.getNome())
+                    .arquivo(file.getBytes())
+                    .build();
+            Imagem atualizado = imagemService.atualizar(id, update);
+            return ResponseEntity.ok(atualizado);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     @GetMapping("/{id}/arquivo")
     public ResponseEntity<Resource> getArquivo(@PathVariable Long id) {
         return imagemService.buscarPorId(id)
@@ -87,9 +108,19 @@ public class ImagemController {
                         return ResponseEntity.notFound().<Resource>build();
                     }
                     Resource resource = new ByteArrayResource(dados);
+                    String filename = img.getNome() != null ? img.getNome() : ("imagem-" + id);
+                    MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
+                    try {
+                        // Tenta inferir o content type pelo nome do arquivo
+                        String lowered = filename.toLowerCase();
+                        if (lowered.endsWith(".png")) contentType = MediaType.IMAGE_PNG;
+                        else if (lowered.endsWith(".jpg") || lowered.endsWith(".jpeg")) contentType = MediaType.IMAGE_JPEG;
+                        else if (lowered.endsWith(".gif")) contentType = MediaType.IMAGE_GIF;
+                    } catch (Exception ignored) {}
+
                     return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + (img.getNome() != null ? img.getNome() : ("imagem-" + id)) + "\"")
-                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                            .contentType(contentType)
                             .body(resource);
                 })
                 .orElse(ResponseEntity.notFound().<Resource>build());

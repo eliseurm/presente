@@ -1,0 +1,70 @@
+<div class="crud-container">
+    <crud-filter
+        [filter]="filter"
+        [fields]="filterFields"
+        [loading]="loading"
+        (onSearch)="filtrar()"
+        (onClear)="limpar()"
+    />
+
+    <p-card class="results-card">
+        <ng-template pTemplate="header">
+            <div class="card-header-content">
+                <h3>Lista de {{ getEntityLabelPlural() }}</h3>
+            </div>
+        </ng-template>
+
+        <erm-data-grid
+            [dataSource]="dataSource"
+            [loading]="loading"
+            (onSaving)="onSavingItem($event)"
+            (onDeleting)="onDeletingItem($event)">
+
+            <erm-editing
+                mode="popup"
+                [allowAdding]="true"
+                [allowUpdating]="true"
+                [allowDeleting]="true"
+                [confirmDelete]="true">
+
+                <erm-popup title="Gerenciar Cliente" [showTitle]="true" width="700px" height="auto"></erm-popup>
+
+                <erm-form [colCount]="2">
+                    <erm-item dataField="nome" label="Nome">
+                        <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
+                    </erm-item>
+                    <erm-item dataField="email" label="E-mail"></erm-item>
+                    <erm-item dataField="telefone" label="Telefone"></erm-item>
+                    <erm-item dataField="usuario" label="Usuário" editorType="template"></erm-item>
+                    <erm-item dataField="anotacoes" label="Anotações"></erm-item>
+                </erm-form>
+
+            </erm-editing>
+
+            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
+            <erm-column dataField="nome" caption="Nome"></erm-column>
+            <erm-column dataField="email" caption="E-mail"></erm-column>
+            <erm-column dataField="telefone" caption="Telefone"></erm-column>
+            <erm-column dataField="usuario" caption="Usuário" cellTemplate="usuarioTemplate" editCellTemplate="usuarioEditor"></erm-column>
+
+            <ng-template ermTemplate="usuarioTemplate" let-data="data">
+                {{ data?.usuario?.username || '-' }}
+            </ng-template>
+
+            <ng-template ermTemplate="usuarioEditor" let-data="data" let-dataField="dataField" let-onChange="onChange">
+                <p-select
+                    [options]="usuariosOptions"
+                    [placeholder]="'Selecione...'"
+                    [showClear]="true"
+                    appendTo="body"
+                    [ngModel]="data.usuario?.id"
+                    (ngModelChange)="data.usuario = $event ? {id: $event} : null; onChange(dataField, data.usuario)"
+                    styleClass="w-full">
+                </p-select>
+            </ng-template>
+
+
+        </erm-data-grid>
+    </p-card>
+    <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+</div>

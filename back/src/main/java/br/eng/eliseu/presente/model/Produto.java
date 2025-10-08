@@ -24,7 +24,7 @@ public class Produto {
 
     private Boolean status;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
             name = "produto_tamanho",
             joinColumns = @JoinColumn(name = "produto_id"),
@@ -33,7 +33,7 @@ public class Produto {
     )
     private List<Tamanho> tamanhos;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
             name = "produto_cor",
             joinColumns = @JoinColumn(name = "produto_id"),
@@ -42,7 +42,7 @@ public class Produto {
     )
     private List<Cor> cores;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
             name = "produto_imagem",
             joinColumns = @JoinColumn(name = "produto_id"),
