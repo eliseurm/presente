@@ -2,6 +2,8 @@ package br.eng.eliseu.presente.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -17,9 +19,9 @@ public class Imagem {
 
     private String url;
 
-    @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(name = "arquivo", columnDefinition = "LONGBLOB")
+    @JdbcTypeCode(SqlTypes.VARBINARY)
+    @Column(name = "arquivo")
     private byte[] arquivo;
 
     private LocalDateTime criadoEm;

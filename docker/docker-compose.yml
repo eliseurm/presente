@@ -1,0 +1,77 @@
+version: '3.7'
+services:
+  presentedb:
+    image: mysql
+    environment:
+      - POSTGRES_USER=presente
+      - POSTGRES_PASSWORD=presente
+      - POSTGRES_DB=presente_db
+      - TZ=America/Sao_Paulo
+    ports:
+      - 5432:5432                 # para testar localmente
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - netPresente
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U presente -d presente_db || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  presentebackend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: presente_backend
+    environment:
+      TZ: America/Sao_Paulo
+      # Render e outras plataformas normalmente definem a variável PORT em runtime.
+      # Aqui colocamos um default para testes locais; sua aplicação Spring deve usar -Dserver.port=${PORT}
+      PORT: 9000
+      # Conexão para Postgres interno do compose (service name = presentedb)
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://presentedb:5432/presente_db?currentSchema=public"
+      SPRING_DATASOURCE_USERNAME: "presente"
+      SPRING_DATASOURCE_PASSWORD: "presente"
+      # boas opções para produção/dev:
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"   # só para desenvolvimento; em produção prefira 'none' + migrations
+      SPRING_PROFILES_ACTIVE: "local"
+    depends_on:
+      - presentedb
+    ports:
+      - 9000:9000
+    networks:
+      - netPresente
+    healthcheck:
+      # OBS: requer curl no container; remova/ajuste se seu backend não tiver /actuator/health
+      test: [ "CMD-SHELL", "curl -f http://localhost:${PORT:-10000}/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  presentefrontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      TZ: America/Sao_Paulo
+    depends_on:
+      - presentebackend
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    networks:
+      - netPresente
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  netPresente:
+    driver: bridge

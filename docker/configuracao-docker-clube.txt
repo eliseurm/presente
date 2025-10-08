@@ -1,0 +1,33 @@
+local
+cd /opt/desenv/my/clube/docker
+./build.sh
+
+
+servidor
+ssh root@homologweb.sonner.com.br (@Pocalipse#007)
+
+sftp://10.1.1.6/srv/docker/eliseu/docker-compose
+ou
+ssh root@10.1.1.6 (@Pocalipse#006)
+cd /srv/docker/eliseu/docker-compose
+
+# --- Removendo 
+docker-compose stop
+docker-compose rm -y
+
+# --- Baixando do repositorio
+docker-compose pull
+
+# --- subindo
+docker-compose up -d
+docker-compose start
+
+
+#docker-compose restart
+
+# Reiniciar o proxy
+#docker restart nginx-proxy
+
+# ver log
+docker logs --tail=150 -f docker-compose_clubebackend_1
+
