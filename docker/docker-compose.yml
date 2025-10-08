@@ -1,7 +1,8 @@
 version: '3.7'
 services:
   presentedb:
-    image: mysql
+    image: postgres:15
+    container_name: presente_postgres
     environment:
       - POSTGRES_USER=presente
       - POSTGRES_PASSWORD=presente
@@ -28,16 +29,6 @@ services:
     container_name: presente_backend
     environment:
       TZ: America/Sao_Paulo
-      # Render e outras plataformas normalmente definem a variável PORT em runtime.
-      # Aqui colocamos um default para testes locais; sua aplicação Spring deve usar -Dserver.port=${PORT}
-      PORT: 9000
-      # Conexão para Postgres interno do compose (service name = presentedb)
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://presentedb:5432/presente_db?currentSchema=public"
-      SPRING_DATASOURCE_USERNAME: "presente"
-      SPRING_DATASOURCE_PASSWORD: "presente"
-      # boas opções para produção/dev:
-      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"   # só para desenvolvimento; em produção prefira 'none' + migrations
-      SPRING_PROFILES_ACTIVE: "local"
     depends_on:
       - presentedb
     ports:
@@ -56,12 +47,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: presente_frontend
     environment:
       TZ: America/Sao_Paulo
     depends_on:
       - presentebackend
     ports:
       - 8080:80
+#      - 443:443 # porta https
+#    volumes:
+#      - ./nginx/ssl:/etc/nginx/ssl # Mapeia a pasta com os certificados para dentro do container
     restart: unless-stopped
     networks:
       - netPresente

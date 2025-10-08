@@ -43,6 +43,7 @@ fi
 cd ../docker
 
 cp ../back/target/presente-0.0.1-SNAPSHOT.jar backend/
+#cp ../back/pom.xml backend/
 
 
 #
@@ -53,7 +54,7 @@ echo "*"
 echo "* Build frontend: "
 echo "*"
 
-cp nginx/* frontend/
+cp -r nginx/* frontend/
 
 cp Dockerfile_frontend frontend/Dockerfile
 
@@ -96,15 +97,23 @@ echo "*"
 #
 #Enviando imagens docker para repositorio
 #
+# Baixando os containers deste docker-compose
+docker-compose down
+
 #docker-compose up --build --force-recreate
-docker-compose build
-docker tag docker_presentefrontend docker.sonner.com.br:9443/clubefrontend:latest
-docker tag docker_clubebackend docker.sonner.com.br:9443/clubebackend:latest
+#docker-compose build
+docker-compose up --build -d
 
-docker login -u admin -p '@Pocalipse#003' 'https://docker.sonner.com.br:9443/'
+#docker tag docker_presentefrontend docker.sonner.com.br:9443/presentefrontend:latest
+#docker tag docker_presentebackend docker.sonner.com.br:9443/presentebackend:latest
+#
+#docker login -u admin -p '@Pocalipse#003' 'https://docker.sonner.com.br:9443/'
+#
+#docker push docker.sonner.com.br:9443/presentefrontend:latest
+#docker push docker.sonner.com.br:9443/presentebackend:latest
 
-docker push docker.sonner.com.br:9443/clubefrontend:latest
-docker push docker.sonner.com.br:9443/clubebackend:latest
+
+# myApiKey : rnd_QcdlPOYJRiNasQIOORj2ljAahAUC
 
 
 
