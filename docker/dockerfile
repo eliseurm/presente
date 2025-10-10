@@ -1,0 +1,45 @@
+# ======================================================================
+# Estágio 1: Build do Frontend (Angular)
+# ======================================================================
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+
+# Os caminhos agora são relativos à raiz do projeto, não mais ../front
+COPY front/package*.json ./
+RUN npm install
+
+COPY front/ .
+RUN npm run ng build -- --output-path=./dist --configuration production
+
+# ======================================================================
+# Estágio 2: Build do Backend (Java/Maven)
+# ======================================================================
+FROM maven:3.9-eclipse-temurin-17 AS backend-builder
+WORKDIR /app
+
+# Caminhos ajustados aqui também
+COPY back/pom.xml .
+RUN mvn dependency:go-offline
+
+COPY back/src ./src
+RUN mvn package -DskipTests
+
+# ======================================================================
+# Estágio 3: Imagem Final de Produção (Alpine + Nginx + Java)
+# ======================================================================
+FROM alpine:3.18
+RUN apk add --no-cache nginx openjdk17-jre sed
+WORKDIR /app
+RUN mkdir -p /usr/share/nginx/html
+
+# A origem da cópia não muda, pois é relativa aos estágios anteriores
+COPY --from=frontend-builder /app/dist/browser /usr/share/nginx/html
+COPY --from=backend-builder /app/target/*.jar /app/app.jar
+
+# Copia os arquivos de configuração que agora estão na pasta 'docker/'
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8080
+ENTRYPOINT ["/entrypoint.sh"]

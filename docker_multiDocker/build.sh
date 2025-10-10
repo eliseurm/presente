@@ -104,57 +104,12 @@ docker-compose down
 #docker-compose build
 docker-compose up --build -d
 
-#docker tag docker_presentefrontend docker.sonner.com.br:9443/presentefrontend:latest
-#docker tag docker_presentebackend docker.sonner.com.br:9443/presentebackend:latest
-#
-#docker login -u admin -p '@Pocalipse#003' 'https://docker.sonner.com.br:9443/'
-#
-#docker push docker.sonner.com.br:9443/presentefrontend:latest
-#docker push docker.sonner.com.br:9443/presentebackend:latest
 
+docker tag docker_presentefrontend eliseurm/docker_presentefrontend
+docker tag docker_presentebackend eliseurm/docker_presentebackend
 
-# myApiKey : rnd_QcdlPOYJRiNasQIOORj2ljAahAUC
+docker login -u eliseurm -p 'senha'
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+docker push eliseurm/docker_presentefrontend:latest
+docker push eliseurm/docker_presentebackend:latest
 

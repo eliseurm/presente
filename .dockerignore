@@ -1,0 +1,17 @@
+# Ignorar pastas de dados do Docker
+docker_multiDocker/postgres_data/
+docker_multiDocker/postgres_local_data/
+
+# Ignorar dependências do Node que não precisam ir para o build
+node_modules/
+front/node_modules/
+
+# Ignorar arquivos de build do Java
+back/target/
+
+# Ignorar arquivos do Git e de IDEs
+.git/
+.idea/
+.vscode/
+*.iml
+

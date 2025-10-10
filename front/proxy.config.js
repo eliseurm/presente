@@ -1,5 +1,5 @@
 // Acessa a variável de ambiente 'PORT'. Se não estiver definida, usa '9000' como padrão.
-const port = process.env.PORT || '9000';
+const port = process.env.PORT_BACK || '9000';
 
 const PROXY_CONFIG = {
     "/api": {
