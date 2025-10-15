@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=presente_db
       - TZ=America/Sao_Paulo
     ports:
-      - "5433:5432" # Usamos a porta 5433 na sua máquina para não conflitar com outro Postgres
+      - "5432:5432" # Usamos a porta 5433 na sua máquina para não conflitar com outro Postgres
     volumes:
       - ./postgres_local_data:/var/lib/postgresql/data
     restart: unless-stopped
