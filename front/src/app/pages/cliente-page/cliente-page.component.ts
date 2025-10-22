@@ -26,6 +26,7 @@ import {
 } from '@/shared/components/erm-data-grid';
 import { SelectModule } from 'primeng/select';
 import { UsuarioService } from '@/services/usuario.service';
+import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
 
 @Component({
   selector: 'cliente-page',
@@ -75,7 +76,8 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
   override ngOnInit(): void {
     super.ngOnInit?.();
     // Carrega usuários para o select-box
-    this.usuarioService.listar({ page: 0, size: 1000, sort: 'id', direction: 'ASC', papel: 'Cliente' } as any).subscribe({
+    const filtroUsuarios = new UsuarioFilter({ page: 0, size: 1000, sort: 'id', direction: 'ASC', papel: 'CLIENTE' });
+    this.usuarioService.listar(filtroUsuarios).subscribe({
       next: (resp: any) => {
         const content = resp?.content || [];
         this.usuariosOptions = content.map((u: any) => ({ label: u.username, value: u.id }));
@@ -99,7 +101,7 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
   override getEntityLabelPlural(): string { return 'Clientes'; }
 
   override buildDefaultFilter(): ClienteFilter {
-    return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as ClienteFilter;
+    return new ClienteFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
   }
 
   override getDeleteConfirmMessage(item: Cliente): string {

@@ -92,7 +92,7 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
     override getEntityLabelPlural(): string { return 'Pessoas'; }
 
     override buildDefaultFilter(): PessoaFilter {
-        return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as PessoaFilter;
+        return new PessoaFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
     }
 
     override getDeleteConfirmMessage(item: Pessoa): string {

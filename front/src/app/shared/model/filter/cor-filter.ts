@@ -1,5 +1,10 @@
 import {BaseFilter} from "@/shared/model/filter/base-filter";
 
-export interface CorFilter extends BaseFilter {
+export class CorFilter extends BaseFilter {
     nome?: string;
+
+    constructor(init?: Partial<CorFilter>) {
+        super();
+        Object.assign(this, init);
+    }
 }

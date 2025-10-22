@@ -21,6 +21,9 @@ import { ImagemService } from '@/services/imagem.service';
 import { Cor } from '@/shared/model/cor';
 import { Tamanho } from '@/shared/model/tamanho';
 import { Imagem } from '@/shared/model/imagem';
+import { CorFilter } from '@/shared/model/filter/cor-filter';
+import { TamanhoFilter } from '@/shared/model/filter/tamanho-filter';
+import { ImagemFilter } from '@/shared/model/filter/imagem-filter';
 import {
   ErmColumnComponent,
   ErmDataGridComponent,
@@ -87,15 +90,16 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
 
   loadOptions(): void {
     // Carrega primeiras páginas de opções (poderia ser paginado/filtrado no futuro)
-    this.corService.listar({ page: 0, size: 9999, sort: 'id', direction: 'ASC' } as any).subscribe({
+    const base = { page: 0, size: 9999, sort: 'id', direction: 'ASC' } as any;
+    this.corService.listar(new CorFilter(base)).subscribe({
       next: (page) => this.coresOptions = page.content || [],
       error: () => {}
     });
-    this.tamanhoService.listar({ page: 0, size: 9999, sort: 'id', direction: 'ASC' } as any).subscribe({
+    this.tamanhoService.listar(new TamanhoFilter(base)).subscribe({
       next: (page) => this.tamanhosOptions = page.content || [],
       error: () => {}
     });
-    this.imagemService.listar({ page: 0, size: 9999, sort: 'id', direction: 'ASC' } as any).subscribe({
+    this.imagemService.listar(new ImagemFilter(base)).subscribe({
       next: (page) => this.imagensOptions = page.content || [],
       error: () => {}
     });
@@ -113,7 +117,7 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
   override getEntityLabelPlural(): string { return 'Produtos'; }
 
   override buildDefaultFilter(): ProdutoFilter {
-    return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as ProdutoFilter;
+    return new ProdutoFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
   }
 
   override getDeleteConfirmMessage(item: Produto): string {

@@ -79,7 +79,7 @@ export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter>
   override getEntityLabelPlural(): string { return 'Imagens'; }
 
   override buildDefaultFilter(): ImagemFilter {
-    return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as ImagemFilter;
+    return new ImagemFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
   }
 
   override getDeleteConfirmMessage(item: Imagem): string {

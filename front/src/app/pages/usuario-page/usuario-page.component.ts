@@ -99,7 +99,7 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
   override getEntityLabelPlural(): string { return 'Usuários'; }
 
   override buildDefaultFilter(): UsuarioFilter {
-    return { page: 0, size: 10, sort: 'id', direction: 'ASC' } as UsuarioFilter;
+    return new UsuarioFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
   }
 
   override getDeleteConfirmMessage(item: Usuario): string {

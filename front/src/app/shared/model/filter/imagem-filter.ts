@@ -1,5 +1,10 @@
 import { BaseFilter } from '@/shared/model/filter/base-filter';
 
-export interface ImagemFilter extends BaseFilter {
+export class ImagemFilter extends BaseFilter {
   nome?: string;
+
+  constructor(init?: Partial<ImagemFilter>) {
+    super();
+    Object.assign(this, init);
+  }
 }

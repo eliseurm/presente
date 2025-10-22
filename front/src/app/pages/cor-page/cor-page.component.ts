@@ -94,12 +94,12 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
     }
 
     override buildDefaultFilter(): CorFilter {
-        return {
+        return new CorFilter({
             page: 0,
             size: 10,
             sort: 'id',
             direction: 'ASC'
-        };
+        });
     }
 
     override getDeleteConfirmMessage(item: Cor): string {
