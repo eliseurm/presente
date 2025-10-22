@@ -10,9 +10,9 @@ import { Tabs, TabPanel, TabPanels, TabList, Tab } from 'primeng/tabs';
 import { Textarea } from 'primeng/textarea';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
+import { DialogModule } from 'primeng/dialog';
 
 import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
-import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
 import { FilterField } from '@/shared/components/crud-filter/filter-field';
 import {
   ErmColumnComponent,
@@ -21,8 +21,7 @@ import {
   ErmFormComponent,
   ErmItemComponent,
   ErmPopupComponent,
-  ErmTemplateDirective,
-  ErmValidationRuleComponent
+  ErmTemplateDirective
 } from '@/shared/components/erm-data-grid';
 
 import { EventoService } from '@/services/evento.service';
@@ -49,20 +48,19 @@ import { StatusEnum } from '@/shared/model/enum/status.enum';
     InputTextModule,
     InputNumberModule,
     ToastModule,
+    DialogModule,
     Tabs,
     TabPanel,
     TabPanels,
     TabList,
     Tab,
     SelectModule,
-    CrudFilterComponent,
     ErmDataGridComponent,
     ErmEditingComponent,
     ErmPopupComponent,
     ErmFormComponent,
     ErmItemComponent,
     ErmColumnComponent,
-    ErmValidationRuleComponent,
     ErmTemplateDirective
   ],
   templateUrl: './evento-page.component.html',
@@ -80,6 +78,11 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
   statusEnumType: any = StatusEnum;
 
   csvFile: File | null = null;
+
+  // Diálogo de busca
+  buscarDialog = false;
+  filtroBuscaNome: string = '';
+  loadingBusca = false;
 
   readonly filterFields: FilterField[] = [
     { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -147,16 +150,76 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
   // Métodos específicos
   currentEditingRow: any = null;
 
-  onInitNewRow(event: any) {
-    this.currentEditingRow = event.data;
-    this.model = event.data;
-    event.data.status = this.statusEnumType.ATIVO;
-    event.data.pessoas = [];
-    event.data.produtos = [];
+  // Novo fluxo: Toolbar e Busca
+  abrirBusca() {
+    this.buscarDialog = true;
+    this.carregarBusca();
   }
 
-  onSavingItem(event: any) {
-    const data = event.data as Evento;
+  carregarBusca() {
+    this.loadingBusca = true;
+    const filtro = new EventoFilter({ page: 0, size: 10, sort: 'id', direction: 'DESC' });
+    if (this.filtroBuscaNome && this.filtroBuscaNome.trim()) {
+      filtro.nome = this.filtroBuscaNome.trim();
+    }
+    this.eventoService.listar(filtro).subscribe({
+      next: (resp: any) => {
+        this.dataSource = resp?.content || [];
+        this.loadingBusca = false;
+      },
+      error: () => {
+        this.loadingBusca = false;
+      }
+    });
+  }
+
+  selecionarEvento(e: Evento) {
+    // Clona para evitar binding direto da lista
+    const clone: any = JSON.parse(JSON.stringify(e || {}));
+    // Ajusta status para objeto enum quando vier string
+    if (clone?.status && typeof clone.status === 'string' && this.statusEnumType[clone.status]) {
+      clone.status = this.statusEnumType[clone.status];
+    }
+    // Garante arrays
+    clone.pessoas = clone.pessoas || [];
+    clone.produtos = clone.produtos || [];
+    this.model = clone;
+    this.buscarDialog = false;
+  }
+
+  private toLocalDateTimeString(value: any): string | null {
+    if (!value) return null;
+    // Se já é string no formato correto com segundos, retorna
+    if (typeof value === 'string') {
+      // Normaliza: se vier sem segundos (yyyy-MM-ddTHH:mm), adiciona ":00"
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+        return value + ':00';
+      }
+      // Se vier com segundos, mantém
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
+        return value;
+      }
+      // Tenta parsear outras variantes
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return this.toLocalDateTimeString(d);
+      return value;
+    }
+    // Se for Date, monta string local sem fuso (LocalDateTime)
+    if (value instanceof Date) {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const yyyy = value.getFullYear();
+      const MM = pad(value.getMonth() + 1);
+      const dd = pad(value.getDate());
+      const HH = pad(value.getHours());
+      const mm = pad(value.getMinutes());
+      const ss = pad(value.getSeconds());
+      return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}`;
+    }
+    return null;
+  }
+
+  gravar() {
+    const data = this.model as Evento;
     // Validações obrigatórias
     const hasNome = !!data?.nome?.trim();
     const hasCliente = !!((data as any)?.cliente?.id ?? (data as any)?.cliente);
@@ -168,7 +231,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
       return;
     }
 
-    // Normaliza associações para enviar somente IDs nas referências internas
     const normalizeStatus = (val: any) => (val && typeof val === 'object' && 'key' in val) ? val.key : val;
     const mapPessoa = (arr?: any[]) => (arr || [])
       .filter((x: any) => x && (x.pessoa?.id || typeof x.pessoa === 'number'))
@@ -184,9 +246,9 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
       cliente: (data as any)?.cliente?.id ? { id: (data as any).cliente.id } : (data?.cliente ? { id: (data as any).cliente } : null),
       status: normalizeStatus(data.status),
       anotacoes: data.anotacoes,
-      inicio: data.inicio,
-      fimPrevisto: data.fimPrevisto,
-      fim: data.fim,
+      inicio: this.toLocalDateTimeString(data.inicio),
+      fimPrevisto: this.toLocalDateTimeString(data.fimPrevisto),
+      fim: this.toLocalDateTimeString(data.fim),
       pessoas: mapPessoa(data.pessoas),
       produtos: mapProduto(data.produtos)
     };
@@ -194,9 +256,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     const id = payload.id;
     const op$ = id ? this.eventoService.atualizar(id, payload) : this.eventoService.criar(payload);
     op$.subscribe({
-      next: () => {
+      next: (resp: any) => {
         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregar();
+        // Atualiza o model com retorno (garante id)
+        this.selecionarEvento(resp);
       },
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao salvar evento';
@@ -205,23 +268,20 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     });
   }
 
-  onDeletingItem(event: any) {
-    const id = (event?.data as any)?.id;
+  novoRegistro() {
+    this.model = this.criarInstancia();
+  }
+
+  excluir() {
+    const id = (this.model as any)?.id;
     if (!id) return;
     this.eventoService.deletar(id).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluído com sucesso` });
-        this.carregar();
+        this.novoRegistro();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir ${this.getEntityLabelSingular().toLowerCase()}` })
     });
-  }
-
-  onEditDialogOpen(event: any) {
-    this.currentEditingRow = event?.data || null;
-    if (event?.data) {
-      this.model = event.data;
-    }
   }
 
   onCsvSelected(event: any) {
@@ -243,7 +303,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
       next: (resp) => {
         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${resp?.adicionados ?? 0} pessoa(s) importada(s)` });
         this.csvFile = null;
-        this.carregar();
+        // Recarrega o evento da API para refletir alterações
+        this.eventoService.buscarPorId(eventoId).subscribe({
+          next: (ev) => this.selecionarEvento(ev as any)
+        });
       },
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao importar CSV';
@@ -252,14 +315,4 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     });
   }
 
-  // Helpers de exibição
-  getPessoaNome(ep: EventoPessoa): string {
-    const p: any = ep?.pessoa;
-    return p?.nome || '';
-  }
-
-  getProdutoNome(epr: EventoProduto): string {
-    const p: any = epr?.produto;
-    return p?.nome || '';
-  }
 }
