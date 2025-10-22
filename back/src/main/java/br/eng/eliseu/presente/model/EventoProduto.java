@@ -1,5 +1,5 @@
 // Java
-package br.eng.eliseu.choice.model;
+package br.eng.eliseu.presente.model;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,5 +1,5 @@
 // Java
-package br.eng.eliseu.choice.model;
+package br.eng.eliseu.presente.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,6 +27,7 @@ public class Evento {
 
     private String anotacoes;
 
+    private LocalDateTime inicio;
     private LocalDateTime fimPrevisto;
     private LocalDateTime fim;
 
@@ -34,7 +35,7 @@ public class Evento {
     private List<EventoProduto> produtos;
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventoUsuario> usuarios;
+    private List<EventoPessoa> pessoas;
 
 
 

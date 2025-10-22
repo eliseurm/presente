@@ -38,6 +38,7 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/pages'],
                 items: [
+                    {label: 'Eventos', icon: 'pi pi-fw pi-sparkles', routerLink: ['/evento']},
                     {label: 'Cliente', icon: 'pi pi-fw pi-users', routerLink: ['/cliente']},
                     {label: 'Usuário', icon: 'pi pi-fw pi-user', routerLink: ['/usuario']},
                     {label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa']},

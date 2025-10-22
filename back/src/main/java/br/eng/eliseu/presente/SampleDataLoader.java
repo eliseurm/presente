@@ -1,6 +1,7 @@
 package br.eng.eliseu.presente;
 
 import br.eng.eliseu.presente.model.PapelEnum;
+import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.model.Usuario;
 import br.eng.eliseu.presente.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -25,6 +26,7 @@ public class SampleDataLoader {
                         .username("admin")
                         .passwordHash(passwordEncoder.encode("1234"))
                         .papel(PapelEnum.ADMINISTRADOR)
+                        .status(StatusEnum.ATIVO)
                         .build();
                 adminRepo.save(adm);
                 System.out.println("===> ADMIN criado: admin / 1234");

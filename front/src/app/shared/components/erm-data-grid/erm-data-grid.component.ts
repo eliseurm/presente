@@ -70,6 +70,8 @@ export class ErmDataGridComponent implements AfterContentInit {
     @Output() onSaved = new EventEmitter<ErmDataGridEvent>();
     @Output() onDeleting = new EventEmitter<ErmDataGridEvent>();
     @Output() onDeleted = new EventEmitter<ErmDataGridEvent>();
+    // Evento emitido quando o diálogo de edição é aberto (novo ou edição)
+    @Output() onEditDialogOpen = new EventEmitter<ErmDataGridEvent>();
 
     @ContentChildren(ErmColumnComponent) columns!: QueryList<ErmColumnComponent>;
     @ContentChild(ErmEditingComponent) editing!: ErmEditingComponent;
@@ -138,6 +140,7 @@ export class ErmDataGridComponent implements AfterContentInit {
         };
 
         this.onInitNewRow.emit(event);
+        this.onEditDialogOpen.emit(event);
         this.displayDialog = true;
     }
 
@@ -146,6 +149,11 @@ export class ErmDataGridComponent implements AfterContentInit {
         this.editingRow = { ...rowData };
         this.validationErrors.clear();
         this.showValidationMessage = false;
+        const event: ErmDataGridEvent = {
+            data: this.editingRow,
+            isNew: false
+        };
+        this.onEditDialogOpen.emit(event);
         this.displayDialog = true;
     }
 
@@ -366,6 +374,24 @@ export class ErmDataGridComponent implements AfterContentInit {
 
         if (column.dataType === 'date' && value) {
             return new Date(value).toLocaleDateString('pt-BR');
+        }
+
+        // Exibe objetos (ex.: enums com descricao) de forma amigável
+        if (value && typeof value === 'object') {
+            // Enum/objeto com descricao
+            if ('descricao' in value && (value as any).descricao) {
+                return (value as any).descricao;
+            }
+            // Opções comuns
+            if ('label' in value && (value as any).label) {
+                return (value as any).label;
+            }
+            if ('nome' in value && (value as any).nome) {
+                return (value as any).nome;
+            }
+            if ('key' in value && (value as any).key) {
+                return (value as any).key;
+            }
         }
 
         return value;

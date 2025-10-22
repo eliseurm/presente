@@ -1,5 +1,5 @@
 // Java
-package br.eng.eliseu.choice.model;
+package br.eng.eliseu.presente.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,7 +30,7 @@ public class EventoPessoa {
     private StatusEnum status;
 
     public static EventoPessoa of(Evento evento, Pessoa pessoa) {
-        return EventoUsuario.builder()
+        return EventoPessoa.builder()
                 .evento(evento)
                 .pessoa(pessoa)
                 .build();

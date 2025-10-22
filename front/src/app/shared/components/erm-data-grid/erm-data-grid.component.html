@@ -127,87 +127,95 @@
             }
         </style>
 
-        <div class="erm-form" *ngIf="editingRow && formItems">
-            <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
-                <div
-                    *ngFor="let item of formItems"
-                    class="erm-form-item"
-                    [class.has-error]="hasError(item.dataField)"
-                    [style.grid-column]="item.colSpan ? 'span ' + item.colSpan : 'span 1'">
+        <!-- Renderização do conteúdo personalizado do formulário, permitindo HTML arbitrário (ex.: p-tabs) -->
+        <ng-container *ngIf="editingRow && editing?.form?.useContentProjection && editing?.form?.contentTemplate; else autoForm">
+            <ng-container *ngTemplateOutlet="editing?.form?.contentTemplate; context: { $implicit: editingRow, data: editingRow }"></ng-container>
+        </ng-container>
 
-                    <label [for]="item.dataField">
-                        {{ getFormItemLabel(item) }}
-                        <span *ngIf="isFieldRequired(item)" class="required-mark">*</span>
-                    </label>
+        <!-- Fallback: renderização automática baseada em <erm-item> -->
+        <ng-template #autoForm>
+            <div class="erm-form" *ngIf="editingRow && formItems">
+                <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
+                    <div
+                        *ngFor="let item of formItems"
+                        class="erm-form-item"
+                        [class.has-error]="hasError(item.dataField)"
+                        [style.grid-column]="item.colSpan ? 'span ' + item.colSpan : 'span 1'">
 
-                    <!-- Campo de texto -->
-                    <input
-                        *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && (!getColumnByDataField(item.dataField)?.dataType || getColumnByDataField(item.dataField)?.dataType === 'string')"
-                        pInputText
-                        [id]="item.dataField"
-                        [(ngModel)]="editingRow[item.dataField]"
-                        (ngModelChange)="setFormItemValue(item.dataField, $event)"
-                        [disabled]="item.dataField === 'id' && !isNewRow"
-                        [class.ng-invalid]="hasError(item.dataField)"
-                        [class.ng-dirty]="hasError(item.dataField)"
-                        class="w-full" />
+                        <label [for]="item.dataField">
+                            {{ getFormItemLabel(item) }}
+                            <span *ngIf="isFieldRequired(item)" class="required-mark">*</span>
+                        </label>
 
-                    <!-- Campo numérico -->
-                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'number'"
-                         [class.field-error]="hasError(item.dataField)">
-                        <p-inputnumber
-                            [inputId]="item.dataField"
+                        <!-- Campo de texto -->
+                        <input
+                            *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && (!getColumnByDataField(item.dataField)?.dataType || getColumnByDataField(item.dataField)?.dataType === 'string')"
+                            pInputText
+                            [id]="item.dataField"
                             [(ngModel)]="editingRow[item.dataField]"
                             (ngModelChange)="setFormItemValue(item.dataField, $event)"
-                            styleClass="w-full">
-                        </p-inputnumber>
-                    </div>
+                            [disabled]="item.dataField === 'id' && !isNewRow"
+                            [class.ng-invalid]="hasError(item.dataField)"
+                            [class.ng-dirty]="hasError(item.dataField)"
+                            class="w-full" />
 
-                    <!-- Campo de data -->
-                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'date'"
-                         [class.field-error]="hasError(item.dataField)">
-                        <p-datepicker
-                            [inputId]="item.dataField"
-                            [(ngModel)]="editingRow[item.dataField]"
-                            (ngModelChange)="setFormItemValue(item.dataField, $event)"
-                            dateFormat="dd/mm/yy"
-                            [showIcon]="true"
-                            styleClass="w-full">
-                        </p-datepicker>
-                    </div>
-
-                    <!-- Campo com lookup (dropdown) -->
-                    <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.lookup"
-                         [class.field-error]="hasError(item.dataField)">
-                        <p-select
-                            [inputId]="item.dataField"
-                            [(ngModel)]="editingRow[item.dataField]"
-                            (ngModelChange)="setFormItemValue(item.dataField, $event)"
-                            [options]="getColumnByDataField(item.dataField)!.lookup!.dataSource"
-                            [optionLabel]="getColumnByDataField(item.dataField)!.lookup!.displayExpr"
-                            [optionValue]="getColumnByDataField(item.dataField)!.lookup!.valueExpr"
-                            [showClear]="true"
-                            placeholder="Selecione..."
-                            styleClass="w-full">
-                        </p-select>
-                    </div>
-
-                    <!-- Template customizado -->
-                    <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
-                        <div [class.field-error]="hasError(item.dataField)">
-                            <ng-container
-                                *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
-                            </ng-container>
+                        <!-- Campo numérico -->
+                        <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'number'"
+                             [class.field-error]="hasError(item.dataField)">
+                            <p-inputnumber
+                                [inputId]="item.dataField"
+                                [(ngModel)]="editingRow[item.dataField]"
+                                (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                                styleClass="w-full">
+                            </p-inputnumber>
                         </div>
-                    </ng-container>
 
-                    <!-- Mensagens de validação inline -->
-                    <small *ngFor="let error of getErrors(item.dataField)" class="p-error">
-                        {{ error }}
-                    </small>
+                        <!-- Campo de data -->
+                        <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.dataType === 'date'"
+                             [class.field-error]="hasError(item.dataField)">
+                            <p-datepicker
+                                [inputId]="item.dataField"
+                                [(ngModel)]="editingRow[item.dataField]"
+                                (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                                dateFormat="dd/mm/yy"
+                                [showIcon]="true"
+                                styleClass="w-full">
+                            </p-datepicker>
+                        </div>
+
+                        <!-- Campo com lookup (dropdown) -->
+                        <div *ngIf="!getColumnByDataField(item.dataField)?.editCellTemplate && getColumnByDataField(item.dataField)?.lookup"
+                             [class.field-error]="hasError(item.dataField)">
+                            <p-select
+                                [inputId]="item.dataField"
+                                [(ngModel)]="editingRow[item.dataField]"
+                                (ngModelChange)="setFormItemValue(item.dataField, $event)"
+                                [options]="getColumnByDataField(item.dataField)!.lookup!.dataSource"
+                                [optionLabel]="getColumnByDataField(item.dataField)!.lookup!.displayExpr"
+                                [optionValue]="getColumnByDataField(item.dataField)!.lookup!.valueExpr"
+                                [showClear]="true"
+                                placeholder="Selecione..."
+                                styleClass="w-full">
+                            </p-select>
+                        </div>
+
+                        <!-- Template customizado -->
+                        <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
+                            <div [class.field-error]="hasError(item.dataField)">
+                                <ng-container
+                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
+                                </ng-container>
+                            </div>
+                        </ng-container>
+
+                        <!-- Mensagens de validação inline -->
+                        <small *ngFor="let error of getErrors(item.dataField)" class="p-error">
+                            {{ error }}
+                        </small>
+                    </div>
                 </div>
             </div>
-        </div>
+        </ng-template>
 
         <ng-template pTemplate="footer">
             <!-- Mensagem de validação animada -->
