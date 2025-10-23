@@ -75,10 +75,10 @@
           <erm-column dataField="status" caption="Status" editCellTemplate="statusPessoaEditor"></erm-column>
 
           <ng-template ermTemplate="pessoasEditorInner" let-data="data">
-            <p-select [options]="pessoasOptions" optionLabel="nome" [(ngModel)]="data.pessoa" placeholder="Selecione"></p-select>
+            <p-select [options]="pessoasOptions" optionLabel="nome" [(ngModel)]="data.pessoa" [ngModelOptions]="{standalone:true}" placeholder="Selecione"></p-select>
           </ng-template>
           <ng-template ermTemplate="statusPessoaEditor" let-data="data">
-            <p-select [options]="[statusEnumType.ATIVO, statusEnumType.PAUSADO, statusEnumType.ENCERRADO]" optionLabel="descricao" [(ngModel)]="data.status" placeholder="Selecione"></p-select>
+            <p-select [options]="[statusEnumType.ATIVO, statusEnumType.PAUSADO, statusEnumType.ENCERRADO]" optionLabel="descricao" [(ngModel)]="data.status" [ngModelOptions]="{standalone:true}" placeholder="Selecione"></p-select>
           </ng-template>
           <ng-template ermTemplate="pessoaNomeCell" let-data="data">
             <span>{{ data?.pessoa?.nome }}</span>
@@ -102,10 +102,10 @@
           <erm-column dataField="status" caption="Status" editCellTemplate="statusProdutoEditor"></erm-column>
 
           <ng-template ermTemplate="produtosEditorInner" let-data="data">
-            <p-select [options]="produtosOptions" optionLabel="nome" [(ngModel)]="data.produto" placeholder="Selecione"></p-select>
+            <p-select [options]="produtosOptions" optionLabel="nome" [(ngModel)]="data.produto" [ngModelOptions]="{standalone:true}" placeholder="Selecione"></p-select>
           </ng-template>
           <ng-template ermTemplate="statusProdutoEditor" let-data="data">
-            <p-select [options]="[statusEnumType.ATIVO, statusEnumType.PAUSADO, statusEnumType.ENCERRADO]" optionLabel="descricao" [(ngModel)]="data.status" placeholder="Selecione"></p-select>
+            <p-select [options]="[statusEnumType.ATIVO, statusEnumType.PAUSADO, statusEnumType.ENCERRADO]" optionLabel="descricao" [(ngModel)]="data.status" [ngModelOptions]="{standalone:true}" placeholder="Selecione"></p-select>
           </ng-template>
           <ng-template ermTemplate="produtoNomeCell" let-data="data">
             <span>{{ data?.produto?.nome }}</span>

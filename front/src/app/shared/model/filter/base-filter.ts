@@ -1,9 +1,9 @@
 // src/app/shared/model/filter/base-filter.ts
 export class BaseFilter {
-    page?: number;
-    size?: number;
-    sort?: string;
-    direction?: string;
+    page: number = 1;
+    size: number = 10;
+    sort: string = 'id';
+    direction: string = 'ASC';
 
     constructor(init?: Partial<BaseFilter>) {
         Object.assign(this, init);

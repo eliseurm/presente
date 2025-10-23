@@ -1,13 +1,14 @@
 import { Cliente } from '@/shared/model/cliente';
 import { EventoPessoa } from '@/shared/model/evento-pessoa';
 import { EventoProduto } from '@/shared/model/evento-produto';
+import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 export class Evento {
   id?: number;
   nome?: string;
   descricao?: string;
   cliente?: Cliente | { id: number };
-  status?: any; // StatusEnum (usar objeto enum como nas outras telas)
+  status?: StatusEnum;
   anotacoes?: string;
   inicio?: string | Date;
   fimPrevisto?: string | Date;

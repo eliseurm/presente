@@ -109,11 +109,12 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     produtos.push({} as EventoProduto);
   }
 
-  override ngOnInit(): void {
-    super.ngOnInit();
-    this.loadOptions();
-  }
+  // override ngOnInit(): void {
+  //   super.ngOnInit();
+  //   this.loadOptions();
+  // }
 
+/*
   loadOptions(): void {
     const base: any = { page: 0, size: 9999, sort: 'id', direction: 'ASC' };
     // Clientes
@@ -123,6 +124,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     // Produtos
     this.produtoService.listar(base).subscribe({ next: page => this.produtosOptions = page.content || [] });
   }
+*/
 
   override criarInstancia(): Evento {
     return { nome: '', status: this.statusEnumType.ATIVO, pessoas: [], produtos: [] } as unknown as Evento;
@@ -158,9 +160,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
   carregarBusca() {
     this.loadingBusca = true;
-    const filtro = new EventoFilter({ page: 0, size: 10, sort: 'id', direction: 'DESC' });
+    const filtro = new EventoFilter();
     if (this.filtroBuscaNome && this.filtroBuscaNome.trim()) {
       filtro.nome = this.filtroBuscaNome.trim();
+      filtro.direction = 'DESC'
     }
     this.eventoService.listar(filtro).subscribe({
       next: (resp: any) => {

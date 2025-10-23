@@ -21,6 +21,7 @@ public class EventoController {
 
     @GetMapping
     public ResponseEntity<Page<Evento>> listar(EventoFilter filtro) {
+
         return ResponseEntity.ok(eventoService.listar(filtro));
     }
 
@@ -33,6 +34,7 @@ public class EventoController {
 
     @PostMapping
     public ResponseEntity<Evento> criar(@RequestBody Evento evento) {
+
         return ResponseEntity.ok(eventoService.criar(evento));
     }
 
