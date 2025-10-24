@@ -1,6 +1,6 @@
-export interface Cliente {
+export class Cliente {
   id?: number;
-  nome: string;
+  nome?: string;
   email?: string;
   telefone?: string;
   usuario?: UsuarioRef | number | null;

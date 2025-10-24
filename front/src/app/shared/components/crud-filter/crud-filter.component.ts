@@ -1,12 +1,12 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { Select } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';  // Adicionar esta importação
-import { BaseFilter } from '@/shared/model/filter/base-filter';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {Select} from 'primeng/select';
+import {DatePickerModule} from 'primeng/datepicker'; // Adicionar esta importação
+import {BaseFilter} from '@/shared/model/filter/base-filter';
 import {FilterField} from "@/shared/components/crud-filter/filter-field";
 import {generateFields} from "@/shared/core/generate-fields.funcrion";
 import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
@@ -28,7 +28,7 @@ import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.c
     templateUrl: './crud-filter.component.html',
     styleUrls: ['./crud-filter.component.scss']
 })
-export class CrudFilterComponent<F extends BaseFilter> implements OnInit{
+export class CrudFilterComponent<F extends BaseFilter> implements OnInit {
 
     @Input() filter!: F;
     @Input() fields: FilterField[] = [];
@@ -38,7 +38,7 @@ export class CrudFilterComponent<F extends BaseFilter> implements OnInit{
     @Output() onClear = new EventEmitter<void>();
 
     ngOnInit(): void {
-        if(this.fields.length==0) {
+        if (this.fields.length == 0) {
             this.fields = generateFields(this.filter);
         }
     }

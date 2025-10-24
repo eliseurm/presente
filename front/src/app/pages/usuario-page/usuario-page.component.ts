@@ -27,6 +27,9 @@ import { EnumSelectComponent } from '@/shared/components/enum-select/enum-select
 import { PapelEnum } from '@/shared/model/enum/papel.enum';
 import { StatusEnum } from '@/shared/model/enum/status.enum';
 import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Tamanho} from "@/shared/model/tamanho";
+import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
 
 @Component({
   selector: 'usuario-page',
@@ -55,6 +58,7 @@ import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
   ],
   providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Usuario, UsuarioFilter])
 export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilter> {
 
   // Expor enums para o template
@@ -87,38 +91,19 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
     super(service, messageService, null as any);
   }
 
-  override criarInstancia(): Usuario {
-    return { username: '', papel: this.papelEnumType.USUARIO, status: this.statusEnumType.ATIVO } as unknown as Usuario;
-  }
-
   override isFormularioValido(): boolean {
     return !!(this.model?.username?.trim());
   }
 
-  override getEntityLabelSingular(): string { return 'Usuário'; }
-  override getEntityLabelPlural(): string { return 'Usuários'; }
-
-  override buildDefaultFilter(): UsuarioFilter {
-    return new UsuarioFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
-  }
-
-  override getDeleteConfirmMessage(item: Usuario): string {
-    return `Deseja realmente excluir o usuário "${item.username}"?`;
-  }
-  override getBatchDeleteConfirmMessage(count: number): string {
-    return `Deseja realmente excluir ${count} usuário(s) selecionado(s)?`;
-  }
-  override getTableColumnCount(): number { return 4; }
-
   // Normaliza os dados carregados para que os campos de enum fiquem compatíveis com o editor
-  override carregar(): void {
+  override carregarDataSource(): void {
     this.loading = true;
     this.service.listar(this.filter).subscribe({
       next: (response: any) => {
         const content = response?.content || [];
         const papelValues = Object.values(PapelEnum) as any[];
         const statusValues = Object.values(StatusEnum) as any[];
-        this._dataSource = content.map((item: any) => {
+        this.dataSource = content.map((item: any) => {
           const novo: any = { ...item };
           // Mapear papel/status strings -> objetos do enum
           if (novo?.papel && typeof novo.papel === 'string') {
@@ -147,7 +132,7 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
         this.loading = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao carregar ${this.getEntityLabelPlural().toLowerCase()}` });
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao carregar Informaçoes` });
         this.loading = false;
       }
     });
@@ -176,8 +161,8 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
     const op$ = id ? this.service.atualizar(id, payload) : this.service.criar(payload);
     op$.subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado ${id ? 'atualizado' : 'criado'} com sucesso` });
+        this.carregarDataSource();
       },
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao salvar usuário';
@@ -191,8 +176,8 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
     if (!id) return;
     this.service.deletar(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluído com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
+        this.carregarDataSource();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir usuário' })
     });

@@ -1,0 +1,151 @@
+// Variáveis presumidas (adapte se as suas forem diferentes)
+// --surface-900, --surface-600, --surface-300, --surface-0
+// --primary-color
+// --text-color (padrão)
+// --card-shadow (para shadow-2)
+// --content-border-radius
+
+.welcome-section {
+    padding: 2.5rem 1rem; // py-10 px-4
+
+    @media (min-width: 640px) { // sm:
+        padding-left: 1.5rem;  // px-6
+        padding-right: 1.5rem;
+    }
+
+    @media (min-width: 1024px) { // lg:
+        padding-left: 2rem;   // px-8
+        padding-right: 2rem;
+    }
+}
+
+.welcome-container {
+    max-width: 80rem; // max-w-7xl
+    margin-left: auto;
+    margin-right: auto; // mx-auto
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr)); // grid-cols-1
+    gap: 2.5rem; // gap-10
+    align-items: center; // items-center
+
+    @media (min-width: 768px) { // md:
+        grid-template-columns: repeat(2, minmax(0, 1fr)); // grid-cols-2
+    }
+}
+
+.text-content {
+    // Container para o texto, pode adicionar estilos se necessário
+}
+
+.title {
+    font-size: 1.875rem; // text-3xl
+    line-height: 2.25rem;
+    font-weight: 700; // font-bold
+    color: var(--surface-900); // text-surface-900
+    margin-bottom: 1rem; // mb-4
+
+    @media (min-width: 640px) { // sm:
+        font-size: 2.25rem; // text-4xl
+        line-height: 2.5rem;
+    }
+
+    // Suporte básico a dark mode - ajuste se seu tema usa classes/atributos
+    @media (prefers-color-scheme: dark) { // dark:
+        color: var(--surface-0); // text-surface-0
+    }
+}
+
+.description {
+    color: var(--surface-600); // text-surface-600
+    font-size: 1rem; // text-base
+    line-height: 1.625; // leading-relaxed (Tailwind usa 1.625)
+    margin-bottom: 1.5rem; // mb-6
+
+    @media (min-width: 640px) { // sm:
+        font-size: 1.125rem; // text-lg
+        line-height: 1.75rem; // line-height correspondente do Tailwind
+    }
+
+    @media (prefers-color-scheme: dark) { // dark:
+        color: var(--surface-300); // text-surface-300
+    }
+}
+
+.actions {
+    display: flex; // flex
+    flex-wrap: wrap; // flex-wrap
+    gap: 0.75rem; // gap-3
+}
+
+.action-button {
+    display: inline-flex; // inline-flex
+    align-items: center; // items-center
+    padding: 0.75rem 1.25rem; // py-3 px-5
+    border-radius: var(--content-border-radius); // rounded-md (usando sua variável)
+    background-color: var(--primary-color); // bg-primary
+    color: #ffffff; // text-white - ou use uma variável como --primary-color-text
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1); // transition + opacity
+
+    &:hover {
+        opacity: 0.9; // hover:opacity-90
+    }
+
+    &:focus-visible {
+        // Adicione seu mixin @include focused() aqui se aplicável a botões
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+}
+
+.image-container {
+    width: 100%; // w-full
+}
+
+.feature-image {
+    width: 100%; // w-full
+    height: auto; // h-auto
+    border-radius: 0.75rem; // rounded-xl (valor comum, ajuste se necessário)
+    // shadow-2 geralmente mapeia para uma sombra de cartão no PrimeNG
+    box-shadow: var(--card-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)); // shadow-2 (com fallback)
+}
+
+.layout-topbar-logo {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.5rem;
+    border-radius: var(--content-border-radius);
+    font-weight: 500;
+    gap: 0.5rem;
+
+    // *** Defina a COR DESEJADA aqui ***
+    // O .logo-icon vai herdar esta cor
+    color: var(--primary-color);
+
+}
+
+// *** Estilo para o span que vai mostrar o logo ***
+.logo-icon {
+    display: inline-block; // Importante para ter dimensões
+
+    // *** Defina o TAMANHO do ícone aqui ***
+    width: 20rem;  // O tamanho que você queria
+    // Tente 'auto' ou um valor proporcional para a altura, baseado no original (46x44)
+    // Ex: height: calc(3rem * (44 / 46));
+    height: 19.9rem; // Aproximadamente a proporção correta
+
+    // *** A COR de fundo será a cor herdada do link pai ***
+    background-color: currentColor;
+
+    // *** Use o SVG como MÁSCARA ***
+    // Verifique se este caminho relativo está 100% correto para ESTE arquivo SCSS
+    mask-image: url('../../../assets/images/selo-senorita-brasil.svg');
+    mask-size: contain;      // Ajusta o tamanho do logo dentro do span
+    mask-repeat: no-repeat;  // Não repete a imagem
+    mask-position: center;   // Centraliza
+
+    // *** Prefixo para compatibilidade (Safari, Chrome antigos) ***
+    -webkit-mask-image: url('../../../assets/images/selo-senorita-brasil.svg');
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}

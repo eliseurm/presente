@@ -153,6 +153,7 @@
                             pInputText
                             [id]="item.dataField"
                             [(ngModel)]="editingRow[item.dataField]"
+                            [ngModelOptions]="{standalone:true}"
                             (ngModelChange)="setFormItemValue(item.dataField, $event)"
                             [disabled]="item.dataField === 'id' && !isNewRow"
                             [class.ng-invalid]="hasError(item.dataField)"
@@ -165,6 +166,7 @@
                             <p-inputnumber
                                 [inputId]="item.dataField"
                                 [(ngModel)]="editingRow[item.dataField]"
+                                [ngModelOptions]="{standalone:true}"
                                 (ngModelChange)="setFormItemValue(item.dataField, $event)"
                                 styleClass="w-full">
                             </p-inputnumber>
@@ -176,6 +178,7 @@
                             <p-datepicker
                                 [inputId]="item.dataField"
                                 [(ngModel)]="editingRow[item.dataField]"
+                                [ngModelOptions]="{standalone:true}"
                                 (ngModelChange)="setFormItemValue(item.dataField, $event)"
                                 dateFormat="dd/mm/yy"
                                 [showIcon]="true"
@@ -189,6 +192,7 @@
                             <p-select
                                 [inputId]="item.dataField"
                                 [(ngModel)]="editingRow[item.dataField]"
+                                [ngModelOptions]="{standalone:true}"
                                 (ngModelChange)="setFormItemValue(item.dataField, $event)"
                                 [options]="getColumnByDataField(item.dataField)!.lookup!.dataSource"
                                 [optionLabel]="getColumnByDataField(item.dataField)!.lookup!.displayExpr"

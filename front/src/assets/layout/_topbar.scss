@@ -19,6 +19,7 @@
         align-items: center;
     }
 
+    /*
     .layout-topbar-logo {
         display: inline-flex;
         align-items: center;
@@ -35,6 +36,51 @@
         &:focus-visible {
             @include focused();
         }
+    }
+    */
+
+    .layout-topbar-logo {
+        display: inline-flex;
+        align-items: center;
+        font-size: 1.5rem;
+        border-radius: var(--content-border-radius);
+        font-weight: 500;
+        gap: 0.5rem;
+
+        // *** Defina a COR DESEJADA aqui ***
+        // O .logo-icon vai herdar esta cor
+        color: var(--primary-color);
+
+        &:focus-visible {
+            @include focused();
+        }
+    }
+
+    // *** Estilo para o span que vai mostrar o logo ***
+    .logo-icon {
+        display: inline-block; // Importante para ter dimensões
+
+        // *** Defina o TAMANHO do ícone aqui ***
+        width: 3rem;  // O tamanho que você queria
+        // Tente 'auto' ou um valor proporcional para a altura, baseado no original (46x44)
+        // Ex: height: calc(3rem * (44 / 46));
+        height: 2.9rem; // Aproximadamente a proporção correta
+
+        // *** A COR de fundo será a cor herdada do link pai ***
+        background-color: currentColor;
+
+        // *** Use o SVG como MÁSCARA ***
+        // Verifique se este caminho relativo está 100% correto para ESTE arquivo SCSS
+        mask-image: url('../images/selo-senorita-brasil.svg');
+        mask-size: contain;      // Ajusta o tamanho do logo dentro do span
+        mask-repeat: no-repeat;  // Não repete a imagem
+        mask-position: center;   // Centraliza
+
+        // *** Prefixo para compatibilidade (Safari, Chrome antigos) ***
+        -webkit-mask-image: url('../images/selo-senorita-brasil.svg');
+        -webkit-mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
     }
 
     .layout-topbar-action {

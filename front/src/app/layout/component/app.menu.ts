@@ -29,6 +29,7 @@ export class AppMenu {
                 label: 'Home',
                 items: [
                     // Navega direto para a página do presente com uma key de exemplo válida
+                    {label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/home']},
                     {label: 'Presente', icon: 'pi pi-fw pi-gift', routerLink: ['/presente', 'abc123']},
                     {label: 'Testes', icon: 'pi pi-fw pi-gift', routerLink: ['/teste']},
                 ]

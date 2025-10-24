@@ -1,5 +1,5 @@
 // src/app/shared/model/filter/base-filter.ts
-export class BaseFilter {
+export abstract class BaseFilter {
     page: number = 1;
     size: number = 10;
     sort: string = 'id';

@@ -1,16 +1,22 @@
-import { Directive, OnInit } from '@angular/core';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { BaseCrudService } from '../../services/base-crud.service';
-import { BaseFilter } from '../../model/filter/base-filter';
+import {Directive, Input, OnInit} from '@angular/core';
+import {TableLazyLoadEvent} from 'primeng/table';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {BaseCrudService} from '../../services/base-crud.service';
+import {BaseFilter} from '../../model/filter/base-filter';
 
 @Directive()
 // MODIFICADO: A classe não é mais abstrata
 export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
-    // ... (propriedades existentes não foram alteradas) ...
-    protected _dataSource: T[] = [];
+
     protected selectedItemsInternal: T[] = [];
-    protected _model!: T;
+
+    @Input()
+    dataSource: T[] = [];
+
+    @Input()
+    model!: T;
+
+    @Input()
     filter!: F;
 
     displayDialog = false;
@@ -21,27 +27,72 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
         protected service: BaseCrudService<T, F>,
         protected messageService: MessageService,
         protected confirmationService: ConfirmationService
-    ) {}
+    ) {
+    }
 
-    get dataSource(): T[] { return this._dataSource; }
-    set dataSource(v: T[]) { this._dataSource = v; }
+    get selectedItems(): T[] {
+        return this.selectedItemsInternal;
+    }
 
-    get selectedItems(): T[] { return this.selectedItemsInternal; }
-    set selectedItems(v: T[]) { this.selectedItemsInternal = v; }
-
-    get model(): T { return this._model; }
-    set model(v: T) { this._model = v; }
+    set selectedItems(v: T[]) {
+        this.selectedItemsInternal = v;
+    }
 
 
-    // ... (métodos como ngOnInit, carregar, salvar, etc., continuam os mesmos) ...
     ngOnInit(): void {
-        this.filter = this.buildDefaultFilter();
-        this._model = this.criarInstancia();
-        this.carregar();
+        this.limpar();
+    }
+
+    limpar() {
+        this.newModel()
+        this.newFilter();
+        this.carregarDataSource();
+    }
+
+
+    newModelIfNull() {
+        if (!this.model) {
+            this.newModel();
+        }
+    }
+
+    newModel() {
+        const ctor = (this as any)['modelConstructor'];
+        if (ctor) {
+            try {
+                this.model = new ctor();
+                return;
+            } catch (e) {
+                // fallback seguro caso a instanciação via decorator falhe por algum motivo
+                // Fallback para compatibilidade: usa buildDefaultFilter se o decorator não estiver disponível
+                this.model = this.buildDefaultModel();
+            }
+        }
+    }
+
+
+    newFilterIfNull() {
+        if (!this.filter) {
+            this.newFilter();
+        }
+    }
+
+    newFilter() {
+        const ctor = (this as any)['filterConstructor'];
+        if (ctor) {
+            try {
+                this.filter = new ctor();
+                return;
+            } catch (e) {
+                // fallback seguro caso a instanciação via decorator falhe por algum motivo
+                // Fallback para compatibilidade: usa buildDefaultFilter se o decorator não estiver disponível
+                this.filter = this.buildDefaultFilter();
+            }
+        }
     }
 
     // Listagem
-    carregar(event?: TableLazyLoadEvent) {
+    carregarDataSource(event?: TableLazyLoadEvent) {
         this.loading = true;
 
         if (event) {
@@ -57,7 +108,7 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
 
         this.service.listar(this.filter).subscribe({
             next: (response: any) => {
-                this._dataSource = response.content;
+                this.dataSource = response.content;
                 this.totalRecords = response.totalElements;
                 this.loading = false;
             },
@@ -65,7 +116,7 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erro',
-                    detail: `Erro ao carregar ${this.getEntityLabelPlural().toLowerCase()}`
+                    detail: `Erro ao carregar informações`
                 });
                 this.loading = false;
             }
@@ -75,26 +126,15 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
     // Filtro
     filtrar() {
         (this.filter as any).page = 0;
-        this.carregar();
+        this.carregarDataSource();
     }
 
-    limpar() {
-        this.filter = this.buildDefaultFilter();
-        this.carregar();
-    }
-
-    // Formulário
-    novo() {
-        this._model = this.criarInstancia();
+    editarModel(item: T) {
+        this.model = {...(item as any)};
         this.displayDialog = true;
     }
 
-    editar(item: T) {
-        this._model = { ...(item as any) };
-        this.displayDialog = true;
-    }
-
-    salvar() {
+    salvarModel() {
         if (!this.isFormularioValido()) {
             this.messageService.add({
                 severity: 'warn',
@@ -106,25 +146,23 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
 
         // @ts-ignore: id opcional
         const id = (this._model as any).id as number | undefined;
-        const operacao = id
-            ? this.service.atualizar(id, this._model)
-            : this.service.criar(this._model);
+        const operacao = id ? this.service.atualizar(id, this.model) : this.service.criar(this.model);
 
         operacao.subscribe({
             next: () => {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Sucesso',
-                    detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado(a)' : 'criado(a)'} com sucesso`
+                    detail: `Dados atualizados com sucesso`
                 });
                 this.displayDialog = false;
-                this.carregar();
+                this.carregarDataSource();
             },
             error: () => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erro',
-                    detail: `Erro ao salvar ${this.getEntityLabelSingular().toLowerCase()}`
+                    detail: `Erro ao salvar informações`
                 });
             }
         });
@@ -132,7 +170,7 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
 
     confirmarExclusao(item: T) {
         this.confirmationService.confirm({
-            message: this.getDeleteConfirmMessage(item),
+            message: 'Deseja realmente excluir esta informações?',
             header: 'Confirmação',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: 'Sim',
@@ -145,15 +183,15 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Sucesso',
-                            detail: `${this.getEntityLabelSingular()} excluído(a) com sucesso`
+                            detail: `Dados excluídos com sucesso`
                         });
-                        this.carregar();
+                        this.carregarDataSource();
                     },
                     error: () => {
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Erro',
-                            detail: `Erro ao excluir ${this.getEntityLabelSingular().toLowerCase()}`
+                            detail: `Erro ao excluir informações`
                         });
                     }
                 });
@@ -164,7 +202,7 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
     confirmarExclusaoEmLote() {
         const count = this.selectedItemsInternal.length;
         this.confirmationService.confirm({
-            message: this.getBatchDeleteConfirmMessage(count),
+            message: 'Deseja realmente excluir os dados selecionado(s)?',
             header: 'Confirmação',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: 'Sim',
@@ -178,16 +216,16 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Sucesso',
-                            detail: `${deletados} ${this.getEntityLabelPlural().toLowerCase()} excluído(s) com sucesso`
+                            detail: `Dados excluído(s) com sucesso`
                         });
                         this.selectedItemsInternal = [];
-                        this.carregar();
+                        this.carregarDataSource();
                     },
                     error: () => {
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Erro',
-                            detail: `Erro ao excluir ${this.getEntityLabelPlural().toLowerCase()}`
+                            detail: `Erro ao excluir informações`
                         });
                     }
                 });
@@ -197,59 +235,25 @@ export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
 
     // Métodos auxiliares para o template
     getDialogHeader(): string {
-        const id = (this._model as any)?.id;
-        return id
-            ? `Editar ${this.getEntityLabelSingular()}`
-            : `Nova ${this.getEntityLabelSingular()}`;
-    }
-
-    getColumnCount(): number {
-        return this.getTableColumnCount() + 2; // +2 para checkbox e ações
+        const id = (this.model as any)?.id;
+        return id ? `Editar dados existentes` : `Novo registro de dados`;
     }
 
     // ### MÉTODOS COM IMPLEMENTAÇÃO PADRÃO ###
     // Agora você pode sobrescrevê-los na classe filha apenas quando necessário.
-
-    // MODIFICADO: Retorna um objeto vazio. Ideal para formulários simples.
-    protected criarInstancia(): T {
-        return {} as T;
-    }
 
     // MODIFICADO: Assume que o formulário é válido por padrão.
     protected isFormularioValido(): boolean {
         return true;
     }
 
-    // MODIFICADO: Retorna um nome genérico.
-    protected getEntityLabelSingular(): string {
-        return 'Registro';
-    }
-
-    // MODIFICADO: Retorna um nome genérico no plural.
-    protected getEntityLabelPlural(): string {
-        return 'Registros';
-    }
-
     // MODIFICADO: Retorna um filtro vazio.
+    protected buildDefaultModel(): T {
+        return {} as T;
+    }
     protected buildDefaultFilter(): F {
         return {} as F;
     }
 
 
-
-    // MODIFICADO: Gera uma mensagem de exclusão padrão.
-    protected getDeleteConfirmMessage(item: T): string {
-        return `Deseja realmente excluir este ${this.getEntityLabelSingular().toLowerCase()}?`;
-    }
-
-    // MODIFICADO: Gera uma mensagem de exclusão em lote padrão.
-    protected getBatchDeleteConfirmMessage(count: number): string {
-        const label = count > 1 ? this.getEntityLabelPlural() : this.getEntityLabelSingular();
-        return `Deseja realmente excluir ${count} ${label.toLowerCase()} selecionado(s)?`;
-    }
-
-    // MODIFICADO: Retorna 0 por padrão. Sobrescreva para definir o colspan correto na tabela.
-    protected getTableColumnCount(): number {
-        return 0;
-    }
 }

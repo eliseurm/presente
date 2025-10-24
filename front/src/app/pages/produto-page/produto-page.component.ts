@@ -34,6 +34,7 @@ import {
   ErmTemplateDirective,
   ErmValidationRuleComponent
 } from '@/shared/components/erm-data-grid';
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 
 @Component({
   selector: 'produto-page',
@@ -63,6 +64,7 @@ import {
   ],
   providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Produto, ProdutoFilter])
 export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilter> {
   // Opções
   coresOptions: Cor[] = [];
@@ -105,28 +107,9 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
     });
   }
 
-  override criarInstancia(): Produto {
-    return { nome: '', status: true, preco: 0, descricao: '', cores: [], tamanhos: [], imagens: [] } as Produto;
-  }
-
   override isFormularioValido(): boolean {
     return !!(this.model?.nome?.trim());
   }
-
-  override getEntityLabelSingular(): string { return 'Produto'; }
-  override getEntityLabelPlural(): string { return 'Produtos'; }
-
-  override buildDefaultFilter(): ProdutoFilter {
-    return new ProdutoFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
-  }
-
-  override getDeleteConfirmMessage(item: Produto): string {
-    return `Deseja realmente excluir o produto "${item.nome}"?`;
-  }
-  override getBatchDeleteConfirmMessage(count: number): string {
-    return `Deseja realmente excluir ${count} produto(s) selecionado(s)?`;
-  }
-  override getTableColumnCount(): number { return 5; }
 
   onInitNewRow(event: any) {
     event.data.status = true;
@@ -159,8 +142,8 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
     const op$ = id ? this.produtoService.atualizar(id, payload) : this.produtoService.criar(payload);
     op$.subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dados ${id ? 'atualizado' : 'criado'} com sucesso` });
+        this.carregarDataSource();
       },
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao salvar produto';
@@ -174,10 +157,10 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
     if (!id) return;
     this.produtoService.deletar(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluído com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
+        this.carregarDataSource();
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir ${this.getEntityLabelSingular().toLowerCase()}` })
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir informações` })
     });
   }
 

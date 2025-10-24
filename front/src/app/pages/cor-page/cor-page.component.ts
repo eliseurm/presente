@@ -26,6 +26,11 @@ import { CorService } from '../../services/cor.service';
 import { FilterField } from '../../shared/components/crud-filter/filter-field';
 import {Cor} from "@/shared/model/cor";
 import {CorFilter} from "@/shared/model/filter/cor-filter";
+import {Imagem} from "@/shared/model/imagem";
+import {ImagemFilter} from "@/shared/model/filter/imagem-filter";
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Evento} from "@/shared/model/evento";
+import {EventoFilter} from "@/shared/model/filter/evento-filter";
 
 @Component({
     selector: 'cor-page',
@@ -55,6 +60,7 @@ import {CorFilter} from "@/shared/model/filter/cor-filter";
     ],
     providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Cor, CorFilter])
 export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
 
     readonly filterFields: FilterField[] = [
@@ -72,46 +78,8 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         super(corService, messageService, null as any);
     }
 
-    override criarInstancia(): Cor {
-        const hexInicial = '#000000';
-        return {
-            nome: '',
-            corHex: hexInicial,
-            corRgbA: this.hexToRgba(hexInicial)
-        };
-    }
-
     override isFormularioValido(): boolean {
         return !!(this.model.nome?.trim() && this.model.corHex);
-    }
-
-    override getEntityLabelSingular(): string {
-        return 'Cor';
-    }
-
-    override getEntityLabelPlural(): string {
-        return 'Cores';
-    }
-
-    override buildDefaultFilter(): CorFilter {
-        return new CorFilter({
-            page: 0,
-            size: 10,
-            sort: 'id',
-            direction: 'ASC'
-        });
-    }
-
-    override getDeleteConfirmMessage(item: Cor): string {
-        return `Deseja realmente excluir a cor "${item.nome}"?`;
-    }
-
-    override getBatchDeleteConfirmMessage(count: number): string {
-        return `Deseja realmente excluir ${count} cor(es) selecionada(s)?`;
-    }
-
-    override getTableColumnCount(): number {
-        return 3;
     }
 
     carregarCores() {

@@ -1,7 +1,7 @@
 
-export interface Cor {
+export class Cor {
     id?: number;
-    nome: string;
+    nome?: string;
     corHex?: string;
     corRgbA?: string;
 }

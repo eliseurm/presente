@@ -23,6 +23,9 @@ import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
 import {CrudFilterComponent} from "@/shared/components/crud-filter/crud-filter.component";
 import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
 import {FilterField} from "@/shared/components/crud-filter/filter-field";
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Evento} from "@/shared/model/evento";
+import {EventoFilter} from "@/shared/model/filter/evento-filter";
 
 @Component({
     selector: 'app-tamanho-page',
@@ -46,6 +49,7 @@ import {FilterField} from "@/shared/components/crud-filter/filter-field";
     templateUrl: './tamanho-page.component.html',
     styleUrls: ['./tamanho-page.component.scss']
 })
+@CrudMetadata("EventoPageComponent", [Tamanho, TamanhoFilter])
 export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilter> {
 
     tipoProdutoEnumType: any = ProdutoTipoEnum;
@@ -76,46 +80,8 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
         super(tamanhoService, messageService, confirmationService);
     }
 
-    override criarInstancia(): Tamanho {
-        return {
-            tipo: undefined,
-            tamanho: ''
-        };
-    }
-
     override isFormularioValido(): boolean {
         return !!(this.model.tipo && this.model.tamanho?.trim());
-    }
-
-    override getEntityLabelSingular(): string {
-        return 'Tamanho';
-    }
-
-    override getEntityLabelPlural(): string {
-        return 'Tamanhos';
-    }
-
-    override buildDefaultFilter(): TamanhoFilter {
-        return {
-            page: 0,
-            size: 10,
-            sort: 'id',
-            direction: 'ASC',
-            tipo: null as any,
-            tamanho: ''
-        };
-    }
-
-    override getDeleteConfirmMessage(item: Tamanho): string {
-        return `Deseja realmente excluir o tamanho "${item.tamanho}"?`;
-    }
-
-    override getBatchDeleteConfirmMessage(count: number): string {
-        return `Deseja realmente excluir ${count} tamanho(s) selecionado(s)?`;
-    }
-
-    override getTableColumnCount(): number {
-        return 3;
     }
 
     // Eventos do erm-data-grid
@@ -182,9 +148,9 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Sucesso',
-                    detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado' : 'criado'} com sucesso`
+                    detail: `Dados ${id ? 'atualizado' : 'criado'} com sucesso`
                 });
-                this.carregar();
+                this.carregarDataSource();
             },
             error: (error) => {
                 let errorMessage = 'Erro ao salvar';
@@ -199,13 +165,13 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
     }
 
     // Normaliza os dados carregados para que o campo "tipo" fique compatível com o enum do frontend
-    override carregar(): void {
+    override carregarDataSource(): void {
         this.loading = true;
         this.service.listar(this.filter).subscribe({
             next: (response: any) => {
                 // Mapeia string vinda do backend para o objeto do enum (para o editor funcionar corretamente)
                 const valoresEnum = Object.values(ProdutoTipoEnum) as any[];
-                this._dataSource = (response.content || []).map((item: any) => {
+                this.dataSource = (response.content || []).map((item: any) => {
                     const novo = { ...item };
                     if (typeof novo.tipo === 'string') {
                         // Tenta mapear por key (ex.: 'ROUPA_ADULTO')
@@ -232,7 +198,7 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erro',
-                    detail: `Erro ao carregar ${this.getEntityLabelPlural().toLowerCase()}`
+                    detail: `Erro ao carregar Informações`
                 });
                 this.loading = false;
             }
@@ -249,16 +215,16 @@ export class TamanhoPageComponent extends CrudBaseComponent<Tamanho, TamanhoFilt
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Sucesso',
-                        detail: `${this.getEntityLabelSingular()} excluído com sucesso`
+                        detail: `Dado excluído com sucesso`
                     });
-                    this.carregar(); // Recarrega a lista
+                    this.carregarDataSource(); // Recarrega a lista
                 },
                 error: (error) => {
                     console.error('Erro ao excluir:', error);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erro',
-                        detail: `Erro ao excluir ${this.getEntityLabelSingular().toLowerCase()}`
+                        detail: `Erro ao excluir informações`
                     });
                 }
             });

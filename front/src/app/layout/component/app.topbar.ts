@@ -21,63 +21,19 @@ import {filter} from 'rxjs/operators';
                     <i class="pi pi-bars"></i>
                 </button>
 
-                <a class="layout-topbar-logo" routerLink="/">
-
-                    <object
-                        data="assets/images/selo-senorita-brasil.svg"
-                        type="image/svg+xml"
-                        aria-label="Señorita Brasil – selo">
-                    </object>
-
-
-                    <!--
-                                        <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="title">
-                                            <title>Señorita Brasil – selo</title>
-                                            <circle cx="27" cy="20" r="18" stroke="var(&#45;&#45;primary-color)" stroke-width="3"/>
-                                            <circle cx="27" cy="20" r="14.2" stroke="var(&#45;&#45;primary-color)" stroke-width="0.9"/>
-                                            <defs>
-                                                <path id="leaf"
-                                                      d="M27 7.5c.95 0 1.95.33 2.23 1.15c-.33 1.07-1.63 2.12-2.23 2.32c-.6-.2-1.9-1.25-2.23-2.32C25.05 7.83 26.05 7.5 27 7.5Z"
-                                                      fill="var(&#45;&#45;primary-color)"/>
-                                            </defs>
-                                            <g>
-                                                <use href="#leaf" transform="rotate(  0 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 15 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 30 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 45 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 60 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 75 27 20)"/>
-                                                <use href="#leaf" transform="rotate( 90 27 20)"/>
-                                                <use href="#leaf" transform="rotate(105 27 20)"/>
-                                                <use href="#leaf" transform="rotate(120 27 20)"/>
-                                                <use href="#leaf" transform="rotate(135 27 20)"/>
-                                                <use href="#leaf" transform="rotate(150 27 20)"/>
-                                                <use href="#leaf" transform="rotate(165 27 20)"/>
-                                                <use href="#leaf" transform="rotate(180 27 20)"/>
-                                                <use href="#leaf" transform="rotate(195 27 20)"/>
-                                                <use href="#leaf" transform="rotate(210 27 20)"/>
-                                                <use href="#leaf" transform="rotate(225 27 20)"/>
-                                                <use href="#leaf" transform="rotate(240 27 20)"/>
-                                                <use href="#leaf" transform="rotate(255 27 20)"/>
-                                                <use href="#leaf" transform="rotate(270 27 20)"/>
-                                                <use href="#leaf" transform="rotate(285 27 20)"/>
-                                                <use href="#leaf" transform="rotate(300 27 20)"/>
-                                                <use href="#leaf" transform="rotate(315 27 20)"/>
-                                                <use href="#leaf" transform="rotate(330 27 20)"/>
-                                                <use href="#leaf" transform="rotate(345 27 20)"/>
-                                            </g>
-                                            <g fill="var(&#45;&#45;primary-color)" text-anchor="middle">
-                                                <text x="27" y="18.2" font-size="5" font-weight="700"
-                                                      font-family="Georgia, 'Times New Roman', serif">Señorita
-                                                </text>
-                                                <text x="27" y="24.8" font-size="6"
-                                                      font-family="'Brush Script MT', 'Segoe Script', cursive">Brasil
-                                                </text>
-                                            </g>
-                                        </svg>
-                    -->
+                <a class="layout-topbar-logo" routerLink="/home">
+                    <span class="logo-icon"></span>
                     <span>Señorita Brasil</span>
                 </a>
+
+
+                <!--
+                                <a class="layout-topbar-logo" routerLink="/home">
+                                    <img src="assets/images/selo-senorita-brasil.svg" alt="Señorita Brasil – selo" />
+                                    <span>Señorita Brasil</span>
+                                </a>
+                -->
+
             </div>
 
             <div class="layout-topbar-actions">

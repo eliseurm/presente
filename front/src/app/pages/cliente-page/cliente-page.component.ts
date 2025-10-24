@@ -27,6 +27,9 @@ import {
 import { SelectModule } from 'primeng/select';
 import { UsuarioService } from '@/services/usuario.service';
 import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Cor} from "@/shared/model/cor";
+import {CorFilter} from "@/shared/model/filter/cor-filter";
 
 @Component({
   selector: 'cliente-page',
@@ -55,6 +58,7 @@ import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
   ],
   providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Cliente, ClienteFilter])
 export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilter> {
 
   usuariosOptions: { label: string; value: number }[] = [];
@@ -89,28 +93,9 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
     });
   }
 
-  override criarInstancia(): Cliente {
-    return { nome: '', email: '', telefone: '' } as Cliente;
-  }
-
   override isFormularioValido(): boolean {
     return !!(this.model?.nome?.trim());
   }
-
-  override getEntityLabelSingular(): string { return 'Cliente'; }
-  override getEntityLabelPlural(): string { return 'Clientes'; }
-
-  override buildDefaultFilter(): ClienteFilter {
-    return new ClienteFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
-  }
-
-  override getDeleteConfirmMessage(item: Cliente): string {
-    return `Deseja realmente excluir o cliente "${item.nome}"?`;
-  }
-  override getBatchDeleteConfirmMessage(count: number): string {
-    return `Deseja realmente excluir ${count} cliente(s) selecionado(s)?`;
-  }
-  override getTableColumnCount(): number { return 4; }
 
   onSavingItem(event: any) {
     const data: Cliente = event.data as Cliente;
@@ -118,8 +103,8 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
     const op$ = id ? this.service.atualizar(id, data) : this.service.criar(data);
     op$.subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado ${id ? 'atualizado' : 'criado'} com sucesso` });
+        this.carregarDataSource();
       },
       error: (error) => {
         const detail = error?.error?.message || 'Erro ao salvar cliente';
@@ -133,8 +118,8 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
     if (!id) return;
     this.service.deletar(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluído com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
+        this.carregarDataSource();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir cliente' })
     });

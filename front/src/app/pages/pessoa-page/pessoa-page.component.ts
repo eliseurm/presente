@@ -24,6 +24,9 @@ import {
     ErmTemplateDirective,
     ErmValidationRuleComponent
 } from '@/shared/components/erm-data-grid';
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Produto} from "@/shared/model/produto";
+import {ProdutoFilter} from "@/shared/model/filter/produto-filter";
 
 @Component({
     selector: 'pessoa-page',
@@ -51,6 +54,7 @@ import {
     ],
     providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Pessoa, PessoaFilter])
 export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter> {
     readonly statusOptions = [
         { label: 'Ativo', value: 'ATIVO' },
@@ -75,33 +79,9 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         super(pessoaService, messageService, null as any);
     }
 
-    override criarInstancia(): Pessoa {
-        return {
-            nome: '',
-            email: '',
-            telefone: '',
-            status: 'ATIVO'
-        } as Pessoa;
-    }
-
     override isFormularioValido(): boolean {
         return !!(this.model?.nome?.trim() && this.model?.email?.trim());
     }
-
-    override getEntityLabelSingular(): string { return 'Pessoa'; }
-    override getEntityLabelPlural(): string { return 'Pessoas'; }
-
-    override buildDefaultFilter(): PessoaFilter {
-        return new PessoaFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
-    }
-
-    override getDeleteConfirmMessage(item: Pessoa): string {
-        return `Deseja realmente excluir a pessoa "${item.nome}"?`;
-    }
-    override getBatchDeleteConfirmMessage(count: number): string {
-        return `Deseja realmente excluir ${count} pessoa(s) selecionada(s)?`;
-    }
-    override getTableColumnCount(): number { return 4; }
 
     // Eventos do ERM Data Grid
     onInitNewRow(event: any) {
@@ -117,8 +97,8 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         const op$ = id ? this.service.atualizar(id, data) : this.service.criar(data);
         op$.subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${id ? 'atualizada' : 'criada'} com sucesso` });
-                this.carregar();
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dados ${id ? 'atualizada' : 'criada'} com sucesso` });
+                this.carregarDataSource();
             },
             error: (error) => {
                 const detail = error?.error?.message || 'Erro ao salvar pessoa';
@@ -132,11 +112,11 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
         if (!id) return;
         this.service.deletar(id).subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluída com sucesso` });
-                this.carregar();
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dados excluído com sucesso` });
+                this.carregarDataSource();
             },
             error: () => {
-                this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir ${this.getEntityLabelSingular().toLowerCase()}` });
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir informações` });
             }
         });
     }

@@ -23,6 +23,9 @@ import {
   ErmTemplateDirective,
   ErmValidationRuleComponent
 } from '@/shared/components/erm-data-grid';
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {Pessoa} from "@/shared/model/pessoa";
+import {PessoaFilter} from "@/shared/model/filter/pessoa-filter";
 
 @Component({
   selector: 'imagem-page',
@@ -50,6 +53,7 @@ import {
   ],
   providers: [MessageService]
 })
+@CrudMetadata("EventoPageComponent", [Imagem, ImagemFilter])
 export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter> {
 
   // Campo de arquivo temporário para upload
@@ -67,28 +71,9 @@ export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter>
     super(imagemService, messageService, null as any);
   }
 
-  override criarInstancia(): Imagem {
-    return { nome: '' } as Imagem;
-  }
-
   override isFormularioValido(): boolean {
     return !!(this.model?.nome?.trim());
   }
-
-  override getEntityLabelSingular(): string { return 'Imagem'; }
-  override getEntityLabelPlural(): string { return 'Imagens'; }
-
-  override buildDefaultFilter(): ImagemFilter {
-    return new ImagemFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' });
-  }
-
-  override getDeleteConfirmMessage(item: Imagem): string {
-    return `Deseja realmente excluir a imagem "${item.nome}"?`;
-  }
-  override getBatchDeleteConfirmMessage(count: number): string {
-    return `Deseja realmente excluir ${count} imagem(ns) selecionada(s)?`;
-  }
-  override getTableColumnCount(): number { return 3; }
 
   onInitNewRow(event: any) {
     this.tempFile = null;
@@ -112,11 +97,11 @@ export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter>
 
     const afterPersist = (createdOrUpdated?: Imagem) => {
       const wasUpdate = !!(id);
-      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} ${wasUpdate ? 'atualizada' : 'criada'} com sucesso` });
+      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado ${wasUpdate ? 'atualizada' : 'criada'} com sucesso` });
       this.tempFile = null;
       this.previewUrl = null;
       this.closePopupIfAvailable();
-      this.carregar();
+      this.carregarDataSource();
     };
 
     if (this.tempFile) {
@@ -166,8 +151,8 @@ export class ImagemPageComponent extends CrudBaseComponent<Imagem, ImagemFilter>
     if (!id) return;
     this.imagemService.deletar(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${this.getEntityLabelSingular()} excluída com sucesso` });
-        this.carregar();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluída com sucesso` });
+        this.carregarDataSource();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir imagem' })
     });
