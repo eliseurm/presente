@@ -1,11 +1,12 @@
--- Primeiro conecte com o super usuario do banco u:'system', s:'sicsadm'
 
+-- Primeiro conecte com o super usuario do banco u:'system', s:'sicsadm'
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'presente_db';
 DROP DATABASE IF EXISTS presente_db;
 DROP USER IF EXISTS presente_user;
 
 CREATE USER presente_user WITH PASSWORD 'Presente_pwd#123';
 CREATE DATABASE presente_db;
+GRANT CREATE ON DATABASE presente_db TO presente_user;
 
 -- Mude para presente_db mas ainda com superUsuario
 
@@ -82,7 +83,34 @@ delete from flyway_schema_history where installed_rank >= 2 ;
 select * from usuario ;
 
 
+-- Projeto extrato
+-- No postgres Conectado com super usuario
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'extrato_db';
+DROP DATABASE IF EXISTS extrato_db;
+DROP USER IF EXISTS extrato_user;
 
-5d28ec36827c 9923d2bed95a acaa5d71f0b9 fc42f0be5d9b 592ae7f5b8bb 7cbcf404fd71 2fd9653a7fb0 66e4f9e2e796 0fb33cec3546 1f4f6585e0df 08203480f849 3d85fabb48d2 8d89e22bc599 27a7fc239ed2 30e816b71f43
+CREATE USER extrato_user WITH PASSWORD 'Extrato_pwd#123';
+CREATE DATABASE extrato_db;
+GRANT CREATE ON DATABASE extrato_db TO extrato_user;
+
+-- Mude para extrato_db mas ainda com superUsuario
+
+CREATE SCHEMA IF NOT EXISTS extrato_sh ;
+GRANT USAGE ON SCHEMA extrato_sh TO extrato_user;
+GRANT CREATE ON SCHEMA extrato_sh TO extrato_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA extrato_sh GRANT ALL ON TABLES TO extrato_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA extrato_sh GRANT ALL ON SEQUENCES TO extrato_user;
+
+CREATE TABLE IF NOT EXISTS extrato_sh.usuario (
+id BIGSERIAL PRIMARY KEY,
+username VARCHAR(255) NOT NULL UNIQUE,
+password_hash TEXT NOT NULL,
+papel VARCHAR(64),
+status VARCHAR(64),
+criado_em TIMESTAMP,
+alterado_em TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_usuario_username ON extrato_sh.usuario (username);
+
 
 

@@ -7,10 +7,10 @@ services:
       dockerfile: docker/Dockerfile.back
     environment:
       SPRING_PROFILES_ACTIVE: local
-      # Pass the fully composed JDBC URL from the script to avoid compose-time substitution issues
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      # Backend lê estas variáveis em application.properties
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-please-change-dev-dev-dev-32bytes-min}

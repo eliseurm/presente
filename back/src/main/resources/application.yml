@@ -17,12 +17,14 @@ spring:
     password: ${DB_PASS:${SPRING_DATASOURCE_PASSWORD:Presente_pwd#123}}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     open-in-view: false
+    # Garante que as migrações (Flyway) rodem antes do JPA validar/inicializar
+    defer-datasource-initialization: true
   flyway:
     enabled: true
     locations: classpath:/db/migration
