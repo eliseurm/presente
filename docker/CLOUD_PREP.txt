@@ -136,6 +136,14 @@ Checklist rápido
 
 Comandos para teste
 
+# Para descrever o servico
+gcloud run services describe presente-back --region southamerica-east1
+gcloud run services describe presente-front --region southamerica-east1
+
+# Log do back
+# O nome do serviço é 'presente-back' e o Project ID é 'presente-project'
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=presente-back AND resource.labels.revision_name=presente-back-00012-thn " --project="presente-project" --limit 200 --format="value(textPayload)"
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=presente-back AND severity>=DEFAULT" --limit 200 --project="presente-project"
 
 # Testa login direto no back
 curl -i -X POST "https://presente-back-4eyszdohya-rj.a.run.app/api/auth/login"   -H 'Content-Type: application/json'   -d '{"username":"admin","password":"admin123"}'

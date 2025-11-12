@@ -37,6 +37,7 @@ export SERVICE_FRONT=presente-front
 export USE_CONNECTOR=true
 export INSTANCE_CONNECTION_NAME="presente-project:southamerica-east1:presente-sql"
 export DB_NAME=presente_db
+export SH_NAME=presente_sh
 export DB_USERNAME=presente_user
 export DB_PASSWORD='Presente_pwd#123'
 export ADMIN_USERNAME=admin
@@ -50,6 +51,7 @@ export JWT_SECRET='uma-chave-bem-longa-de-dev-32bytes-min'
 : "${SERVICE_FRONT:?Defina SERVICE_FRONT presente-front}"
 
 : "${DB_NAME:?Defina DB_NAME}"
+: "${SH_NAME:?Defina SH_NAME}"
 : "${DB_USERNAME:?Defina DB_USERNAME}"
 : "${DB_PASSWORD:?Defina DB_PASSWORD}"
 : "${ADMIN_USERNAME:?Defina ADMIN_USERNAME}"
@@ -90,14 +92,14 @@ gcloud auth configure-docker southamerica-east1-docker.pkg.dev -q
 # Backend
 # Using explicit Dockerfile for backend
 echo "[cloudrun] Buildando backend localmente (docker/Dockerfile.back) e publicando..."
-docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
-docker push "${IMAGE_BACK}"
+#docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
+#docker push "${IMAGE_BACK}"
 
 # Frontend
 # Using explicit Dockerfile for frontend
 echo "[cloudrun] Buildando frontend localmente (docker/Dockerfile.front) e publicando..."
-docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
-docker push "${IMAGE_FRONT}"
+#docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
+#docker push "${IMAGE_FRONT}"
 
 
 # Deploy backend
@@ -119,7 +121,7 @@ if [ "${USE_CONNECTOR}" = "true" ]; then
     --add-cloudsql-instances "${INSTANCE_CONNECTION_NAME}"
   )
 #  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=${INSTANCE_CONNECTION_NAME}"
-  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?currentSchema=${SH_NAME}&cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
 else
   : "${DB_HOST:?Defina DB_HOST quando USE_CONNECTOR=false}"
   BACK_ARGS+=(

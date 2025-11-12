@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 public class SampleDataLoader {
@@ -21,7 +22,10 @@ public class SampleDataLoader {
     @Bean
     CommandLineRunner initData(UsuarioRepository adminRepo, JwtEncoder jwtEncoder, PasswordEncoder passwordEncoder){
         return args -> {
-            if(adminRepo.findByUsername("admin").isEmpty()){
+            Optional<Usuario> admin = adminRepo.findByUsername("admin");
+            System.out.println(admin.get().getUsername());
+            System.out.println(passwordEncoder.encode("1234"));
+            if(admin.isEmpty()){
                 Usuario adm = Usuario.builder()
                         .username("admin")
                         .passwordHash(passwordEncoder.encode("1234"))
