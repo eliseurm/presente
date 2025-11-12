@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+  # Serviço da sua aplicação monolítica
+  # Esta versão assume que a aplicação se conectará a um
+  # banco de dados EXTERNO, configurado diretamente
+  # no 'application.properties' da imagem.
+  app:
+    container_name: local_presente_monolith
+    image: local_presente_monolith:latest
+    # O build agora é feito pelo Docker Compose usando o Dockerfile monolítico
+    build:
+      context: ..  # O contexto é a raiz do projeto (um nível acima da pasta 'docker')
+      dockerfile: ./docker/dockerfile # Caminho para o Dockerfile a partir da raiz
+    ports:
+      - "8080:8080" # Acessaremos a aplicação em http://localhost:8080
+    environment:
+      # Variável que o entrypoint.sh usa para configurar o Nginx
+      - PORT=8080
+      #
+      # As variáveis de banco de dados (URL, USER, PWD)
+      # devem estar no seu 'application.properties'
+      # Informa ao Spring Boot (via application.properties)
+      # como se conectar ao banco de dados que está
+      # rodando no 'localhost' da sua máquina HOST.
+      - DB_URL=jdbc:postgresql://host.docker.internal:5432/presente_db?currentSchema=presente_sh
+      - DB_USER=presente_user
+      - DB_PASS=Presente_pwd#123
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    restart: unless-stopped
+    # 'depends_on' e 'networks' foram removidos
+    # pois não há mais o container 'postgres-local'.
+    healthcheck:
+      # Testa se o endpoint de saúde do Spring Boot está respondendo
+      # (Este healthcheck permanece, assumindo que seu app
+      # roda internamente na porta 9000, como no original)
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# A definição de 'networks' foi removida pois o serviço 'postgres-local'
+# foi removido e a rede customizada não é mais necessária.

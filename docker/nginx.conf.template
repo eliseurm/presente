@@ -1,35 +1,31 @@
-# Diretivas globais necessárias para o Nginx funcionar
-worker_processes  auto;
-error_log         /var/log/nginx/error.log;
-pid               /var/run/nginx.pid;
+server {
+    listen       ${PORT};
+    server_name  _;
 
-# O bloco 'events' é obrigatório
-events {
-    worker_connections  1024;
-}
+    # Serve static files
+    root /usr/share/nginx/html;
+    index index.html;
 
-# O bloco http, que estava faltando no contexto, agora está aqui
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
+    # Proxy API calls to the backend
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        # Important for Cloud Run upstreams: preserve proper Host/SNI and HTTP/1.1
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header Connection "";
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_ssl_server_name on;
+        # Reasonable timeouts (tune if needed)
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
 
-    # Nossa configuração de servidor, exatamente como antes, mas dentro do 'http'
-    server {
-        # Esta porta será substituída dinamicamente pelo script entrypoint.sh
-        listen LISTEN_PORT;
-
-        location / {
-            root   /usr/share/nginx/html;
-            index  index.html;
-            try_files $uri $uri/ /index.html;
-        }
-
-        location /api/ {
-            proxy_pass http://localhost:9000/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto https;
-        }
+    # SPA fallback for Angular routes
+    location / {
+        try_files $uri $uri/ /index.html;
     }
 }

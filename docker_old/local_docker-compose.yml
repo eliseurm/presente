@@ -1,0 +1,60 @@
+version: '3.7'
+
+services:
+  # =================================================================
+  # SERVIÇO BACKEND (JAVA)
+  # =================================================================
+  presente-back:
+    container_name: presente-back
+    # A pasta de contexto para o build é o diretório PARENT (..) para acessar back/ e front/
+    build:
+      context: ..
+      # O Dockerfile é especificado pelo caminho relativo a partir do contexto (..)
+      dockerfile: docker/dockerfile.back
+
+    # Mapeia a porta interna 9000 para a porta 9000 do host
+    ports:
+      - "9000:9000"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Variáveis de ambiente
+    environment:
+      SERVER_PORT: 9000
+
+      DB_URL: "jdbc:postgresql://host.docker.internal:5432/presente_db?currentSchema=presente_sh"
+      DB_USER: presente_user
+      DB_PASS: Presente_pwd#123
+
+    restart: always
+
+  # =================================================================
+  # SERVIÇO FRONTEND (NGINX/ANGULAR)
+  # =================================================================
+  presente-front:
+    container_name: presente-front
+    # A pasta de contexto para o build é o diretório PARENT (..) para acessar back/ e front/
+    build:
+      context: ..
+      # O Dockerfile é especificado pelo caminho relativo a partir do contexto (..)
+      dockerfile: docker/dockerfile.front
+
+    # Mapeia a porta interna 8080 (Cloud Run/Nginx) para a porta 8080 do host
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - presente-back
+
+    # Variáveis de ambiente para o Nginx (usadas no envsubst do ENTRYPOINT)
+    environment:
+      # URL interna para o serviço backend dentro da rede Docker Compose.
+      BACKEND_URL: "http://presente-back:9000"
+      BEARER_TOKEN: ""
+      PORT: 8080
+
+    restart: always
+
+
+

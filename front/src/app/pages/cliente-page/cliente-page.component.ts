@@ -53,9 +53,7 @@ import {CorFilter} from "@/shared/model/filter/cor-filter";
     SelectModule
   ],
   templateUrl: './cliente-page.component.html',
-  styleUrls: [
-    '../../shared/components/crud-base/crud-base.component.scss'
-  ],
+  styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],
   providers: [MessageService]
 })
 @CrudMetadata("EventoPageComponent", [Cliente, ClienteFilter])

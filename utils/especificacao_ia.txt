@@ -1,0 +1,75 @@
+quero um sistema que atenda o seguinte objeto.
+
+Imagine varias empresas que querem presentear seus funcionarios.
+Entao a empresa escolhe uma lista de opcoes de presentes, onde cada empregado pode escolher o presente que quer ganhar.
+Este sistema se trata disso.
+
+#Especificacoes gerais do sistema:
+Deve possibilitar o cadastro de varios cliente (empresas).
+Cada empresa pode cadastrar varios eventos. Eventos é o momento em que o funcionario vai ser presenteado. Pode ser no final do ano, na pascoa, natal etc.
+Deve possibilitar que cada cliente tenha sua lista de produtos (presente) que pode ser utilizado em seus eventos.
+Deve possibilitar o cadastro de produtos, e cada produto com sua caracteristica de tamanho e cor.
+Deve possibilitar o cadastro de tamanhos, como tamanhos de roupas ou de calcados.
+Deve possibilitar o cadastro de cores, onde o usuario escolhe em uma paleta de a cor que vai ser usada na escolha que o funcionario vai fazer.
+Deve possibilitar o cadastro de imagens selecionada pelo usuario.
+Deve possibilitar o cadastro ou importacao dos funcionarios que receberao o presente.
+Deve ser possivel cadastro unico de pessoas (funcionarios)
+Deve possibilitar que o Cliente tenha acesso ao sistema, e que ele so consiga ver seus eventos e seus funcionarios
+Uma vez que o evento esteja cadastrado com a lista de presentes, e a lista de empregados que vao receber o presente cadastrado. Um link com um 'numero magico' deve ser gerado. este link deve ser enviado para o funcionario atravez do whatsapp e email.
+Deve ter uma tela onde o funcionario acessa, usando um 'numero magico' que o identique, e nesta tela ele pode escolher dentre os presentes disponiveis qual ele vai querer, se o presente tiver opcao de varias cores e tamanhos, é nesta tela que ele ja escolhe isto.
+Deve ter uma tela, onde o administrador, colhe as informacoes que foram selecionadas pelos cliente e gerando um relatorio totalizando as quantidades de cada produto/tamanho/cor que foi selecionado pelo funcionario.
+
+
+
+#Especificacao de telas de cadastro CRUD
+Todas as telas de crud devem ter o mesmo comportmento, primeiro entra em uma tela onde o usuario pode fazer um filtro e selecionar o registro desejado ou criar um novo registro.
+Uma vez selecionado o registro, vai para uma tela de edicao onde todos os atributos da entidade podem ser editados.
+Este padrao deve ser adotado por todas as telas, logo, uma classe de crud com este comportamento deve ser criado, para ser usado com todas as entidades.
+
+#Especificacoes de cada tela:
+-Tela de cadastro de cores:
+Deve ter uma paleta de cores para que o usuario selecione a cor desejada.
+
+-Tela de tamanhos:
+É a tela de cadastro dos possiveis tamanho para roupas e/ou sapatos etc.
+
+-Tela de Produtos:
+Deve ter as informacoes do produto, nesta tela nao tem informacoes sobre cor ou tamanho
+
+-Tela de Pessoa:
+Informacoes sobre a pessoa, cada pessoa pertence ao cadastro de um cliente.
+Um cliente, nao pode ver a pessoa do outro cliente.
+A pessoa vai ser usada na selecao de funcionarios do evento. Uma pessoa pode ser usado em mais de um evento do mesmo cliente.
+A pessoa deve estar vinculada a um cliente.
+
+-Tela de Eventos:
+Esta tela tem informacoes sobre o evento, data de inicio data de fim, descricao, lista de produtos e lista de participantes.
+Nesta tela tbm deve ser definido um usuario com papel cliente
+Nesta tela o cliente atribui o 'numero magico' que sera usado pelo funcionario para acessar a tela de presentes.
+Este link deve ser enviado pelo whatapp e pelo email cadastrado na tela de pessoa
+
+-Tela de Usuario:
+Esta tela cadastra os usuarios que vao utilizar o sistema. Cada usuario deve ter seu papel definido (Administrador, Cliente, Usuario)
+O Administrador sempre vai ter acesso a tudo, irrestrito.
+O Cliente, vai ter acesso aos eventos que for atribuido.
+O Usuario, cada pessoa tem o papel de usuario, e pode ver apenas os eventos que esta participando, nunca vai pode alterar nada. Seu loguim de acesso vai ser sempre o cpf e uma senha vai ser informaco quando ele clicar em 'esqueci minha senha'.
+
+-Tela imagens:
+Esta tela deve permitir que o usuario selecione imagens do pc ou celular.
+
+-Tela de Clientes:
+Nesta tela deve ser possivel definir qual usuario com papel de cliente vai ter acesso as informacao do cliente.
+Nela tbm deve definir a situacao do cliente, caso ele nao esteja ativo, o acesso ao sistema deve ser bloqueado, bem como para todos os funcionarios vinculados ao mesmo.
+
+
+-Especificacoes de acesso;
+O sistema deve ter duas partes distintas de acesso, uma que é livre, basta apenas ter o 'numero magico' no link. (exemplo: https://dominio/presente/a3s4d5f6g)
+A aoutra forma de acesso, sao para as paginas administrativas, que precisa de usuario e senha.
+
+-Especificacoes da infra.
+O siatema deve ter tres modulos, back, front e docker
+back: Escrito com java e deve conter tres camadas distintas, repositori, service e controller
+front: Escrito em angular, usando componentes primeng, tendo como base o modelo free do primeng 'Sakai'
+docker: deve conter scripts, dockerfile, docker-compose para publicacao do site nos servicos de cloud run e cloud sql do google
+
+-Especificacoes das entidades e enums
