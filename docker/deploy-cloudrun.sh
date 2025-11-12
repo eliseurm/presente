@@ -30,31 +30,25 @@ set -euo pipefail
 #   ./docker/deploy-cloudrun.sh
 
 
-export PROJECT_ID=clube-project
+export PROJECT_ID=presente-project
 export REGION=southamerica-east1
 export SERVICE_BACK=presente-back
 export SERVICE_FRONT=presente-front
 export USE_CONNECTOR=true
-export INSTANCE_CONNECTION_NAME="clube-project:southamerica-east1:clube-sql"
+export INSTANCE_CONNECTION_NAME="presente-project:southamerica-east1:presente-sql"
 export DB_NAME=presente_db
 export DB_USERNAME=presente_user
 export DB_PASSWORD='Presente_pwd#123'
-export ADMIN_USERNAME=admin
-export ADMIN_PASSWORD=admin123
-export JWT_SECRET='uma-chave-bem-longa-de-dev-32bytes-min'
 
 
 : "${PROJECT_ID:?Defina PROJECT_ID}"
 : "${REGION:?Defina REGION}"
 : "${SERVICE_BACK:?Defina SERVICE_BACK presente-back}"
 : "${SERVICE_FRONT:?Defina SERVICE_FRONT presente-front}"
-
 : "${DB_NAME:?Defina DB_NAME}"
 : "${DB_USERNAME:?Defina DB_USERNAME}"
 : "${DB_PASSWORD:?Defina DB_PASSWORD}"
-: "${ADMIN_USERNAME:?Defina ADMIN_USERNAME}"
-: "${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD}"
-: "${JWT_SECRET:?Defina JWT_SECRET (>=32 bytes)}"
+
 
 USE_CONNECTOR=${USE_CONNECTOR:-true}
 DB_PORT=${DB_PORT:-5432}
@@ -90,13 +84,13 @@ gcloud auth configure-docker southamerica-east1-docker.pkg.dev -q
 # Backend
 # Using explicit Dockerfile for backend
 echo "[cloudrun] Buildando backend localmente (docker/Dockerfile.back) e publicando..."
-docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
+docker build -f "${ROOT_DIR}/docker/Dockerfile.back" -t "${IMAGE_BACK}" "${ROOT_DIR}"
 docker push "${IMAGE_BACK}"
 
 # Frontend
 # Using explicit Dockerfile for frontend
 echo "[cloudrun] Buildando frontend localmente (docker/Dockerfile.front) e publicando..."
-docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
+docker build -f "${ROOT_DIR}/docker/Dockerfile.front" -t "${IMAGE_FRONT}" "${ROOT_DIR}"
 docker push "${IMAGE_FRONT}"
 
 
@@ -111,27 +105,37 @@ BACK_ARGS=(
   --port 9000
 )
 
-ENV_VARS_STRING="SPRING_PROFILES_ACTIVE=prod,DB_NAME=${DB_NAME},DB_USERNAME=${DB_USERNAME},DB_PASSWORD=${DB_PASSWORD},ADMIN_USERNAME=${ADMIN_USERNAME},ADMIN_PASSWORD=${ADMIN_PASSWORD},JWT_SECRET=${JWT_SECRET}"
+ENV_VARS_STRING="SPRING_PROFILES_ACTIVE=prod, DB_USER=${DB_USERNAME}, DB_PASS=${DB_PASSWORD}"
+
+# DDL: respeitar configuração desejada. Se desejar forçar um valor na revisão,
+# exporte antes: DDL_AUTO=create|update|validate|none. Se não definido, usa o application.properties.
+if [ -n "${DDL_AUTO:-}" ]; then
+  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_JPA_HIBERNATE_DDL_AUTO=${DDL_AUTO}"
+fi
+
+# Reduzir dependência de metadados JDBC e de filtros web na inicialização
+#  spring.jpa.open-in-view=false
+#  hibernate.temp.use_jdbc_metadata_defaults=false
+#  hikari.connectionTimeout (dá mais tempo ao connector)
+HIKARI_TIMEOUT_VALUE=${EXTRA_HIKARI_TIMEOUT:-120000}
+ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_JPA_OPEN_IN_VIEW=false,SPRING_JPA_PROPERTIES_HIBERNATE_TEMP_USE_JDBC_METADATA_DEFAULTS=false,SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=${HIKARI_TIMEOUT_VALUE}"
 
 if [ "${USE_CONNECTOR}" = "true" ]; then
   : "${INSTANCE_CONNECTION_NAME:?Defina INSTANCE_CONNECTION_NAME para USE_CONNECTOR=true}"
-  BACK_ARGS+=(
-    --add-cloudsql-instances "${INSTANCE_CONNECTION_NAME}"
-  )
-#  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=${INSTANCE_CONNECTION_NAME}"
-  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+  BACK_ARGS+=( --add-cloudsql-instances "${INSTANCE_CONNECTION_NAME}" )
+  # Backend lê DB_URL (application.properties) e já tem dependência do connector
+  # Padrão recomendado com host "google" e SocketFactory do Connector.
+  #  - ipTypes=PUBLIC força uso de IP público (sem exigir Private IP/VPC)
+  #  - currentSchema mantém compatibilidade com o ambiente local
+  #  - enableIamAuth=false evita tentativa de IAM auth quando não desejado
+  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql://google/${DB_NAME}?cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory&ipTypes=PUBLIC&currentSchema=presente_sh&enableIamAuth=false"
 else
   : "${DB_HOST:?Defina DB_HOST quando USE_CONNECTOR=false}"
-  BACK_ARGS+=(
-    --set-env-vars SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
-  )
-  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?currentSchema=presente_sh"
 fi
-BACK_ARGS+=(
-  --set-env-vars "${ENV_VARS_STRING}"
-)
+BACK_ARGS+=( --set-env-vars "${ENV_VARS_STRING}" )
 
-echo "gcloud ${BACK_ARGS[@]}"
+echo "gcloud ${BACK_ARGS[*]}"
 gcloud "${BACK_ARGS[@]}"
 
 # Discover backend URL

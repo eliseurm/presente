@@ -1,39 +1,56 @@
 -- Primeiro conecte com o super usuario do banco u:'system', s:'sicsadm'
 
--- ---
--- Etapa 1: Limpeza (Executada do banco 'postgres' padrão)
--- ---
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'presente_db';
 DROP DATABASE IF EXISTS presente_db;
 DROP USER IF EXISTS presente_user;
 
--- ---
--- Etapa 2: Criar usuário e banco
--- ---
-CREATE USER presente_user WITH ENCRYPTED PASSWORD 'Presente_pwd#123';
+CREATE USER presente_user WITH PASSWORD 'Presente_pwd#123';
 CREATE DATABASE presente_db;
 
--- Dê ao seu usuário a permissão de se CONECTAR ao novo banco
-GRANT CONNECT ON DATABASE presente_db TO presente_user;
--- ---
--- Etapa 3: Criar o Schema (A FORMA CORRETA)
--- ---
+-- Mude para presente_db mas ainda com superUsuario
 
--- !!! IMPORTANTE !!!
--- Conecte-se DIRETAMENTE ao banco 'presente_db' agora.
--- (No psql, você usaria: \c presente_db)
--- (Em outras ferramentas, mude sua conexão ativa para 'presente_db')
-
--- Agora que está DENTRO de 'presente_db', execute:
-
--- 1. Crie o schema (ele será de propriedade do seu usuário admin 'postgres')
-CREATE SCHEMA IF NOT EXISTS presente_sh;
-
--- 2. Transfira a propriedade do schema para o usuário da aplicação
-GRANT presente_user TO postgres;
-ALTER SCHEMA presente_sh OWNER TO presente_user;
+CREATE SCHEMA IF NOT EXISTS presente_sh ;
+GRANT USAGE ON SCHEMA presente_sh TO presente_user;
+GRANT CREATE ON SCHEMA presente_sh TO presente_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA presente_sh GRANT ALL ON TABLES TO presente_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA presente_sh GRANT ALL ON SEQUENCES TO presente_user;
 
 
 
+-- Agora mude de usuario e schema (presente_sh e presente_user)
+
+
+CREATE TABLE IF NOT EXISTS presente_sh.usuario (
+   id BIGSERIAL PRIMARY KEY,
+   username VARCHAR(255) NOT NULL UNIQUE,
+   password_hash TEXT NOT NULL,
+   papel VARCHAR(64),
+   status VARCHAR(64),
+   criado_em TIMESTAMP,
+   alterado_em TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_usuario_username ON presente_sh.usuario (username);
+
+
+
+-- Tratar so de Shema ( superUsuario )
+DROP SCHEMA IF EXISTS presente_sh CASCADE;
+CREATE SCHEMA IF NOT EXISTS presente_sh AUTHORIZATION presente_user;
+GRANT USAGE ON SCHEMA presente_sh TO presente_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA presente_sh GRANT ALL ON TABLES TO presente_user;
+GRANT CREATE ON SCHEMA presente_sh TO presente_user;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA presente_sh GRANT USAGE ON SEQUENCES TO presente_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA presente_sh GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO presente_user;
+
+
+
+-- Troca para usuario e shema (presente_user, presente_sh)
+
+create table teste (
+    codigo int,
+    descricao varchar(50)
+);
 
 
 

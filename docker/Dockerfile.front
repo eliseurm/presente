@@ -15,8 +15,11 @@ RUN apk add --no-cache gettext
 # We will generate nginx conf from a template so we can inject BACKEND_URL and PORT at runtime
 ENV BACKEND_URL="http://localhost:9000" PORT=80
 
-# Copy built assets
-COPY --from=build /app/dist/presente-front /usr/share/nginx/html
+# Remove default nginx html (avoids showing the default welcome page)
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built assets (Angular CLI application builder outputs into dist/<app>/browser)
+COPY --from=build /app/dist/presente-front/browser /usr/share/nginx/html
 
 # Copy nginx template and entrypoint
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template

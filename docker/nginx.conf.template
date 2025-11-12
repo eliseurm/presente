@@ -8,7 +8,9 @@ server {
 
     # Proxy API calls to the backend
     location /api/ {
-        proxy_pass ${BACKEND_URL};
+        # The trailing slash rewrites /api/... to /... on the upstream
+        # Example: /api/auth/login -> ${BACKEND_URL}/auth/login
+        proxy_pass ${BACKEND_URL}/;
         # Important for Cloud Run upstreams: preserve proper Host/SNI and HTTP/1.1
         proxy_http_version 1.1;
         proxy_set_header Host $proxy_host;
