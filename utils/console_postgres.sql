@@ -83,34 +83,5 @@ INSERT INTO presente_sh.usuario (id, username, password_hash, papel, status, cri
 select * from usuario ;
 
 
--- Projeto extrato
--- No postgres Conectado com super usuario
-SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'extrato_db';
-DROP DATABASE IF EXISTS extrato_db;
-DROP USER IF EXISTS extrato_user;
-
-CREATE USER extrato_user WITH PASSWORD 'Extrato_pwd#123';
-CREATE DATABASE extrato_db;
-GRANT CREATE ON DATABASE extrato_db TO extrato_user;
-
--- Mude para extrato_db mas ainda com superUsuario
-
-CREATE SCHEMA IF NOT EXISTS extrato_sh ;
-GRANT USAGE ON SCHEMA extrato_sh TO extrato_user;
-GRANT CREATE ON SCHEMA extrato_sh TO extrato_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA extrato_sh GRANT ALL ON TABLES TO extrato_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA extrato_sh GRANT ALL ON SEQUENCES TO extrato_user;
-
-CREATE TABLE IF NOT EXISTS extrato_sh.usuario (
-id BIGSERIAL PRIMARY KEY,
-username VARCHAR(255) NOT NULL UNIQUE,
-password_hash TEXT NOT NULL,
-papel VARCHAR(64),
-status VARCHAR(64),
-criado_em TIMESTAMP,
-alterado_em TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_usuario_username ON extrato_sh.usuario (username);
-
-
+select * from tamanho ;
 
