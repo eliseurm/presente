@@ -1,0 +1,72 @@
+/* Estilos responsivos para o container <crud> usando PrimeFlex/PrimeNG */
+
+:host {
+  display: block;
+  /* Força alinhamento à esquerda dentro do componente, sem afetar fora */
+  text-align: left !important;
+}
+
+/* toolbar com quebra de linha em telas pequenas */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+/* Espaçamentos utilitários */
+.mb-3 { margin-bottom: 1rem; }
+
+/* Botões ocupam largura total no mobile para melhor toque */
+@media (max-width: 576px) {
+  :host ::ng-deep .p-toolbar .p-button {
+    width: 100%;
+  }
+}
+
+/* Painel de filtros com grid fluida */
+:host ::ng-deep .p-panel .p-panel-content {
+  padding-top: .75rem;
+}
+
+/* Mensagens com espaçamento inferior */
+:host ::ng-deep .p-messages {
+  margin-bottom: 1rem;
+}
+
+/* Cartão da listagem ajustável */
+.card {
+  background: var(--surface-card);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--card-shadow, none);
+}
+
+/* Alinhamento à esquerda para campos no filtro e no formulário de edição */
+:host ::ng-deep [crud-list-filter-fields],
+:host ::ng-deep [crud-edit-template] {
+  text-align: left !important;
+}
+
+:host ::ng-deep [crud-edit-template] .p-inputtext,
+:host ::ng-deep [crud-edit-template] .p-dropdown,
+:host ::ng-deep [crud-edit-template] .p-select,
+:host ::ng-deep [crud-list-filter-fields] .p-inputtext,
+:host ::ng-deep [crud-list-filter-fields] .p-dropdown,
+:host ::ng-deep [crud-list-filter-fields] .p-select {
+  text-align: left !important;
+}
+
+/* Força alinhamento do rótulo visível do PrimeNG Select */
+:host ::ng-deep .p-select .p-select-label,
+:host ::ng-deep .p-dropdown .p-dropdown-label {
+  text-align: left !important;
+}
+
+/* Helper para esconder colunas em telas pequenas, usar na tabela conforme necessário */
+.hide-sm {
+  display: none;
+}
+
+@media (min-width: 577px) {
+  .hide-sm {
+    display: table-cell;
+  }
+}

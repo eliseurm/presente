@@ -1,60 +1,62 @@
-<div class="card">
+<crud #crudRef [parent]="vm" [listToolbarTitle]="'Tamanhos'" [editToolbarTitle]="'Editar Tamanho'"
+      [collapsibleFilters]="true"
+      [showListCloseButton]="true"
+      (closeButtonAction)="onCloseCrud()">
 
-    <!-- Card de Filtros -->
+  <!-- Filtros -->
+  <div crud-list-filter-fields class="w-full text-left">
     <crud-filter
-        [filter]="filter"
-        [fields]="filterFields"
-        [loading]="loading"
-        (onSearch)="filtrar()"
-        (onClear)="limpar()"
-    />
+      [filter]="vm.filter"
+      [fields]="filterFields"
+      [loading]="false"
+      (onSearch)="vm.doFilter().subscribe()"
+      (onClear)="onClearFilters()"
+    ></crud-filter>
+  </div>
 
-    <erm-data-grid
-        [dataSource]="dataSource"
-        [loading]="loading"
-        (onInitNewRow)="onInitNewRow($event)"
-        (onSaving)="onSavingItem($event)"
-        (onDeleting)="onDeletingItem($event)">
+  <!-- Grid -->
+  <div crud-list-grid class="w-full">
+    <p-table [value]="vm.dataSource"
+             [paginator]="true"
+             [rows]="vm.filter.size || 10"
+             [totalRecords]="vm.totalRecords"
+             [lazy]="false"
+             responsiveLayout="scroll"
+             (onPage)="onPage($event)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="hide-sm">ID</th>
+          <th>Tipo</th>
+          <th>Tamanho</th>
+          <th style="width:1%">Ações</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr (dblclick)="crudRef.onRowDblClick(row)">
+          <td class="hide-sm">{{ row.id }}</td>
+          <td>{{ getTipoDescricao(row.tipo) }}</td>
+          <td>{{ row.tamanho }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                    (click)="crudRef.onRowDblClick(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-        <erm-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true">
-            <!-- Altura auto para se ajustar ao conteúdo -->
-            <erm-popup title="Tamanho" [showTitle]="true" width="600px" height="auto"></erm-popup>
+  <!-- Formulário de edição (consumidor controla validação) -->
+  <div crud-edit-template class="grid p-fluid text-left">
+    <div class="col-12 md:col-6 text-left">
+      <label class="block mb-2">Tipo de Produto</label>
+      <enum-select [enumObject]="tipoProdutoEnumType" [(ngModel)]="vm.model.tipo" name="tipo"></enum-select>
+    </div>
+    <div class="col-12 md:col-6 text-left">
+      <label class="block mb-2">Tamanho</label>
+      <input pInputText type="text" [(ngModel)]="vm.model.tamanho" name="tamanho" placeholder="Informe o tamanho" />
+    </div>
+  </div>
 
-            <erm-form [colCount]="1">
-                <erm-item dataField="tipo" label="Tipo de Produto">
-                    <erm-validation-rule type="required" message="O tipo é obrigatório"></erm-validation-rule>
-                </erm-item>
-                <erm-item dataField="tamanho" editorType="text" label="Tamanho">
-                    <erm-validation-rule type="required" message="O tamanho é obrigatório"></erm-validation-rule>
-                </erm-item>
-            </erm-form>
+</crud>
 
-        </erm-editing>
-
-        <erm-column dataField="id" caption="ID" [width]="80"></erm-column>
-        <erm-column
-            dataField="tipo"
-            caption="Tipo"
-            [width]="150"
-            cellTemplate="tipoCellTemplate"
-            editCellTemplate="tipoEditCellTemplate">
-        </erm-column>
-        <erm-column dataField="tamanho" caption="Tamanho"></erm-column>
-
-        <!-- Template para visualização da célula na tabela -->
-        <ng-template ermTemplate="tipoCellTemplate" let-data="data">
-            {{ getTipoDescricao(data.tipo) }}
-        </ng-template>
-
-        <!-- Template para edição -->
-        <ng-template ermTemplate="tipoEditCellTemplate" let-data="data">
-            <enum-select
-                [enumObject]="tipoProdutoEnumType"
-                [(ngModel)]="data.tipo"
-                label="Tipo de Produto">
-            </enum-select>
-        </ng-template>
-
-    </erm-data-grid>
 <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-</div>

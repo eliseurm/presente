@@ -2,8 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseFilter } from '@/shared/model/filter/base-filter';
 import { PageResponse } from '@/shared/model/page-response';
+import { CrudPort } from '@/shared/services/crud-port';
 
-export abstract class BaseCrudService<T, F extends BaseFilter> {
+// Classe base de serviços CRUD no front-end que implementa o contrato CrudPort
+export abstract class BaseCrudService<T extends { id?: any; version?: number }, F extends BaseFilter> implements CrudPort<T, F> {
     protected abstract apiUrl: string;
 
     constructor(protected http: HttpClient) {}
@@ -13,6 +15,7 @@ export abstract class BaseCrudService<T, F extends BaseFilter> {
         return this.http.get<PageResponse<T>>(this.apiUrl, { params });
     }
 
+    // Mantém compatibilidade com serviços existentes
     buscarPorId(id: number): Observable<T> {
         return this.http.get<T>(`${this.apiUrl}/${id}`);
     }
@@ -35,6 +38,20 @@ export abstract class BaseCrudService<T, F extends BaseFilter> {
             `${this.apiUrl}/batch`,
             { body: ids }
         );
+    }
+
+    // Implementação do CrudPort (wrappers padronizados)
+    getById(id: any): Observable<T> {
+        return this.buscarPorId(id);
+    }
+
+    salvar(model: T): Observable<T> {
+        const hasId = model?.id != null;
+        return hasId ? this.atualizar(model.id, model) : this.criar(model);
+    }
+
+    excluir(id: any): Observable<void> {
+        return this.deletar(id);
     }
 
     protected buildParams(filtro: F): any {

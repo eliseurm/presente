@@ -16,4 +16,8 @@ public class Tamanho {
 
     private String tamanho;
 
+    // Controle de concorrência otimista
+    @Version
+    private Long version;
+
 }

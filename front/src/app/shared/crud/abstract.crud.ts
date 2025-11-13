@@ -1,0 +1,174 @@
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, Observable, of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { CrudPort } from '@/shared/services/crud-port';
+import { Mode } from '@/shared/crud/crud.mode';
+import { PageResponse } from '@/shared/model/page-response';
+import { BaseFilter } from '@/shared/model/filter/base-filter';
+
+export abstract class AbstractCrud<T extends { id?: any; version?: number }, F extends BaseFilter> {
+  // Estado base
+  model!: T;
+  filter!: F;
+  dataSource: T[] = [];
+  mode: Mode = Mode.List;
+
+  // Mensagens/erros
+  errorsVisible = false;
+  errorMessages: string[] = [];
+  registryUnlocked = true;
+  totalRecords = 0;
+
+  // Observables
+  refreshModel = new Subject<void>();
+  filterSubject = new Subject<F>();
+  listGridSelectionSubject = new Subject<T | T[]>();
+
+  protected storage: Storage = sessionStorage;
+
+  protected constructor(
+    protected port: CrudPort<T, F>,
+    protected route?: ActivatedRoute,
+    protected router?: Router,
+  ) {}
+
+  // Inicialização
+  init(): void {
+    this.newModelIfNull();
+    this.newFilterIfNull();
+    this.loadFromStorage();
+    const id = this.route?.snapshot.paramMap.get('id');
+    if (id) {
+      this.onIdParam(id);
+    } else {
+      // Carrega listagem inicial
+      this.doFilter().subscribe();
+    }
+  }
+
+  // CRUD
+  doFilter(): Observable<PageResponse<T>> {
+    return this.port.listar(this.filter).pipe(
+      tap((page) => {
+        this.dataSource = page.content;
+        this.totalRecords = page.totalElements;
+        this.saveToStorage();
+      }),
+      catchError((err) => this.handleError<PageResponse<T>>(err, 'Falha ao carregar lista'))
+    );
+  }
+
+  doSave(): Observable<T> {
+    return this.port.salvar(this.model).pipe(
+      tap((saved) => {
+        this.model = saved;
+        this.onSaveSuccess();
+      }),
+      catchError((err) => this.handleError<T>(err, 'Falha ao salvar registro'))
+    );
+  }
+
+  doRemove(idOrModel: any): Observable<void> {
+    const id = typeof idOrModel === 'object' ? idOrModel.id : idOrModel;
+    return this.port.excluir(id).pipe(
+      tap(() => this.onRemoveSuccess()),
+      catchError((err) => this.handleError<void>(err, 'Falha ao excluir registro'))
+    );
+  }
+
+  doCreateNew(): void {
+    this.model = this.newModel();
+    this.mode = Mode.Edit;
+    this.refreshModel.next();
+  }
+
+  doCancel(): void {
+    this.mode = Mode.List;
+    this.errorsVisible = false;
+  }
+
+  canDoSave(): boolean { return true; }
+
+  // Rotas / Edição por ID
+  onIdParam(id: string | number): void {
+    this.callGetByIdService(id).subscribe({
+      next: (m) => {
+        this.verifyAndLockRegistry(m).subscribe({
+          next: (locked) => {
+            this.model = locked;
+            this.mode = Mode.Edit;
+            this.refreshModel.next();
+          },
+          error: (e) => this.handleError(e, 'Falha ao bloquear registro')
+        });
+      },
+      error: (e) => this.handleError(e, 'Falha ao carregar registro')
+    });
+  }
+
+  protected callGetByIdService(id: any): Observable<T> { return this.port.getById(id); }
+
+  // Concorrência otimista: stub (JPA @Version no back já garante)
+  protected verifyAndLockRegistry(m: T): Observable<T> { return of(m); }
+
+  // Factories
+  protected newModelIfNull(): void { if (!this.model) { this.model = this.newModel(); } }
+  protected newFilterIfNull(): void { if (!this.filter) { this.filter = this.newFilter(); } }
+  protected abstract newModel(): T;
+  protected abstract newFilter(): F;
+
+  // Storage
+  protected saveToStorage(): void {
+    try {
+      this.storage.setItem(this.storageKey('filter'), JSON.stringify(this.filter));
+    } catch {}
+  }
+
+  protected loadFromStorage(): void {
+    try {
+      const val = this.storage.getItem(this.storageKey('filter'));
+      if (val) this.filter = Object.assign(this.newFilter(), JSON.parse(val));
+    } catch {}
+  }
+
+  protected storageKey(suffix: string): string {
+    const segment = (this.router?.url || 'crud').split('?')[0];
+    return `${segment}:${suffix}`;
+  }
+
+  // Hooks de sucesso/erro
+  protected onSaveSuccess(): void { this.mode = Mode.List; this.doFilter().subscribe(); }
+  protected onRemoveSuccess(): void {
+    // Após excluir, volta para a listagem e limpa o modelo atual
+    this.mode = Mode.List;
+    try { this.model = this.newModel(); } catch {}
+    this.errorsVisible = false;
+    this.doFilter().subscribe();
+  }
+
+  protected handleError<R>(err: any, fallbackMsg: string): Observable<R> {
+    const msg = this.normalizeError(err) || fallbackMsg;
+    this.errorMessages = [msg];
+    this.errorsVisible = true;
+    return of(undefined as unknown as R);
+  }
+
+  protected normalizeError(e: any): string {
+    // Prioriza mensagem do backend
+    const beMsg = e?.error?.message || e?.error?.error;
+    if (beMsg) return beMsg;
+    // Trata por status
+    const status = e?.status;
+    if (status === 0) return 'Falha de conexão. Verifique sua rede e tente novamente.';
+    if (status === 400) return 'Requisição inválida. Verifique os dados informados.';
+    if (status === 401) return 'Não autorizado. Faça login novamente.';
+    if (status === 403) return 'Acesso negado para esta operação.';
+    if (status === 404) return 'Registro não encontrado.';
+    if (status === 409) return 'Registro alterado por outro usuário. Atualize a tela e tente novamente.';
+    if (status >= 500) return 'Erro no servidor. Tente novamente em instantes.';
+    const msg = e?.message || '';
+    // Evita exibir a mensagem técnica do HttpClient completa
+    if (msg && msg.startsWith('Http failure response')) return '';
+    return msg;
+  }
+}

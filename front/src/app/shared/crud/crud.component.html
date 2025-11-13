@@ -1,0 +1,60 @@
+<!-- Toolbar de Listagem -->
+<p-toolbar *ngIf="parent?.mode === Mode.List" class="flex-wrap">
+  <div class="flex align-items-center gap-2">
+    <span class="text-lg font-semibold">{{ listToolbarTitle }}</span>
+  </div>
+  <div class="ml-auto flex flex-wrap gap-2">
+    <button *ngIf="showListFilterButton" pButton type="button" label="Filtrar" icon="pi pi-filter" (click)="onListToolbarFilterButtonAction()"></button>
+    <button *ngIf="showListNewButton" pButton type="button" label="Novo" icon="pi pi-plus" (click)="onListToolbarNewButtonAction()"></button>
+    <button *ngIf="showListClearButton" pButton type="button" label="Limpar" icon="pi pi-eraser" (click)="onListToolbarClearButtonAction()"></button>
+    <button *ngIf="showListCloseButton" pButton type="button" label="Fechar" icon="pi pi-times" (click)="onListToolbarCloseButtonAction()"></button>
+  </div>
+</p-toolbar>
+
+<!-- Dialogo de confirmação global do CRUD -->
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Painel de Filtros -->
+<p-panel *ngIf="parent?.mode === Mode.List" [toggleable]="collapsibleFilters" [collapsed]="isMobile" class="mb-3">
+  <ng-template pTemplate="header">{{ isMobile ? 'Exibir Filtros' : 'Ocultar Filtros' }}</ng-template>
+  <div class="p-fluid grid justify-content-start">
+    <ng-content select="[crud-list-filter-fields]"></ng-content>
+  </div>
+</p-panel>
+
+<!-- Grid da Listagem -->
+<div *ngIf="parent?.mode === Mode.List" class="card">
+  <ng-content select="[crud-list-grid]"></ng-content>
+</div>
+
+<!-- Toolbar de Edição -->
+<p-toolbar *ngIf="parent?.mode === Mode.Edit" class="flex-wrap">
+  <div class="flex align-items-center gap-2">
+    <span class="text-lg font-semibold">{{ editToolbarTitle }}</span>
+  </div>
+  <div class="ml-auto flex flex-wrap gap-2">
+    <!-- Ordem: Gravar, Novo, Excluir, Cancelar, Fechar -->
+    <button *ngIf="showEditSaveButton" pButton type="button" label="Gravar (Alt+S)" icon="pi pi-check" (click)="onEditToolbarSaveButtonAction()"></button>
+    <button *ngIf="showEditNewButton" pButton type="button" label="Novo" icon="pi pi-plus" (click)="onEditToolbarNewButtonAction()"></button>
+    <button *ngIf="showEditDeleteButton" pButton type="button" label="Excluir" icon="pi pi-trash" class="p-button-danger" (click)="onEditToolbarDeleteButtonAction()"></button>
+    <button *ngIf="showEditCancelButton" pButton type="button" label="Cancelar" icon="pi pi-undo" class="p-button-secondary" (click)="onEditToolbarCancelButtonAction()"></button>
+    <button *ngIf="showEditCloseButton" pButton type="button" label="Fechar (Alt+F)" icon="pi pi-times" (click)="onEditToolbarCloseButtonAction()"></button>
+  </div>
+</p-toolbar>
+
+<!-- Mensagens de erro (sem dependência de p-messages para evitar incompatibilidade de versão) -->
+<div *ngIf="parent?.errorsVisible && errorMessages?.length" class="crud-messages error mb-3">
+  <ul>
+    <li *ngFor="let m of errorMessages">{{ m }}</li>
+  </ul>
+  </div>
+
+<!-- Context Bar opcional na edição -->
+<div *ngIf="parent?.mode === Mode.Edit">
+  <ng-content select="[crud-edit-contextbar]"></ng-content>
+</div>
+
+<!-- Template de Edição -->
+<div *ngIf="parent?.mode === Mode.Edit" class="p-fluid grid justify-content-start">
+  <ng-content select="[crud-edit-template]"></ng-content>
+</div>

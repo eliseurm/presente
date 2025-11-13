@@ -6,7 +6,7 @@ import {BaseFilter} from '../../model/filter/base-filter';
 
 @Directive()
 // MODIFICADO: A classe não é mais abstrata
-export class CrudBaseComponent<T, F extends BaseFilter> implements OnInit {
+export class CrudBaseComponent<T extends { id?: any; version?: number }, F extends BaseFilter> implements OnInit {
 
     protected selectedItemsInternal: T[] = [];
 
