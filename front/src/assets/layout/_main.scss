@@ -8,8 +8,12 @@
 }
 
 .layout-main {
+    /* Permite que filhos flex rolem e ocupem todo o espaço até o footer */
     flex: 1 1 auto;
-    padding-bottom: 2rem;
+    min-height: 0;           /* crucial para permitir rolagem dos filhos */
+    display: flex;           /* cria contexto flex para páginas e seus containers */
+    flex-direction: column;
+    padding-bottom: 0;       /* sem espaçamento extra: conteúdo encosta no footer */
 }
 
 img {

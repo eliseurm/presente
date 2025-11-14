@@ -39,6 +39,9 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
   @Input() showEditNewButton = true;
   @Input() showEditCloseButton = true;
 
+  // Aparência/UX
+  @Input() wrapEditTemplateInCard = true; // envolve a área de edição em uma "caixa" branca (card)
+
   @Output() filterButtonAction = new EventEmitter<void>();
   @Output() saveButtonAction = new EventEmitter<void>();
   @Output() deleteButtonAction = new EventEmitter<void>();

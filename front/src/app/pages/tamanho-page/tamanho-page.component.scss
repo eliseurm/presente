@@ -1,3 +1,11 @@
+:host {
+    /* Faz a página ocupar todo o espaço disponível dentro de .layout-main */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 :host ::ng-deep {
     // Garante que o select-box tenha espaço suficiente
     .erm-dialog {
@@ -13,4 +21,17 @@
             width: 100%;
         }
     }
+
+    /* Garante que o <crud> desta página estique até o footer */
+    crud {
+        display: flex !important;
+        flex-direction: column;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        width: 100%;
+    }
+
+    /* Removido: alinhamentos redundantes do template de edição.
+       O alinhamento à esquerda será controlado centralmente pelo crud.component.scss
+       e pelas classes utilitárias no HTML (ex.: text-left, grid/col do PrimeFlex). */
 }

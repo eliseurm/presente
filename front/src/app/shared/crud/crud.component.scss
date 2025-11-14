@@ -1,14 +1,33 @@
 /* Estilos responsivos para o container <crud> usando PrimeFlex/PrimeNG */
 
 :host {
-  display: block;
+  /* O <crud> precisa ocupar o espaço disponível até o footer */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0; /* necessário para permitir que filhos com overflow rolem */
+  width: 100%;
+  height: 100%;
   /* Força alinhamento à esquerda dentro do componente, sem afetar fora */
-  text-align: left !important;
+  text-align: left;
+}
+
+/* Garante que quando o <crud> estiver dentro do .layout-main ele expanda até o footer */
+:host-context(.layout-main) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* toolbar com quebra de linha em telas pequenas */
 .flex-wrap {
   flex-wrap: wrap;
+}
+
+/* Tamanho uniforme dos botões nas toolbars (desktop/tablet) */
+:host ::ng-deep .p-toolbar .p-button {
+  min-width: 9rem; /* garante largura consistente entre eles */
 }
 
 /* Espaçamentos utilitários */
@@ -18,6 +37,7 @@
 @media (max-width: 576px) {
   :host ::ng-deep .p-toolbar .p-button {
     width: 100%;
+    min-width: 0; /* no mobile, ocupar 100% e ignorar largura mínima */
   }
 }
 
@@ -34,31 +54,111 @@
 /* Cartão da listagem ajustável */
 .card {
   background: var(--surface-card);
-  border-radius: var(--border-radius);
+  /* Mantém a mesma borda arredondada utilizada no restante do layout (toolbar/cards) */
+  border-radius: var(--content-border-radius);
   padding: 1rem;
   box-shadow: var(--card-shadow, none);
 }
 
-/* Alinhamento à esquerda para campos no filtro e no formulário de edição */
-:host ::ng-deep [crud-list-filter-fields],
-:host ::ng-deep [crud-edit-template] {
-  text-align: left !important;
+/* Área da edição deve ocupar toda a área restante entre a toolbar e o footer */
+.crud-edit-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0; /* permite que o filho role */
+  width: 100%;
 }
 
-:host ::ng-deep [crud-edit-template] .p-inputtext,
-:host ::ng-deep [crud-edit-template] .p-dropdown,
-:host ::ng-deep [crud-edit-template] .p-select,
-:host ::ng-deep [crud-list-filter-fields] .p-inputtext,
-:host ::ng-deep [crud-list-filter-fields] .p-dropdown,
-:host ::ng-deep [crud-list-filter-fields] .p-select {
-  text-align: left !important;
+.crud-edit-card {
+  /* Ocupa todo o espaço restante e permite rolagem interna quando necessário */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
 }
+
+/* Remove o espaçamento inferior do card de edição para encostar no footer */
+.crud-edit-card.card {
+  margin-bottom: 0;
+}
+
+/* Força que os slots de conteúdo do CRUD alinhem os componentes à esquerda,
+   mesmo se algum CSS global tentar empurrar para a direita */
+
+/* Slot genérico não deve interferir no layout dos filhos; mantém alinhado à esquerda */
+.crud-slot {
+  display: block;
+  text-align: left ;
+  width: 100%;
+    border: 1px solid var(--p-toolbar-border-color);
+    border-radius: var(--p-toolbar-border-radius);
+}
+
+/* Remove ajustes que poderiam empurrar elementos; deixa layout por conta do conteúdo projetado */
+//.crud-slot > * { margin-left: 0 ; }
+
+/* Específico da área de edição: garante que o slot ocupe toda a área e não quebre em múltiplas linhas */
+.crud-slot-edit {
+  /* Slot da edição ocupa a área disponível; o filho (crud-edit-card) é quem expande */
+  width: 100%;
+}
+
+/* Ajustes finos para grids projetadas no template de edição: alinhar à esquerda e usar largura total */
+//::host ::ng-deep [crud-edit-template].grid,
+//::host ::ng-deep [crud-edit-template] .grid {
+//  justify-content: flex-start ;
+//  width: 100% ;
+//}
+
+//::host ::ng-deep [crud-edit-template] .col-12,
+//::host ::ng-deep [crud-edit-template] [class*="col-"] {
+//  margin-left: 0 ;
+//}
+
+/* Força alinhamento à esquerda de elementos de formulário comuns dentro do template de edição */
+//::host ::ng-deep [crud-edit-template] .p-inputtext,
+//::host ::ng-deep [crud-edit-template] .p-inputtextarea,
+//::host ::ng-deep [crud-edit-template] .p-dropdown,
+//::host ::ng-deep [crud-edit-template] .p-select,
+//::host ::ng-deep [crud-edit-template] .p-calendar,
+//::host ::ng-deep [crud-edit-template] .p-checkbox,
+//::host ::ng-deep [crud-edit-template] .p-radiobutton,
+//::host ::ng-deep [crud-edit-template] label {
+//  text-align: left ;
+//  justify-content: flex-start ;
+//}
+
+/* Evita utilitários acidentais de alinhamento à direita aplicados por containers pais */
+//::host ::ng-deep [crud-edit-template] .justify-content-end,
+//::host ::ng-deep [crud-edit-template] .ml-auto,
+//::host ::ng-deep [crud-edit-template] .text-right {
+//  justify-content: flex-start ;
+//  margin-left: 0 ;
+//  text-align: left ;
+//}
+
+/* Alinhamento à esquerda para campos no filtro e no formulário de edição */
+//:host ::ng-deep [crud-list-filter-fields],
+//:host ::ng-deep [crud-edit-template] {
+//  text-align: left ;
+//}
+
+//:host ::ng-deep [crud-edit-template] .p-inputtext,
+//:host ::ng-deep [crud-edit-template] .p-dropdown,
+//:host ::ng-deep [crud-edit-template] .p-select,
+//:host ::ng-deep [crud-list-filter-fields] .p-inputtext,
+//:host ::ng-deep [crud-list-filter-fields] .p-dropdown,
+//:host ::ng-deep [crud-list-filter-fields] .p-select {
+//  text-align: left ;
+//}
 
 /* Força alinhamento do rótulo visível do PrimeNG Select */
-:host ::ng-deep .p-select .p-select-label,
-:host ::ng-deep .p-dropdown .p-dropdown-label {
-  text-align: left !important;
-}
+//:host ::ng-deep .p-select .p-select-label,
+//:host ::ng-deep .p-dropdown .p-dropdown-label {
+//  text-align: left ;
+//}
 
 /* Helper para esconder colunas em telas pequenas, usar na tabela conforme necessário */
 .hide-sm {
@@ -70,3 +170,11 @@
     display: table-cell;
   }
 }
+
+/* ====== Ajustes específicos para o componente enum-select (wrapper customizado) ====== */
+//::host ::ng-deep enum-select label {
+//  text-align: left ;
+//}
+//::host ::ng-deep enum-select .p-select .p-select-label {
+//  text-align: left ;
+//}
