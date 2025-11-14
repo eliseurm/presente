@@ -1,156 +1,204 @@
-<div class="crud-container">
-    <!-- Toolbar -->
-    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
-        <p-button label="Buscar" icon="pi pi-search" (onClick)="abrirBusca()"></p-button>
-        <p-button label="Gravar" icon="pi pi-save" severity="success" (onClick)="gravar()"></p-button>
-        <p-button label="Novo" icon="pi pi-plus" severity="secondary" (onClick)="limpar()"></p-button>
-        <p-button label="Excluir" icon="pi pi-trash" severity="danger" (onClick)="excluir()" [disabled]="!model.id"></p-button>
-        <span style="margin-left:auto; opacity:.8">{{ model.id ? 'ID: ' + model.id : 'Novo evento' }}</span>
-    </div>
+<crud #crudRef [parent]="vm" [listToolbarTitle]="'Eventos'" [editToolbarTitle]="'Editar Evento'"
+      [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-    <!-- Abas principais -->
-    <p-tabs [value]="'0'">
-        <p-tablist>
-            <p-tab [value]="'0'">Geral</p-tab>
-            <p-tab [value]="'1'">Pessoas</p-tab>
-            <p-tab [value]="'2'">Produtos</p-tab>
-        </p-tablist>
-        <p-tabpanels>
-            <!-- Aba Geral -->
-            <p-tabpanel [value]="'0'">
-                <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div>
-                        <label>Nome *</label>
-                        <input pInputText type="text" [(ngModel)]="model.nome" [ngModelOptions]="{standalone:true}"/>
-                    </div>
-                    <div>
-                        <label>Status *</label>
-                        <enum-select [enumObject]="statusEnumType"
-                                     [(ngModel)]="model.status"
-                        ></enum-select>
-                    </div>
-                    <div>
-                        <label>Cliente *</label>
-                        <p-select [options]="clientesOptions" optionLabel="nome" optionValue="id"
-                                  [(ngModel)]="model.cliente"
-                                  (onChange)="model.cliente = $event.value"
-                                  placeholder="Selecione"></p-select>
-                    </div>
-                    <div>
-                        <label>Início *</label>
-                        <input type="datetime-local" pInputText [(ngModel)]="model.inicio" [ngModelOptions]="{standalone:true}"/>
-                    </div>
-                    <div>
-                        <label>Previsto *</label>
-                        <input type="datetime-local" pInputText [(ngModel)]="model.fimPrevisto" [ngModelOptions]="{standalone:true}"/>
-                    </div>
-                    <div>
-                        <label>Fim</label>
-                        <input type="datetime-local" pInputText [(ngModel)]="model.fim" [ngModelOptions]="{standalone:true}"/>
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label>Descrição</label>
-                        <textarea pInputText rows="3" [(ngModel)]="model.descricao" [ngModelOptions]="{standalone:true}" class="w-full"></textarea>
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label>Anotações</label>
-                        <textarea pInputText rows="3" [(ngModel)]="model.anotacoes" [ngModelOptions]="{standalone:true}" class="w-full"></textarea>
-                    </div>
-                </div>
-            </p-tabpanel>
+  <!-- Filtros da lista -->
+  <div crud-list-filter-fields class="w-full text-left">
+    <crud-filter
+      [filter]="vm.filter"
+      [fields]="filterFields"
+      [loading]="false"
+      (onSearch)="vm.doFilter().subscribe()"
+      (onClear)="onClearFilters()"
+    ></crud-filter>
+  </div>
 
-            <!-- Aba Pessoas -->
-            <p-tabpanel [value]="'1'">
-                <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
-                    <input #csvInput type="file" accept=".csv" style="display:none" (change)="onCsvSelected($event); importarCsvPessoas(model)"/>
-                    <button pButton type="button" label="Importar CSV" icon="pi pi-upload" (click)="csvInput.click()" [disabled]="!model.id"></button>
-                </div>
-                <erm-data-grid [dataSource]="model.pessoas || []" [loading]="false">
-                    <erm-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true" [confirmDelete]="true">
-                        <erm-popup title="Pessoa do Evento" [showTitle]="true" width="720px" height="auto"></erm-popup>
-                        <erm-form [colCount]="1">
-                            <erm-item dataField="pessoa" label="Pessoa" editorType="template"></erm-item>
-                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
-                        </erm-form>
-                    </erm-editing>
+  <!-- Grid de listagem -->
+  <div crud-list-grid class="w-full">
+    <p-table [value]="vm.dataSource"
+             [paginator]="true"
+             [rows]="vm.filter.size || 10"
+             [totalRecords]="vm.totalRecords"
+             [lazy]="false"
+             responsiveLayout="scroll"
+             (onPage)="onPage($event)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Cliente</th>
+          <th>Nome</th>
+          <th>Status</th>
+          <th>Previsto</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th style="width:1%">Ações</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr (dblclick)="crudRef.onRowDblClick(row)">
+          <td>{{ row?.cliente?.nome }}</td>
+          <td>{{ row?.nome }}</td>
+          <td>{{ getStatusDescricao(row?.status) }}</td>
+          <td>{{ row?.fimPrevisto | date:'short' }}</td>
+          <td>{{ row?.inicio | date:'short' }}</td>
+          <td>{{ row?.fim | date:'short' }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                    (click)="crudRef.onRowDblClick(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-                    <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-                    <erm-column dataField="pessoa" caption="Pessoa" cellTemplate="pessoaNomeCell" editCellTemplate="pessoasEditorInner"></erm-column>
-                    <erm-column dataField="status" caption="Status" editCellTemplate="statusPessoaEditor"></erm-column>
+  <!-- Formulário de edição com abas -->
+  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+    <p-tabs [value]="'0'" class="w-full">
+      <p-tablist>
+        <p-tab [value]="'0'">Geral</p-tab>
+        <p-tab [value]="'1'">Pessoas</p-tab>
+        <p-tab [value]="'2'">Produtos</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <p-tabpanel [value]="'0'">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="flex flex-col gap-2 w-full md:w-3/4">
+              <label class="block">Nome *</label>
+              <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-1/2">
+              <label class="block">Status *</label>
+              <enum-select class="w-full" [enumObject]="statusEnumType" [(ngModel)]="vm.model.status" name="status"></enum-select>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-1/2">
+              <label class="block">Cliente *</label>
+              <p-select class="w-full" [options]="clientesOptions" optionLabel="nome" optionValue="id"
+                        [(ngModel)]="vm.model.cliente" name="cliente"
+                        (onChange)="vm.model.cliente = $event.value"
+                        placeholder="Selecione"></p-select>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-1/2">
+              <label class="block">Início *</label>
+              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.inicio" name="inicio"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-1/2">
+              <label class="block">Previsto *</label>
+              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.fimPrevisto" name="fimPrevisto"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-1/2">
+              <label class="block">Fim</label>
+              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.fim" name="fim"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+              <label class="block">Descrição</label>
+              <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+              <label class="block">Anotações</label>
+              <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
+            </div>
+          </div>
+        </p-tabpanel>
 
-                    <ng-template ermTemplate="pessoasEditorInner" let-data="data">
-                        <p-select [options]="pessoasOptions" optionLabel="nome"
-                                  [(ngModel)]="data.pessoa"
-                                  (onChange)="data.pessoa = $event.value"
-                                  placeholder="Selecione"></p-select>
-                    </ng-template>
-                    <ng-template ermTemplate="statusPessoaEditor" let-data="data">
-                        <enum-select [enumObject]="statusEnumType"
-                                     [(ngModel)]="data.status"
-                        ></enum-select>
-                    </ng-template>
-                    <ng-template ermTemplate="pessoaNomeCell" let-data="data">
-                        <span>{{ data?.pessoa?.nome }}</span>
-                    </ng-template>
-                </erm-data-grid>
-            </p-tabpanel>
+        <p-tabpanel [value]="'1'">
+          <erm-data-grid
+            [dataSource]="vm.model.pessoas || []"
+            [loading]="false"
+            (onInitNewRow)="onInitNewPessoa($event)"
+            (onSaving)="onSavingPessoa($event)"
+            (onDeleting)="onDeletingPessoa($event)">
 
-            <!-- Aba Produtos -->
-            <p-tabpanel [value]="'2'">
-                <erm-data-grid [dataSource]="model.produtos || []" [loading]="false">
-                    <erm-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true" [confirmDelete]="true">
-                        <erm-popup title="Produto do Evento" [showTitle]="true" width="720px" height="auto"></erm-popup>
-                        <erm-form [colCount]="1">
-                            <erm-item dataField="produto" label="Produto" editorType="template"></erm-item>
-                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
-                        </erm-form>
-                    </erm-editing>
+            <erm-editing
+              mode="popup"
+              [allowAdding]="true"
+              [allowUpdating]="true"
+              [allowDeleting]="true"
+              [confirmDelete]="true">
 
-                    <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-                    <erm-column dataField="produto" caption="Produto" cellTemplate="produtoNomeCell" editCellTemplate="produtosEditorInner"></erm-column>
-                    <erm-column dataField="status" caption="Status" editCellTemplate="statusProdutoEditor"></erm-column>
+              <erm-popup title="Pessoa do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
+              <erm-form [colCount]="2">
+                <erm-item dataField="pessoa" label="Pessoa" editorType="template">
+                  <erm-validation-rule type="required" message="Pessoa é obrigatória"></erm-validation-rule>
+                </erm-item>
+                <erm-item dataField="status" label="Status" editorType="template">
+                  <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
+                </erm-item>
+              </erm-form>
+            </erm-editing>
 
-                    <ng-template ermTemplate="produtosEditorInner" let-data="data">
-                        <p-select [options]="produtosOptions" optionLabel="nome"
-                                  [(ngModel)]="data.produto"
-                                  (onChange)="data.produto = $event.value"
-                                  placeholder="Selecione"></p-select>
-                    </ng-template>
-                    <ng-template ermTemplate="statusProdutoEditor" let-data="data">
-                        <enum-select [enumObject]="statusEnumType"
-                                     [(ngModel)]="data.status"
-                        ></enum-select>
-                    </ng-template>
-                    <ng-template ermTemplate="produtoNomeCell" let-data="data">
-                        <span>{{ data?.produto?.nome }}</span>
-                    </ng-template>
-                </erm-data-grid>
-            </p-tabpanel>
-        </p-tabpanels>
-    </p-tabs>
-
-    <!-- Dialog de busca -->
-    <p-dialog [(visible)]="buscarDialog" header="Buscar Evento" [modal]="true" [style]="{width:'900px'}" [closable]="true">
-        <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
-            <input pInputText type="text" placeholder="Filtrar por nome" [(ngModel)]="filtroBuscaNome" [ngModelOptions]="{standalone:true}" style="flex:1"/>
-            <p-button label="Buscar" icon="pi pi-search" (onClick)="carregarBusca()"></p-button>
-        </div>
-        <erm-data-grid [dataSource]="dataSource" [loading]="loadingBusca">
-            <erm-editing [allowAdding]="false" [allowUpdating]="false" [allowDeleting]="false"></erm-editing>
-            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-            <erm-column dataField="nome" caption="Nome"></erm-column>
-            <erm-column dataField="cliente" caption="Cliente" cellTemplate="clienteCell"></erm-column>
+            <!-- Colunas -->
+            <erm-column dataField="pessoa" caption="Pessoa"></erm-column>
             <erm-column dataField="status" caption="Status"></erm-column>
-            <erm-column dataField="id" caption="Ação" cellTemplate="selectCell"></erm-column>
 
-            <ng-template ermTemplate="clienteCell" let-data="data">
-                <span>{{ data?.cliente?.nome }}</span>
+            <!-- Templates de edição -->
+            <ng-template ermTemplate="pessoa" let-row>
+              <p-select class="w-full"
+                        [options]="pessoasOptions"
+                        optionLabel="nome"
+                        optionValue="id"
+                        [(ngModel)]="row.pessoa"
+                        [ngModelOptions]="{standalone:true}"
+                        placeholder="Selecione"></p-select>
             </ng-template>
-            <ng-template ermTemplate="selectCell" let-data="data">
-                <p-button label="Selecionar" size="small" (onClick)="selecionarEvento(data)"></p-button>
+            <ng-template ermTemplate="status" let-row>
+              <enum-select class="w-full"
+                           [enumObject]="statusEnumType"
+                           [(ngModel)]="row.status"
+                           [ngModelOptions]="{standalone:true}"></enum-select>
             </ng-template>
-        </erm-data-grid>
-    </p-dialog>
+          </erm-data-grid>
+        </p-tabpanel>
 
-    <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-</div>
+        <p-tabpanel [value]="'2'">
+          <erm-data-grid
+            [dataSource]="vm.model.produtos || []"
+            [loading]="false"
+            (onInitNewRow)="onInitNewProduto($event)"
+            (onSaving)="onSavingProduto($event)"
+            (onDeleting)="onDeletingProduto($event)">
+
+            <erm-editing
+              mode="popup"
+              [allowAdding]="true"
+              [allowUpdating]="true"
+              [allowDeleting]="true"
+              [confirmDelete]="true">
+
+              <erm-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
+              <erm-form [colCount]="2">
+                <erm-item dataField="produto" label="Produto" editorType="template">
+                  <erm-validation-rule type="required" message="Produto é obrigatório"></erm-validation-rule>
+                </erm-item>
+                <erm-item dataField="status" label="Status" editorType="template">
+                  <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
+                </erm-item>
+              </erm-form>
+            </erm-editing>
+
+            <!-- Colunas -->
+            <erm-column dataField="produto" caption="Produto"></erm-column>
+            <erm-column dataField="status" caption="Status"></erm-column>
+
+            <!-- Templates de edição -->
+            <ng-template ermTemplate="produto" let-row>
+              <p-select class="w-full"
+                        [options]="produtosOptions"
+                        optionLabel="nome"
+                        optionValue="id"
+                        [(ngModel)]="row.produto"
+                        [ngModelOptions]="{standalone:true}"
+                        placeholder="Selecione"></p-select>
+            </ng-template>
+            <ng-template ermTemplate="status" let-row>
+              <enum-select class="w-full"
+                           [enumObject]="statusEnumType"
+                           [(ngModel)]="row.status"
+                           [ngModelOptions]="{standalone:true}"></enum-select>
+            </ng-template>
+          </erm-data-grid>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+</crud>
+
+<p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>

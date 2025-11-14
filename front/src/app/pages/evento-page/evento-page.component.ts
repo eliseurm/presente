@@ -1,27 +1,21 @@
-import {Component} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MessageService} from 'primeng/api';
-import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {ToastModule} from 'primeng/toast';
 import {Tabs, TabPanel, TabPanels, TabList, Tab} from 'primeng/tabs';
-import {InputNumberModule} from 'primeng/inputnumber';
 import {SelectModule} from 'primeng/select';
 import {DialogModule} from 'primeng/dialog';
+import {TextareaModule} from 'primeng/textarea';
+import {TableModule} from 'primeng/table';
 
-import {CrudBaseComponent} from '@/shared/components/crud-base/crud-base.component';
+import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {FilterField} from '@/shared/components/crud-filter/filter-field';
-import {
-    ErmColumnComponent,
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmPopupComponent,
-    ErmTemplateDirective
-} from '@/shared/components/erm-data-grid';
+import {CrudComponent} from '@/shared/crud/crud.component';
+import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.component';
+import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
 
 import {EventoService} from '@/services/evento.service';
 import {Evento} from '@/shared/model/evento';
@@ -35,10 +29,18 @@ import {Pessoa} from '@/shared/model/pessoa';
 import {Produto} from '@/shared/model/produto';
 import {Cliente} from '@/shared/model/cliente';
 import {StatusEnum} from '@/shared/model/enum/status.enum';
-import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
-import {PapelEnum} from "@/shared/model/enum/papel.enum";
-import {TextareaModule} from "primeng/textarea";
-import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import {EventoCrudVM} from './evento-crud.vm';
+import {Router} from '@angular/router';
+import {
+    ErmColumnComponent,
+    ErmDataGridComponent,
+    ErmEditingComponent,
+    ErmFormComponent,
+    ErmItemComponent,
+    ErmPopupComponent,
+    ErmTemplateDirective,
+    ErmValidationRuleComponent
+} from '@/shared/components/erm-data-grid';
 
 @Component({
     selector: 'evento-page',
@@ -46,10 +48,8 @@ import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
     imports: [
         CommonModule,
         FormsModule,
-        CardModule,
         ButtonModule,
         InputTextModule,
-        InputNumberModule,
         ToastModule,
         DialogModule,
         SelectModule,
@@ -59,25 +59,29 @@ import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
         TabPanels,
         TabList,
         Tab,
+        EnumSelectComponent,
+        CrudFilterComponent,
+        CrudComponent,
+        TableModule,
         ErmDataGridComponent,
         ErmEditingComponent,
         ErmPopupComponent,
         ErmFormComponent,
         ErmItemComponent,
         ErmColumnComponent,
-        ErmTemplateDirective,
-        EnumSelectComponent
+        ErmValidationRuleComponent,
+        ErmTemplateDirective
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: [
         '../../shared/components/crud-base/crud-base.component.scss'
     ],
-    providers: [MessageService]
+    providers: [MessageService, EventoCrudVM]
 })
 @CrudMetadata("EventoPageComponent", [Evento, EventoFilter])
-export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
+export class EventoPageComponent implements OnInit {
 
-    protected readonly papelEnumType = PapelEnum;
+    @ViewChild('crudRef') crudRef?: CrudComponent<Evento, EventoFilter>;
 
     // Opções
     clientesOptions: Cliente[] = [];
@@ -92,211 +96,147 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     filtroBuscaNome: string = '';
     loadingBusca = false;
 
-    // readonly filterFields: FilterField[] = [{key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome'},];
+    filterFields: FilterField[] = [
+        { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
+        { key: 'clienteId', label: 'Cliente', type: 'select', options: [] },
+        { key: 'status', label: 'Status', type: 'select', options: (Object.values(StatusEnum) as any[]).map((s: any) => ({ label: String(s.descricao ?? s.key), value: s.key })) }
+    ];
 
     constructor(
+        public vm: EventoCrudVM,
         private eventoService: EventoService,
         private pessoaService: PessoaService,
         private produtoService: ProdutoService,
         private clienteService: ClienteService,
-        messageService: MessageService
-    ) {
-        super(eventoService, messageService, null as any);
+        private messageService: MessageService,
+        private router: Router
+    ) {}
+
+    ngOnInit(): void {
+        this.vm.init();
+        this.carregarOpcoes();
     }
 
-    // Helpers para adicionar itens nas listas evitando erros de tipagem no template
+    private carregarOpcoes(): void {
+        const base: any = { page: 0, size: 9999, sort: 'id', direction: 'ASC' };
+        this.clienteService.listar(base).subscribe({ next: page => {
+            this.clientesOptions = page.content || [];
+            // Atualiza opções do filtro Cliente
+            const idx = this.filterFields.findIndex(f => f.key === 'clienteId');
+            if (idx >= 0) {
+                this.filterFields[idx] = {
+                    ...this.filterFields[idx],
+                    options: this.clientesOptions.map(c => ({ label: c?.nome ?? String(c?.id ?? ''), value: c?.id }))
+                };
+            }
+        }});
+        this.pessoaService.listar(base).subscribe({ next: page => this.pessoasOptions = page.content || [] });
+        this.produtoService.listar(base).subscribe({ next: page => this.produtosOptions = page.content || [] });
+    }
+
+    onPage(event: any) {
+        this.vm.filter.page = event.page;
+        this.vm.filter.size = event.rows;
+        this.vm.doFilter().subscribe();
+    }
+
+    onClearFilters() {
+        this.vm.filter = this.vm['newFilter']();
+        this.vm.doFilter().subscribe();
+    }
+
+    onCloseCrud() {
+        this.router.navigate(['/']);
+    }
+
+    getStatusDescricao(status: any): string {
+        if (!status) return '';
+        if (typeof status === 'string') {
+            const found = (Object.values(StatusEnum) as any[]).find((s: any) => s.key === status || (s.descricao || '').toLowerCase() === status.toLowerCase());
+            return found?.descricao || status;
+        }
+        if (typeof status === 'object') {
+            return (status as any).descricao || (status as any).key || '';
+        }
+        return '';
+    }
+
     addPessoa() {
-        const pessoas = (this.model.pessoas = this.model.pessoas || []);
+        const pessoas = (this.vm.model.pessoas = this.vm.model.pessoas || []);
         pessoas.push({} as EventoPessoa);
     }
-
+    removePessoa(index: number) {
+        if (!this.vm.model.pessoas) return;
+        this.vm.model.pessoas.splice(index, 1);
+    }
     addProduto() {
-        const produtos = (this.model.produtos = this.model.produtos || []);
+        const produtos = (this.vm.model.produtos = this.vm.model.produtos || []);
         produtos.push({} as EventoProduto);
     }
-
-    override ngOnInit(): void {
-        super.ngOnInit();
-        this.loadOptions();
+    removeProduto(index: number) {
+        if (!this.vm.model.produtos) return;
+        this.vm.model.produtos.splice(index, 1);
     }
 
-    loadOptions(): void {
-        const base: any = {page: 0, size: 9999, sort: 'id', direction: 'ASC'};
-        // Clientes
-        this.clienteService.listar(base).subscribe({next: page => this.clientesOptions = page.content || []});
-        // Pessoas
-        this.pessoaService.listar(base).subscribe({next: page => this.pessoasOptions = page.content || []});
-        // Produtos
-        this.produtoService.listar(base).subscribe({next: page => this.produtosOptions = page.content || []});
+    // ======= Handlers para ERM Data Grid nas abas =======
+    onInitNewPessoa(event: any) {
+        event.data = event.data || {};
+        event.data.pessoa = null;
+        event.data.status = null;
     }
 
-      // Aqui define regras de validacao do crud
-    override isFormularioValido(): boolean {
-        return !!(this.model?.nome?.trim());
-    }
-
-
-    // Novo fluxo: Toolbar e Busca
-    abrirBusca() {
-        this.buscarDialog = true;
-        this.carregarBusca();
-    }
-
-    carregarBusca() {
-        this.loadingBusca = true;
-        const filtro = new EventoFilter();
-        if (this.filtroBuscaNome && this.filtroBuscaNome.trim()) {
-            filtro.nome = this.filtroBuscaNome.trim();
-            filtro.direction = 'DESC'
-        }
-        this.eventoService.listar(filtro).subscribe({
-            next: (resp: any) => {
-                this.dataSource = resp?.content || [];
-                this.loadingBusca = false;
-            },
-            error: () => {
-                this.loadingBusca = false;
-            }
-        });
-    }
-
-    selecionarEvento(e: Evento) {
-        // Clona para evitar binding direto da lista
-        const clone: any = JSON.parse(JSON.stringify(e || {}));
-        // Ajusta status para objeto enum quando vier string
-        if (clone?.status && typeof clone.status === 'string' && this.statusEnumType[clone.status]) {
-            clone.status = this.statusEnumType[clone.status];
-        }
-        // Garante arrays
-        clone.pessoas = clone.pessoas || [];
-        clone.produtos = clone.produtos || [];
-        this.model = clone;
-        this.buscarDialog = false;
-    }
-
-    private toLocalDateTimeString(value: any): string | null {
-        if (!value) return null;
-        // Se já é string no formato correto com segundos, retorna
-        if (typeof value === 'string') {
-            // Normaliza: se vier sem segundos (yyyy-MM-ddTHH:mm), adiciona ":00"
-            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
-                return value + ':00';
-            }
-            // Se vier com segundos, mantém
-            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
-                return value;
-            }
-            // Tenta parsear outras variantes
-            const d = new Date(value);
-            if (!isNaN(d.getTime())) return this.toLocalDateTimeString(d);
-            return value;
-        }
-        // Se for Date, monta string local sem fuso (LocalDateTime)
-        if (value instanceof Date) {
-            const pad = (n: number) => n.toString().padStart(2, '0');
-            const yyyy = value.getFullYear();
-            const MM = pad(value.getMonth() + 1);
-            const dd = pad(value.getDate());
-            const HH = pad(value.getHours());
-            const mm = pad(value.getMinutes());
-            const ss = pad(value.getSeconds());
-            return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}`;
-        }
-        return null;
-    }
-
-    gravar() {
-        const data = this.model as Evento;
-        // Validações obrigatórias
-        const hasNome = !!data?.nome?.trim();
-        const hasCliente = !!((data as any)?.cliente?.id ?? (data as any)?.cliente);
-        const hasStatus = !!data?.status;
-        const hasInicio = !!data?.inicio;
-        const hasPrevisto = !!data?.fimPrevisto;
-        if (!(hasNome && hasCliente && hasStatus && hasInicio && hasPrevisto)) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Preencha os campos obrigatórios: Nome, Cliente, Status, Início e Previsto.'});
+    onSavingPessoa(event: any) {
+        const row: any = event?.data || {};
+        if (!this.vm.model.pessoas) this.vm.model.pessoas = [];
+        // Normaliza pessoa (aceita objeto Pessoa inteiro ou apenas id)
+        const pessoaId = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
+        if (!pessoaId) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione a Pessoa'});
             return;
         }
-
-        const normalizeStatus = (val: any) => (val && typeof val === 'object' && 'key' in val) ? val.key : val;
-        const mapPessoa = (arr?: any[]) => (arr || [])
-            .filter((x: any) => x && (x.pessoa?.id || typeof x.pessoa === 'number'))
-            .map((x: any) => ({id: x.id, pessoa: {id: x.pessoa?.id ?? x.pessoa}, status: normalizeStatus(x.status)}));
-        const mapProduto = (arr?: any[]) => (arr || [])
-            .filter((x: any) => x && (x.produto?.id || typeof x.produto === 'number'))
-            .map((x: any) => ({id: x.id, produto: {id: x.produto?.id ?? x.produto}, status: normalizeStatus(x.status)}));
-
-        const payload: any = {
-            id: (data as any).id,
-            nome: data.nome,
-            descricao: data.descricao,
-            cliente: (data as any)?.cliente?.id ? {id: (data as any).cliente.id} : (data?.cliente ? {id: (data as any).cliente} : null),
-            status: normalizeStatus(data.status),
-            anotacoes: data.anotacoes,
-            inicio: this.toLocalDateTimeString(data.inicio),
-            fimPrevisto: this.toLocalDateTimeString(data.fimPrevisto),
-            fim: this.toLocalDateTimeString(data.fim),
-            pessoas: mapPessoa(data.pessoas),
-            produtos: mapProduto(data.produtos)
-        };
-
-        const id = payload.id;
-        const op$ = id ? this.eventoService.atualizar(id, payload) : this.eventoService.criar(payload);
-        op$.subscribe({
-            next: (resp: any) => {
-                this.messageService.add({severity: 'success', summary: 'Sucesso', detail: `Dado ${id ? 'atualizado' : 'criado'} com sucesso`});
-                // Atualiza o model com retorno (garante id)
-                this.selecionarEvento(resp);
-            },
-            error: (error) => {
-                const detail = error?.error?.message || 'Erro ao salvar evento';
-                this.messageService.add({severity: 'error', summary: 'Erro', detail});
-            }
-        });
+        const status = row.status || null;
+        // Atualiza se já existir essa pessoa na lista; senão adiciona
+        const idx = this.vm.model.pessoas.findIndex((p:any) => (p?.pessoa?.id || p?.pessoa) === pessoaId);
+        const novo = { pessoa: this.pessoasOptions.find(p=>p.id===pessoaId) || {id: pessoaId} as any, status } as EventoPessoa;
+        if (idx >= 0) this.vm.model.pessoas[idx] = novo; else this.vm.model.pessoas.push(novo);
+        this.messageService.add({severity:'success', summary:'OK', detail:'Pessoa registrada na lista do evento (pendente de Gravar).'});
     }
 
-    excluir() {
-        const id = (this.model as any)?.id;
-        if (!id) return;
-        this.eventoService.deletar(id).subscribe({
-            next: () => {
-                this.messageService.add({severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso`});
-                this.newModel();
-            },
-            error: () => this.messageService.add({severity: 'error', summary: 'Erro', detail: `Erro ao excluir informações`})
-        });
+    onDeletingPessoa(event: any) {
+        const row: any = event?.data || {};
+        if (!this.vm.model.pessoas) return;
+        const pessoaId = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
+        this.vm.model.pessoas = this.vm.model.pessoas.filter((p:any) => (p?.pessoa?.id || p?.pessoa) !== pessoaId);
+        this.messageService.add({severity:'success', summary:'OK', detail:'Pessoa removida da lista (pendente de Gravar).'});
     }
 
-
-    onCsvSelected(event: any) {
-        const file = event?.target?.files?.[0] as File | undefined;
-        this.csvFile = file || null;
+    onInitNewProduto(event: any) {
+        event.data = event.data || {};
+        event.data.produto = null;
+        event.data.status = null;
     }
 
-    importarCsvPessoas(rowData: any) {
-        const eventoId = rowData?.id;
-        if (!eventoId) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Salve o evento antes de importar pessoas.'});
+    onSavingProduto(event: any) {
+        const row: any = event?.data || {};
+        if (!this.vm.model.produtos) this.vm.model.produtos = [];
+        const produtoId = typeof row.produto === 'object' ? row.produto?.id : row.produto;
+        if (!produtoId) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione o Produto'});
             return;
         }
-        if (!this.csvFile) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Selecione um arquivo CSV.'});
-            return;
-        }
-        this.eventoService.importPessoasCsv(eventoId, this.csvFile!).subscribe({
-            next: (resp) => {
-                this.messageService.add({severity: 'success', summary: 'Sucesso', detail: `${resp?.adicionados ?? 0} pessoa(s) importada(s)`});
-                this.csvFile = null;
-                // Recarrega o evento da API para refletir alterações
-                this.eventoService.buscarPorId(eventoId).subscribe({
-                    next: (ev) => this.selecionarEvento(ev as any)
-                });
-            },
-            error: (error) => {
-                const detail = error?.error?.message || 'Erro ao importar CSV';
-                this.messageService.add({severity: 'error', summary: 'Erro', detail});
-            }
-        });
+        const status = row.status || null;
+        const idx = this.vm.model.produtos.findIndex((pr:any) => (pr?.produto?.id || pr?.produto) === produtoId);
+        const novo = { produto: this.produtosOptions.find(p=>p.id===produtoId) || {id: produtoId} as any, status } as EventoProduto;
+        if (idx >= 0) this.vm.model.produtos[idx] = novo; else this.vm.model.produtos.push(novo);
+        this.messageService.add({severity:'success', summary:'OK', detail:'Produto registrado na lista do evento (pendente de Gravar).'});
+    }
+
+    onDeletingProduto(event: any) {
+        const row: any = event?.data || {};
+        if (!this.vm.model.produtos) return;
+        const produtoId = typeof row.produto === 'object' ? row.produto?.id : row.produto;
+        this.vm.model.produtos = this.vm.model.produtos.filter((pr:any) => (pr?.produto?.id || pr?.produto) !== produtoId);
+        this.messageService.add({severity:'success', summary:'OK', detail:'Produto removido da lista (pendente de Gravar).'});
     }
 
 

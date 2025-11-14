@@ -16,4 +16,7 @@ export class Evento {
 
   pessoas?: EventoPessoa[];
   produtos?: EventoProduto[];
+
+  // Concorrência otimista
+  version?: number;
 }

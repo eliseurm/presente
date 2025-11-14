@@ -1,6 +1,9 @@
 // Java
 package br.eng.eliseu.presente.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +23,8 @@ public class Evento {
     private String descricao;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @JsonIdentityReference(alwaysAsId = true)
     private Cliente cliente;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +41,10 @@ public class Evento {
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventoPessoa> pessoas;
+
+    // Controle de concorrência otimista
+    @Version
+    private Long version;
 
 
 
