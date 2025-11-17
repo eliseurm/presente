@@ -1,6 +1,10 @@
 // Java
 package br.eng.eliseu.presente.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,10 +24,13 @@ public class EventoPessoa {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "evento_id", nullable = false)
+    @JsonBackReference(value = "evento-pessoas")
     private Evento evento;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pessoa_id", nullable = false)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Pessoa.class)
+    @JsonIdentityReference(alwaysAsId = true)
     private Pessoa pessoa;
 
     @Enumerated(EnumType.STRING)

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -8,8 +8,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TableModule } from 'primeng/table';
 
-import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
+import { CrudComponent } from '@/shared/crud/crud.component';
 import { ProdutoService } from '@/services/produto.service';
 import { ProdutoFilter } from '@/shared/model/filter/produto-filter';
 import { Produto } from '@/shared/model/produto';
@@ -24,17 +25,8 @@ import { Imagem } from '@/shared/model/imagem';
 import { CorFilter } from '@/shared/model/filter/cor-filter';
 import { TamanhoFilter } from '@/shared/model/filter/tamanho-filter';
 import { ImagemFilter } from '@/shared/model/filter/imagem-filter';
-import {
-  ErmColumnComponent,
-  ErmDataGridComponent,
-  ErmEditingComponent,
-  ErmFormComponent,
-  ErmItemComponent,
-  ErmPopupComponent,
-  ErmTemplateDirective,
-  ErmValidationRuleComponent
-} from '@/shared/components/erm-data-grid';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
+import { ProdutoCrudVM } from './produto-crud.vm';
 
 @Component({
   selector: 'produto-page',
@@ -48,24 +40,19 @@ import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
     InputNumberModule,
     ToastModule,
     MultiSelectModule,
+    TableModule,
+    CrudComponent,
     CrudFilterComponent,
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmPopupComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmColumnComponent,
-    ErmValidationRuleComponent,
-    ErmTemplateDirective
   ],
   templateUrl: './produto-page.component.html',
   styleUrls: [
     '../../shared/components/crud-base/crud-base.component.scss'
   ],
-  providers: [MessageService]
+  providers: [MessageService, ProdutoCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [Produto, ProdutoFilter])
-export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilter> {
+@CrudMetadata("ProdutoPageComponent", [Produto, ProdutoFilter])
+export class ProdutoPageComponent  {
+  @ViewChild('crudRef') crudRef?: CrudComponent<Produto, ProdutoFilter>;
   // Opções
   coresOptions: Cor[] = [];
   tamanhosOptions: Tamanho[] = [];
@@ -76,17 +63,16 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
   ];
 
   constructor(
+    public vm: ProdutoCrudVM,
     private produtoService: ProdutoService,
     private corService: CorService,
     private tamanhoService: TamanhoService,
     private imagemService: ImagemService,
-    messageService: MessageService
-  ) {
-    super(produtoService, messageService, null as any);
-  }
+    private messageService: MessageService,
+  ) {}
 
-  override ngOnInit(): void {
-    super.ngOnInit();
+  ngOnInit(): void {
+    this.vm.init();
     this.loadOptions();
   }
 
@@ -107,8 +93,22 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
     });
   }
 
-  override isFormularioValido(): boolean {
-    return !!(this.model?.nome?.trim());
+  isFormularioValido(): boolean { return !!(this.vm?.model?.nome?.trim()); }
+
+  // Integração com o contêiner <crud>
+  onPage(event: any) {
+    this.vm.filter.page = event.page;
+    this.vm.filter.size = event.rows;
+    this.vm.doFilter().subscribe();
+  }
+
+  onClearFilters() {
+    this.vm.filter = new ProdutoFilter();
+    this.vm.doFilter().subscribe();
+  }
+
+  onCloseCrud() {
+    // Caso exista navegação de fechamento, pode ser tratada aqui
   }
 
   onInitNewRow(event: any) {
@@ -125,31 +125,7 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
       return;
     }
 
-    // Normaliza associações para enviar somente IDs
-    const mapToIds = (arr?: any[]) => (arr || []).filter(x => !!x).map((x: any) => ({ id: x.id }));
-    const payload: any = {
-      id: (data as any).id,
-      nome: data.nome,
-      descricao: data.descricao,
-      preco: data.preco,
-      status: data.status,
-      cores: mapToIds(data.cores),
-      tamanhos: mapToIds(data.tamanhos),
-      imagens: mapToIds(data.imagens)
-    };
-
-    const id = payload.id;
-    const op$ = id ? this.produtoService.atualizar(id, payload) : this.produtoService.criar(payload);
-    op$.subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dados ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregarDataSource();
-      },
-      error: (error) => {
-        const detail = error?.error?.message || 'Erro ao salvar produto';
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail });
-      }
-    });
+    // O CrudComponent chamará vm.doSave(); aqui apenas garantimos que o evento não quebre o fluxo
   }
 
   onDeletingItem(event: any) {
@@ -158,7 +134,8 @@ export class ProdutoPageComponent extends CrudBaseComponent<Produto, ProdutoFilt
     this.produtoService.deletar(id).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
-        this.carregarDataSource();
+        // Após excluir, recarrega a lista usando a ViewModel do CRUD
+        this.vm.doFilter().subscribe();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao excluir informações` })
     });

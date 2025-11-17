@@ -6,6 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -31,6 +33,7 @@ public class Produto {
             inverseJoinColumns = @JoinColumn(name = "tamanho_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"produto_id", "tamanho_id"})
     )
+    @Fetch(FetchMode.SUBSELECT)
     private List<Tamanho> tamanhos;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
@@ -40,6 +43,7 @@ public class Produto {
             inverseJoinColumns = @JoinColumn(name = "cor_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"produto_id", "cor_id"})
     )
+    @Fetch(FetchMode.SUBSELECT)
     private List<Cor> cores;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
@@ -49,6 +53,7 @@ public class Produto {
             inverseJoinColumns = @JoinColumn(name = "imagem_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"produto_id", "imagem_id"})
     )
+    @Fetch(FetchMode.SUBSELECT)
     private List<Imagem> imagens;
 
 

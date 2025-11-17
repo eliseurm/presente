@@ -41,12 +41,27 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
   }
 
   override canDoSave(): boolean {
+    const errors: string[] = [];
+
     const nomeOk = !!(this.model?.nome && String(this.model.nome).trim().length > 0);
+    if (!nomeOk) errors.push('Informe o nome do evento.');
+
     const statusOk = !!this.model?.status;
-    const clienteOk = !!(this.model?.cliente && (this as any).getClienteId());
+    if (!statusOk) errors.push('Informe o status do evento.');
+
+    const clienteId = this.getClienteId();
+    const clienteOk = !!clienteId;
+    if (!clienteOk) errors.push('Selecione o cliente.');
+
     const inicioOk = !!this.model?.inicio;
+    if (!inicioOk) errors.push('Informe a data/hora de início.');
+
     const previstoOk = !!this.model?.fimPrevisto;
-    return nomeOk && statusOk && clienteOk && inicioOk && previstoOk;
+    if (!previstoOk) errors.push('Informe a data/hora prevista de término.');
+
+    this.errorMessages = errors;
+    this.errorsVisible = errors.length > 0;
+    return errors.length === 0;
   }
 
   // Normaliza payload antes de salvar (status enum e cliente id)

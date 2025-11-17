@@ -1,102 +1,89 @@
-<div class="crud-container">
+<crud #crudRef [parent]="vm" [listToolbarTitle]="'Produtos'" [editToolbarTitle]="'Editar Produto'"
+      [collapsibleFilters]="true" [showListCloseButton]="false" (closeButtonAction)="onCloseCrud()">
+
+  <!-- Filtros -->
+  <div crud-list-filter-fields class="w-full text-left">
     <crud-filter
-        [filter]="filter"
-        [fields]="filterFields"
-        [loading]="loading"
-        (onSearch)="filtrar()"
-        (onClear)="limpar()"
-    />
+      [filter]="vm.filter"
+      [fields]="filterFields"
+      [loading]="false"
+      (onSearch)="vm.doFilter().subscribe()"
+      (onClear)="onClearFilters()"
+    ></crud-filter>
+  </div>
 
-    <p-card class="results-card">
-        <ng-template pTemplate="header">
-            <div class="card-header-content">
-                <h3>Lista de Produtos</h3>
+  <!-- Grid de listagem -->
+  <div crud-list-grid class="w-full">
+    <p-table [value]="vm.dataSource"
+             [paginator]="true"
+             [rows]="vm.filter.size || 10"
+             [totalRecords]="vm.totalRecords"
+             [lazy]="false"
+             responsiveLayout="scroll"
+             (onPage)="onPage($event)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>Situação</th>
+          <th>Preço</th>
+          <th>Imagens</th>
+          <th style="width:1%">Ações</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr (dblclick)="crudRef.onRowDblClick(row)">
+          <td>{{ row?.nome }}</td>
+          <td>{{ row?.status ? 'Ativo' : 'Inativo' }}</td>
+          <td>{{ row?.preco }}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              @for (img of row?.imagens ?? []; track $index) {
+                <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
+              }
             </div>
-        </ng-template>
+          </td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                    (click)="crudRef.onRowDblClick(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-        <erm-data-grid
-            [dataSource]="dataSource"
-            [loading]="loading"
-            (onInitNewRow)="onInitNewRow($event)"
-            (onSaving)="onSavingItem($event)"
-            (onDeleting)="onDeletingItem($event)">
+  <!-- Formulário de edição -->
+  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Nome *</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
+      </div>
+      <div class="flex flex-col gap-2 w-full md:w-1/2">
+        <label class="block">Preço</label>
+        <input class="w-full" pInputText type="number" [(ngModel)]="vm.model.preco" name="preco" min="0" step="0.01"/>
+      </div>
+      <div class="flex items-center gap-2 w-full md:w-1/2" style="margin-top: 28px;">
+        <input type="checkbox" [(ngModel)]="vm.model.status" name="status"/> <label>Ativo</label>
+      </div>
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">Descrição</label>
+        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+      </div>
+      <div class="flex flex-col gap-2 w-full md:w-1/2">
+        <label class="block">Cores</label>
+        <p-multiSelect [options]="coresOptions" optionLabel="nome" [(ngModel)]="vm.model.cores" name="cores" display="chip"></p-multiSelect>
+      </div>
+      <div class="flex flex-col gap-2 w-full md:w-1/2">
+        <label class="block">Tamanhos</label>
+        <p-multiSelect [options]="tamanhosOptions" optionLabel="tamanho" [(ngModel)]="vm.model.tamanhos" name="tamanhos" display="chip"></p-multiSelect>
+      </div>
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">Imagens</label>
+        <p-multiSelect [options]="imagensOptions" optionLabel="nome" [(ngModel)]="vm.model.imagens" name="imagens" display="chip"></p-multiSelect>
+      </div>
+    </div>
+  </div>
 
-            <erm-editing
-                mode="popup"
-                [allowAdding]="true"
-                [allowUpdating]="true"
-                [allowDeleting]="true"
-                [confirmDelete]="true">
+</crud>
 
-                <erm-popup title="Gerenciar Produto" [showTitle]="true" width="900px" height="auto"></erm-popup>
-
-                <erm-form [colCount]="2">
-                    <erm-item dataField="nome" label="Nome">
-                        <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
-                    </erm-item>
-                    <erm-item dataField="preco" label="Preço">
-                        <input type="number" pInputText [(ngModel)]="model.preco" min="0" step="0.01"/>
-                    </erm-item>
-                    <erm-item dataField="descricao" label="Descrição" editorType="template"></erm-item>
-                    <erm-item dataField="status" label="Ativo?" editorType="template"></erm-item>
-                    <erm-item dataField="cores" label="Cores" editorType="template"></erm-item>
-                    <erm-item dataField="tamanhos" label="Tamanhos" editorType="template"></erm-item>
-                    <erm-item dataField="imagens" label="Imagens" editorType="template"></erm-item>
-                </erm-form>
-            </erm-editing>
-
-            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-            <erm-column dataField="nome" caption="Nome"></erm-column>
-            <erm-column dataField="status" caption="Situaçao" editCellTemplate="statusEditor"></erm-column>
-            <erm-column dataField="preco" caption="Preço"></erm-column>
-            <erm-column dataField="descricao" caption="Descriçao" [visible]="false" editCellTemplate="descricaoEditor"></erm-column>
-            <erm-column dataField="cores" caption="Cores" cellTemplate="coresCell" editCellTemplate="coresEditor"></erm-column>
-            <erm-column dataField="tamanhos" caption="Tamanhos" cellTemplate="tamanhosCell" editCellTemplate="tamanhosEditor"></erm-column>
-            <erm-column dataField="imagens" caption="Imagens" cellTemplate="imagensCell" editCellTemplate="imagensEditor"></erm-column>
-
-            <ng-template ermTemplate="descricaoEditor" let-data="data">
-                <textarea
-                    pInputTextarea
-                    [(ngModel)]="data.descricao"
-                    rows="4"
-                    class="w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:outline-none"
-                ></textarea>
-
-            </ng-template>
-
-            <ng-template ermTemplate="statusEditor" let-data="data">
-                <input type="checkbox" [(ngModel)]="data.status"/> Ativo
-            </ng-template>
-
-            <ng-template ermTemplate="coresEditor" let-data="data">
-                <p-multiSelect [options]="coresOptions" optionLabel="nome" [(ngModel)]="data.cores" display="chip"></p-multiSelect>
-            </ng-template>
-
-            <ng-template ermTemplate="tamanhosEditor" let-data="data">
-                <p-multiSelect [options]="tamanhosOptions" optionLabel="tamanho" [(ngModel)]="data.tamanhos" display="chip"></p-multiSelect>
-            </ng-template>
-
-            <ng-template ermTemplate="imagensEditor" let-data="data">
-                <p-multiSelect [options]="imagensOptions" optionLabel="nome" [(ngModel)]="data.imagens" display="chip"></p-multiSelect>
-            </ng-template>
-
-            <ng-template ermTemplate="coresCell" let-data="data">
-                <span>{{ getCoresTexto(data) }}</span>
-            </ng-template>
-
-            <ng-template ermTemplate="tamanhosCell" let-data="data">
-                <span>{{ getTamanhosTexto(data) }}</span>
-            </ng-template>
-
-            <ng-template ermTemplate="imagensCell" let-data="data">
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    @for (img of data?.imagens ?? []; track $index) {
-                        <img [src]="getImagemUrl(img)" style="width:32px;height:32px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
-                    }
-                </div>
-            </ng-template>
-
-        </erm-data-grid>
-    </p-card>
-    <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-</div>
+<p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>

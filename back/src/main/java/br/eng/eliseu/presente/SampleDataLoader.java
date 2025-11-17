@@ -23,8 +23,8 @@ public class SampleDataLoader {
     CommandLineRunner initData(UsuarioRepository adminRepo, JwtEncoder jwtEncoder, PasswordEncoder passwordEncoder){
         return args -> {
             Optional<Usuario> admin = adminRepo.findByUsername("admin");
-            System.out.println(admin.get().getUsername());
-            System.out.println(passwordEncoder.encode("1234"));
+//            System.out.println(admin.get().getUsername());
+//            System.out.println(passwordEncoder.encode("1234"));
             if(admin.isEmpty()){
                 Usuario adm = Usuario.builder()
                         .username("admin")

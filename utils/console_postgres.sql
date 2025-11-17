@@ -85,3 +85,17 @@ select * from usuario ;
 
 select * from tamanho ;
 
+select * from cliente ;
+
+select * from evento ;
+
+select *
+from evento e
+join cliente c on e.cliente_id=c.id
+;
+
+
+select a from Evento a ;
+
+select * from evento_pessoa ;
+select * from evento_produto ;

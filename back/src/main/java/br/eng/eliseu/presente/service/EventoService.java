@@ -9,10 +9,14 @@ import br.eng.eliseu.presente.repository.ProdutoRepository;
 import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,6 +36,147 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     @Override
     protected EventoRepository getRepository() {
         return eventoRepository;
+    }
+
+    // ================= Vínculos: Pessoas =================
+
+    @Transactional
+    public EventoPessoa addOrUpdatePessoa(Long eventoId, Long pessoaId, StatusEnum status) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        Pessoa pessoa = pessoaRepository.findById(pessoaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pessoa não encontrada: " + pessoaId));
+
+        if (evento.getPessoas() == null) {
+            evento.setPessoas(new ArrayList<>());
+        }
+
+        // procura vínculo existente por pessoa
+        EventoPessoa vinculo = evento.getPessoas().stream()
+                .filter(ep -> ep.getPessoa() != null && Objects.equals(ep.getPessoa().getId(), pessoa.getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (vinculo == null) {
+            vinculo = EventoPessoa.builder()
+                    .evento(evento)
+                    .pessoa(pessoa)
+                    .status(status)
+                    .build();
+            evento.getPessoas().add(vinculo);
+        } else {
+            vinculo.setStatus(status);
+        }
+
+        eventoRepository.save(evento);
+        return vinculo;
+    }
+
+    @Transactional
+    public EventoPessoa updatePessoaVinculo(Long eventoId, Long eventoPessoaId, StatusEnum status) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getPessoas() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo de pessoa não encontrado no evento");
+        }
+
+        EventoPessoa vinculo = evento.getPessoas().stream()
+                .filter(ep -> Objects.equals(ep.getId(), eventoPessoaId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo pessoa não encontrado: " + eventoPessoaId));
+
+        vinculo.setStatus(status);
+        eventoRepository.save(evento);
+        return vinculo;
+    }
+
+    @Transactional
+    public void removePessoaVinculo(Long eventoId, Long eventoPessoaId) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getPessoas() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo de pessoa não encontrado no evento");
+        }
+
+        boolean removed = evento.getPessoas().removeIf(ep -> Objects.equals(ep.getId(), eventoPessoaId));
+        if (!removed) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo pessoa não encontrado: " + eventoPessoaId);
+        }
+        eventoRepository.save(evento); // orphanRemoval cuidará da deleção
+    }
+
+    // ================= Vínculos: Produtos =================
+
+    @Transactional
+    public EventoProduto addOrUpdateProduto(Long eventoId, Long produtoId, StatusEnum status) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        Produto produto = produtoRepository.findById(produtoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado: " + produtoId));
+
+        if (evento.getProdutos() == null) {
+            evento.setProdutos(new HashSet<>());
+        }
+
+        // procura vínculo existente por produto
+        EventoProduto probe = EventoProduto.builder().evento(evento).produto(produto).build();
+        EventoProduto vinculo = evento.getProdutos().stream()
+                .filter(ep -> ep.getProduto() != null && Objects.equals(ep.getProduto().getId(), produto.getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (vinculo == null) {
+            vinculo = EventoProduto.builder()
+                    .evento(evento)
+                    .produto(produto)
+                    .status(status)
+                    .build();
+            evento.getProdutos().add(vinculo);
+        } else {
+            vinculo.setStatus(status);
+        }
+
+        eventoRepository.save(evento);
+        return vinculo;
+    }
+
+    @Transactional
+    public EventoProduto updateProdutoVinculo(Long eventoId, Long eventoProdutoId, StatusEnum status) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getProdutos() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo de produto não encontrado no evento");
+        }
+
+        EventoProduto vinculo = evento.getProdutos().stream()
+                .filter(ep -> Objects.equals(ep.getId(), eventoProdutoId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo produto não encontrado: " + eventoProdutoId));
+
+        vinculo.setStatus(status);
+        eventoRepository.save(evento);
+        return vinculo;
+    }
+
+    @Transactional
+    public void removeProdutoVinculo(Long eventoId, Long eventoProdutoId) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getProdutos() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo de produto não encontrado no evento");
+        }
+
+        boolean removed = evento.getProdutos().removeIf(ep -> Objects.equals(ep.getId(), eventoProdutoId));
+        if (!removed) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo produto não encontrado: " + eventoProdutoId);
+        }
+        eventoRepository.save(evento);
     }
 
     @Override
@@ -54,6 +199,38 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    // Garantir inicialização das coleções com Open-Session-In-View desabilitado
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Evento> listar(EventoFilter filtro) {
+        Page<Evento> page = super.listar(filtro);
+        // Inicializa coleções dentro da transação (evita LazyInitializationException na serialização)
+        page.getContent().forEach(e -> {
+            if (e.getPessoas() != null) {
+                e.getPessoas().size();
+            }
+            if (e.getProdutos() != null) {
+                e.getProdutos().size();
+            }
+        });
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Evento> buscarPorId(Long id) {
+        Optional<Evento> opt = super.buscarPorId(id);
+        opt.ifPresent(e -> {
+            if (e.getPessoas() != null) {
+                e.getPessoas().size();
+            }
+            if (e.getProdutos() != null) {
+                e.getProdutos().size();
+            }
+        });
+        return opt;
     }
 
     private void normalizarAssociacoes(Evento entidade) {
@@ -79,9 +256,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
             entidade.setPessoas(normalizadas);
         }
-        // Produtos
+        // Produtos (agora Set para evitar 'bag')
         if (entidade.getProdutos() != null) {
-            List<EventoProduto> normalizadas = new ArrayList<>();
+            Set<EventoProduto> normalizadas = new HashSet<>();
             for (EventoProduto eprod : entidade.getProdutos()) {
                 if (eprod == null) continue;
                 eprod.setEvento(entidade);
@@ -125,7 +302,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             entidadeExistente.getPessoas().addAll(entidade.getPessoas());
         }
         if (entidadeExistente.getProdutos() == null) {
-            entidadeExistente.setProdutos(new ArrayList<>());
+            entidadeExistente.setProdutos(new HashSet<>());
         }
         entidadeExistente.getProdutos().clear();
         if (entidade.getProdutos() != null) {

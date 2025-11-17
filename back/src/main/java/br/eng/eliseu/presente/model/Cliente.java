@@ -25,8 +25,13 @@ public class Cliente {
 
     private String anotacoes;
 
+    @Column(name = "criado_em")
     private LocalDateTime criadoEm;
+
+    @Column(name = "alterado_em")
     private LocalDateTime alteradoEm;
+
+
 
     @PrePersist
     public void prePersist(){

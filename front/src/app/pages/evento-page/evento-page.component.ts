@@ -7,6 +7,7 @@ import {InputTextModule} from 'primeng/inputtext';
 import {ToastModule} from 'primeng/toast';
 import {Tabs, TabPanel, TabPanels, TabList, Tab} from 'primeng/tabs';
 import {SelectModule} from 'primeng/select';
+import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DialogModule} from 'primeng/dialog';
 import {TextareaModule} from 'primeng/textarea';
 import {TableModule} from 'primeng/table';
@@ -70,7 +71,8 @@ import {
         ErmItemComponent,
         ErmColumnComponent,
         ErmValidationRuleComponent,
-        ErmTemplateDirective
+        ErmTemplateDirective,
+        AutoCompleteModule
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: [
@@ -88,6 +90,12 @@ export class EventoPageComponent implements OnInit {
     pessoasOptions: Pessoa[] = [];
     produtosOptions: Produto[] = [];
     statusEnumType: any = StatusEnum;
+
+    // Sugestões para Autocomplete
+    pessoasSugestoes: Pessoa[] = [];
+    produtosSugestoes: Produto[] = [];
+    carregandoPessoas = false;
+    carregandoProdutos = false;
 
     csvFile: File | null = null;
 
@@ -114,6 +122,8 @@ export class EventoPageComponent implements OnInit {
 
     ngOnInit(): void {
         this.vm.init();
+        // Quando o modelo é recarregado (abrir edição, salvar, etc.), atualiza labels auxiliares
+        this.vm.refreshModel.subscribe(() => this.preencherCamposDeExibicao());
         this.carregarOpcoes();
     }
 
@@ -129,9 +139,10 @@ export class EventoPageComponent implements OnInit {
                     options: this.clientesOptions.map(c => ({ label: c?.nome ?? String(c?.id ?? ''), value: c?.id }))
                 };
             }
+            this.preencherCamposDeExibicao();
         }});
-        this.pessoaService.listar(base).subscribe({ next: page => this.pessoasOptions = page.content || [] });
-        this.produtoService.listar(base).subscribe({ next: page => this.produtosOptions = page.content || [] });
+        this.pessoaService.listar(base).subscribe({ next: page => { this.pessoasOptions = page.content || []; this.preencherCamposDeExibicao(); } });
+        this.produtoService.listar(base).subscribe({ next: page => { this.produtosOptions = page.content || []; this.preencherCamposDeExibicao(); } });
     }
 
     onPage(event: any) {
@@ -161,6 +172,23 @@ export class EventoPageComponent implements OnInit {
         return '';
     }
 
+    // Rótulos de exibição nas células da grid, evitando [object Object]
+    getPessoaRotulo(row: any): string {
+        if (!row) return '';
+        if (row.pessoaNome) return row.pessoaNome;
+        const id = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
+        const obj = this.pessoasOptions.find(p => p.id === id);
+        return obj?.nome || (id != null ? String(id) : '');
+    }
+
+    getProdutoRotulo(row: any): string {
+        if (!row) return '';
+        if (row.produtoNome) return row.produtoNome;
+        const id = typeof row.produto === 'object' ? row.produto?.id : row.produto;
+        const obj = this.produtosOptions.find(p => p.id === id);
+        return obj?.nome || (id != null ? String(id) : '');
+    }
+
     addPessoa() {
         const pessoas = (this.vm.model.pessoas = this.vm.model.pessoas || []);
         pessoas.push({} as EventoPessoa);
@@ -181,24 +209,58 @@ export class EventoPageComponent implements OnInit {
     // ======= Handlers para ERM Data Grid nas abas =======
     onInitNewPessoa(event: any) {
         event.data = event.data || {};
+        // Campo apenas para o editor (AutoComplete)
+        event.data._pessoaObj = null;
+        // Campo persistido (ID): manteremos apenas o ID ao salvar
         event.data.pessoa = null;
         event.data.status = null;
+    }
+
+    // Busca remota de pessoas para o Autocomplete
+    searchPessoas(event: any) {
+        const query = (event?.query || '').trim();
+        const filtro: any = {
+            nome: query || undefined,
+            page: 0,
+            size: 10,
+            sort: 'nome',
+            direction: 'ASC'
+        };
+        this.carregandoPessoas = true;
+        this.pessoaService.listar(filtro).subscribe({
+            next: page => {
+                this.pessoasSugestoes = page?.content || [];
+                this.carregandoPessoas = false;
+            },
+            error: _ => {
+                this.pessoasSugestoes = [];
+                this.carregandoPessoas = false;
+            }
+        });
     }
 
     onSavingPessoa(event: any) {
         const row: any = event?.data || {};
         if (!this.vm.model.pessoas) this.vm.model.pessoas = [];
-        // Normaliza pessoa (aceita objeto Pessoa inteiro ou apenas id)
-        const pessoaId = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
+        // Objeto selecionado no AutoComplete e ID
+        const selected = row._pessoaObj ?? row.pessoa;
+        const pessoaId = typeof selected === 'object' ? selected?.id : selected;
         if (!pessoaId) {
             this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione a Pessoa'});
+            event.cancel = true;
             return;
         }
-        const status = row.status || null;
-        // Atualiza se já existir essa pessoa na lista; senão adiciona
-        const idx = this.vm.model.pessoas.findIndex((p:any) => (p?.pessoa?.id || p?.pessoa) === pessoaId);
-        const novo = { pessoa: this.pessoasOptions.find(p=>p.id===pessoaId) || {id: pessoaId} as any, status } as EventoPessoa;
-        if (idx >= 0) this.vm.model.pessoas[idx] = novo; else this.vm.model.pessoas.push(novo);
+        // Evita duplicidade
+        const duplicate = this.vm.model.pessoas.some((p:any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
+        if (duplicate) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Essa pessoa já está na lista.'});
+            event.cancel = true;
+            return;
+        }
+        // Normaliza campos para exibição/persistência
+        const pessoaObj = typeof selected === 'object' ? selected : this.pessoasOptions.find(p => p.id === pessoaId);
+        row.pessoa = pessoaId; // mantém ID para o payload
+        row.pessoaNome = pessoaObj?.nome || String(pessoaId); // label para exibição na grid
         this.messageService.add({severity:'success', summary:'OK', detail:'Pessoa registrada na lista do evento (pendente de Gravar).'});
     }
 
@@ -212,23 +274,163 @@ export class EventoPageComponent implements OnInit {
 
     onInitNewProduto(event: any) {
         event.data = event.data || {};
-        event.data.produto = null;
+        event.data._produtoObj = null; // usado apenas no editor (AutoComplete)
+        event.data.produto = null;     // manteremos apenas o ID ao salvar
         event.data.status = null;
+    }
+
+    // Busca remota de produtos para o Autocomplete
+    searchProdutos(event: any) {
+        const query = (event?.query || '').trim();
+        const filtro: any = {
+            nome: query || undefined,
+            page: 0,
+            size: 10,
+            sort: 'nome',
+            direction: 'ASC'
+        };
+        this.carregandoProdutos = true;
+        this.produtoService.listar(filtro).subscribe({
+            next: page => {
+                this.produtosSugestoes = page?.content || [];
+                this.carregandoProdutos = false;
+            },
+            error: _ => {
+                this.produtosSugestoes = [];
+                this.carregandoProdutos = false;
+            }
+        });
     }
 
     onSavingProduto(event: any) {
         const row: any = event?.data || {};
         if (!this.vm.model.produtos) this.vm.model.produtos = [];
-        const produtoId = typeof row.produto === 'object' ? row.produto?.id : row.produto;
+        const selected = row._produtoObj ?? row.produto;
+        const produtoId = typeof selected === 'object' ? selected?.id : selected;
         if (!produtoId) {
             this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione o Produto'});
+            event.cancel = true;
             return;
         }
-        const status = row.status || null;
-        const idx = this.vm.model.produtos.findIndex((pr:any) => (pr?.produto?.id || pr?.produto) === produtoId);
-        const novo = { produto: this.produtosOptions.find(p=>p.id===produtoId) || {id: produtoId} as any, status } as EventoProduto;
-        if (idx >= 0) this.vm.model.produtos[idx] = novo; else this.vm.model.produtos.push(novo);
+        const duplicate = this.vm.model.produtos.some((pr:any) => (pr?.produto?.id || pr?.produto) === produtoId && pr !== row);
+        if (duplicate) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Esse produto já está na lista.'});
+            event.cancel = true;
+            return;
+        }
+        const produtoObj = typeof selected === 'object' ? selected : (this.produtosSugestoes.find(p => p.id === produtoId) || this.produtosOptions.find(p => p.id === produtoId));
+        row.produto = produtoId; // mantém ID
+        row.produtoNome = produtoObj?.nome || String(produtoId);
         this.messageService.add({severity:'success', summary:'OK', detail:'Produto registrado na lista do evento (pendente de Gravar).'});
+    }
+
+    // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Pessoa)
+    onEditingStartPessoa(event: any) {
+        const row: any = event?.data || {};
+        const id = typeof row?.pessoa === 'object' ? row.pessoa?.id : row?.pessoa;
+        if (!id) {
+            row._pessoaObj = null;
+            row.pessoa = null;
+            return;
+        }
+        const cached = this.pessoasOptions.find(p => p.id === id);
+        if (cached) {
+            row._pessoaObj = cached;
+            row.pessoa = cached.id;
+            row.pessoaNome = cached.nome;
+            return;
+        }
+        // Busca por id caso não esteja no cache de opções
+        try {
+            this.pessoaService.getById(id).subscribe({
+                next: (p) => { row._pessoaObj = p; row.pessoa = p?.id; row.pessoaNome = p?.nome; },
+                error: () => { const tmp = { id, nome: row?.pessoaNome || String(id) } as any; row._pessoaObj = tmp; row.pessoa = id; row.pessoaNome = tmp.nome; }
+            });
+        } catch {
+            const tmp = { id, nome: row?.pessoaNome || String(id) } as any;
+            row._pessoaObj = tmp;
+            row.pessoa = id;
+            row.pessoaNome = tmp.nome;
+        }
+    }
+
+    // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)
+    onEditingStartProduto(event: any) {
+        const row: any = event?.data || {};
+        const id = typeof row?.produto === 'object' ? row.produto?.id : row?.produto;
+        if (!id) {
+            row._produtoObj = null;
+            row.produto = null;
+            return;
+        }
+        const cached = this.produtosOptions.find(p => p.id === id);
+        if (cached) {
+            row._produtoObj = cached;
+            row.produto = cached.id;
+            row.produtoNome = cached.nome;
+            return;
+        }
+        try {
+            this.produtoService.getById(id).subscribe({
+                next: (p) => { row._produtoObj = p; row.produto = p?.id; row.produtoNome = p?.nome; },
+                error: () => { const tmp = { id, nome: row?.produtoNome || String(id) } as any; row._produtoObj = tmp; row.produto = id; row.produtoNome = tmp.nome; }
+            });
+        } catch {
+            const tmp = { id, nome: row?.produtoNome || String(id) } as any;
+            row._produtoObj = tmp;
+            row.produto = id;
+            row.produtoNome = tmp.nome;
+        }
+    }
+
+    // Sincronização imediata ao selecionar/limpar no AutoComplete (Pessoa)
+    onPessoaSelecionada(row: any, event: any) {
+        try {
+            const item = event?.value ?? row?._pessoaObj;
+            row._pessoaObj = item;
+            row.pessoa = item?.id ?? null;
+            row.pessoaNome = item?.nome ?? '';
+        } catch {}
+    }
+    onPessoaLimpar(row: any) {
+        row._pessoaObj = null;
+        row.pessoa = null;
+        row.pessoaNome = '';
+    }
+
+    // Sincronização imediata ao selecionar/limpar no AutoComplete (Produto)
+    onProdutoSelecionado(row: any, event: any) {
+        try {
+            const item = event?.value ?? row?._produtoObj;
+            row._produtoObj = item;
+            row.produto = item?.id ?? null;
+            row.produtoNome = item?.nome ?? '';
+        } catch {}
+    }
+    onProdutoLimpar(row: any) {
+        row._produtoObj = null;
+        row.produto = null;
+        row.produtoNome = '';
+    }
+
+    // Preenche labels auxiliares para exibição na grid
+    private preencherCamposDeExibicao(): void {
+        try {
+            if (Array.isArray(this.vm.model?.pessoas)) {
+                this.vm.model.pessoas.forEach((ep: any) => {
+                    const id = typeof ep?.pessoa === 'object' ? ep.pessoa?.id : ep?.pessoa;
+                    const obj = this.pessoasOptions.find(p => p.id === id);
+                    ep.pessoaNome = ep.pessoaNome || obj?.nome || (id != null ? String(id) : '');
+                });
+            }
+            if (Array.isArray(this.vm.model?.produtos)) {
+                this.vm.model.produtos.forEach((pr: any) => {
+                    const id = typeof pr?.produto === 'object' ? pr.produto?.id : pr?.produto;
+                    const obj = this.produtosOptions.find(p => p.id === id);
+                    pr.produtoNome = pr.produtoNome || obj?.nome || (id != null ? String(id) : '');
+                });
+            }
+        } catch {}
     }
 
     onDeletingProduto(event: any) {
@@ -241,3 +443,5 @@ export class EventoPageComponent implements OnInit {
 
 
 }
+
+// Helpers de exibição (espaço reservado)

@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.service.api;
 
+import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.filter.BaseFilter;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
 
     @Override
     public Page<T> listar(F filtro) {
+
         Sort.Direction sortDirection = filtro.getDirection().equalsIgnoreCase("ASC")
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
@@ -37,7 +39,9 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
         );
 
         Specification<T> spec = buildSpecification(filtro);
+
         return getSpecificationExecutor().findAll(spec, pageable);
+
     }
 
     @Override

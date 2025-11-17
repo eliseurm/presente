@@ -1,14 +1,17 @@
-// Java
 package br.eng.eliseu.presente.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -22,9 +25,10 @@ public class Evento {
 
     private String descricao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @ManyToOne
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Cliente.class)
     @JsonIdentityReference(alwaysAsId = true)
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
     @Enumerated(EnumType.STRING)
@@ -33,23 +37,33 @@ public class Evento {
     private String anotacoes;
 
     private LocalDateTime inicio;
+
+    @Column(name = "fim_previsto")
     private LocalDateTime fimPrevisto;
+
     private LocalDateTime fim;
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventoProduto> produtos;
+    @Fetch(FetchMode.SUBSELECT)
+    @JsonManagedReference(value = "evento-produtos")
+    private Set<EventoProduto> produtos;
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Fetch(FetchMode.SUBSELECT)
+    @JsonManagedReference(value = "evento-pessoas")
     private List<EventoPessoa> pessoas;
+
+    @Column(name = "criado_em")
+    private LocalDateTime criadoEm;
+
+    @Column(name = "alterado_em")
+    private LocalDateTime alteradoEm;
 
     // Controle de concorrência otimista
     @Version
     private Long version;
 
 
-
-    private LocalDateTime criadoEm;
-    private LocalDateTime alteradoEm;
 
     @PrePersist
     public void prePersist(){

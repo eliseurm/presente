@@ -103,6 +103,7 @@
             [dataSource]="vm.model.pessoas || []"
             [loading]="false"
             (onInitNewRow)="onInitNewPessoa($event)"
+            (onEditingStart)="onEditingStartPessoa($event)"
             (onSaving)="onSavingPessoa($event)"
             (onDeleting)="onDeletingPessoa($event)">
 
@@ -125,24 +126,46 @@
             </erm-editing>
 
             <!-- Colunas -->
-            <erm-column dataField="pessoa" caption="Pessoa"></erm-column>
-            <erm-column dataField="status" caption="Status"></erm-column>
+            <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
+            <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
+            <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoa" cellTemplate="pessoaDisplay"></erm-column>
+            <erm-column dataField="status" caption="Status" editCellTemplate="status" cellTemplate="statusDisplay"></erm-column>
 
             <!-- Templates de edição -->
             <ng-template ermTemplate="pessoa" let-row>
-              <p-select class="w-full"
-                        [options]="pessoasOptions"
-                        optionLabel="nome"
-                        optionValue="id"
-                        [(ngModel)]="row.pessoa"
-                        [ngModelOptions]="{standalone:true}"
-                        placeholder="Selecione"></p-select>
+              <p-autoComplete class="w-full"
+                              [(ngModel)]="row._pessoaObj"
+                              [ngModelOptions]="{standalone:true}"
+                              [suggestions]="pessoasSugestoes"
+                              (completeMethod)="searchPessoas($event)"
+                              (onSelect)="onPessoaSelecionada(row, $event)"
+                              (onClear)="onPessoaLimpar(row)"
+                              (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
+                              optionLabel="nome"
+                              [dropdown]="true"
+                              [forceSelection]="true"
+                              placeholder="Buscar pessoa por nome">
+                <ng-template pTemplate="item" let-item>
+                  {{ item?.nome }}
+                </ng-template>
+                <ng-template pTemplate="selectedItem" let-item>
+                  {{ item?.nome }}
+                </ng-template>
+              </p-autoComplete>
+            </ng-template>
+            <!-- Exibição na célula -->
+            <ng-template ermTemplate="pessoaDisplay" let-row>
+              {{ getPessoaRotulo(row) }}
             </ng-template>
             <ng-template ermTemplate="status" let-row>
               <enum-select class="w-full"
                            [enumObject]="statusEnumType"
                            [(ngModel)]="row.status"
-                           [ngModelOptions]="{standalone:true}"></enum-select>
+                           [ngModelOptions]="{standalone:true}"
+              ></enum-select>
+            </ng-template>
+            <ng-template ermTemplate="statusDisplay" let-row>
+              {{ getStatusDescricao(row?.status) }}
             </ng-template>
           </erm-data-grid>
         </p-tabpanel>
@@ -152,6 +175,7 @@
             [dataSource]="vm.model.produtos || []"
             [loading]="false"
             (onInitNewRow)="onInitNewProduto($event)"
+            (onEditingStart)="onEditingStartProduto($event)"
             (onSaving)="onSavingProduto($event)"
             (onDeleting)="onDeletingProduto($event)">
 
@@ -174,18 +198,36 @@
             </erm-editing>
 
             <!-- Colunas -->
-            <erm-column dataField="produto" caption="Produto"></erm-column>
-            <erm-column dataField="status" caption="Status"></erm-column>
+            <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
+            <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
+            <erm-column dataField="produto" caption="Produto" editCellTemplate="produto" cellTemplate="produtoDisplay"></erm-column>
+            <erm-column dataField="status" caption="Status" editCellTemplate="status" cellTemplate="statusDisplay"></erm-column>
 
             <!-- Templates de edição -->
             <ng-template ermTemplate="produto" let-row>
-              <p-select class="w-full"
-                        [options]="produtosOptions"
-                        optionLabel="nome"
-                        optionValue="id"
-                        [(ngModel)]="row.produto"
-                        [ngModelOptions]="{standalone:true}"
-                        placeholder="Selecione"></p-select>
+              <p-autoComplete class="w-full"
+                              [(ngModel)]="row._produtoObj"
+                              [ngModelOptions]="{standalone:true}"
+                              [suggestions]="produtosSugestoes"
+                              (completeMethod)="searchProdutos($event)"
+                              (onSelect)="onProdutoSelecionado(row, $event)"
+                              (onClear)="onProdutoLimpar(row)"
+                              (onBlur)="onProdutoSelecionado(row, { value: row._produtoObj })"
+                              optionLabel="nome"
+                              [dropdown]="true"
+                              [forceSelection]="true"
+                              placeholder="Buscar produto por nome">
+                <ng-template pTemplate="item" let-item>
+                  {{ item?.nome }}
+                </ng-template>
+                <ng-template pTemplate="selectedItem" let-item>
+                  {{ item?.nome }}
+                </ng-template>
+              </p-autoComplete>
+            </ng-template>
+            <!-- Exibição na célula -->
+            <ng-template ermTemplate="produtoDisplay" let-row>
+              {{ getProdutoRotulo(row) }}
             </ng-template>
             <ng-template ermTemplate="status" let-row>
               <enum-select class="w-full"

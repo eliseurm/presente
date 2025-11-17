@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,31 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    // Garante inicialização das coleções com Open-Session-In-View desabilitado
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Produto> listar(ProdutoFilter filtro) {
+        var page = super.listar(filtro);
+        page.getContent().forEach(p -> {
+            if (p.getCores() != null) p.getCores().size();
+            if (p.getTamanhos() != null) p.getTamanhos().size();
+            if (p.getImagens() != null) p.getImagens().size();
+        });
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Produto> buscarPorId(Long id) {
+        var opt = super.buscarPorId(id);
+        opt.ifPresent(p -> {
+            if (p.getCores() != null) p.getCores().size();
+            if (p.getTamanhos() != null) p.getTamanhos().size();
+            if (p.getImagens() != null) p.getImagens().size();
+        });
+        return opt;
     }
 
     private void anexarReferencias(Produto entidade) {
