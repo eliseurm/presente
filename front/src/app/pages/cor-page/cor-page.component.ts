@@ -1,36 +1,24 @@
 
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ColorPickerModule } from 'primeng/colorpicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import {
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmPopupComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmColumnComponent,
-    ErmValidationRuleComponent,
-    ErmTemplateDirective
-} from '../../shared/components/erm-data-grid';
 import { CrudFilterComponent } from '../../shared/components/crud-filter/crud-filter.component';
-import { CrudBaseComponent } from '../../shared/components/crud-base/crud-base.component';
 import { CorService } from '../../services/cor.service';
 import { FilterField } from '../../shared/components/crud-filter/filter-field';
 import {Cor} from "@/shared/model/cor";
 import {CorFilter} from "@/shared/model/filter/cor-filter";
-import {Imagem} from "@/shared/model/imagem";
-import {ImagemFilter} from "@/shared/model/filter/imagem-filter";
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import {Evento} from "@/shared/model/evento";
-import {EventoFilter} from "@/shared/model/filter/evento-filter";
+import { CrudComponent } from '@/shared/crud/crud.component';
+import { TableModule } from 'primeng/table';
+import { CorCrudVM } from './cor-crud.vm';
 
 @Component({
     selector: 'cor-page',
@@ -38,30 +26,25 @@ import {EventoFilter} from "@/shared/model/filter/evento-filter";
     imports: [
         CommonModule,
         FormsModule,
-        CardModule,
         ButtonModule,
         ColorPickerModule,
         InputTextModule,
         ToastModule,
         CrudFilterComponent,
-        ErmDataGridComponent,
-        ErmEditingComponent,
-        ErmPopupComponent,
-        ErmFormComponent,
-        ErmItemComponent,
-        ErmColumnComponent,
-        ErmValidationRuleComponent,
-        ErmTemplateDirective
+        CrudComponent,
+        TableModule
     ],
     templateUrl: './cor-page.component.html',
     styleUrls: [
         '../../shared/components/crud-base/crud-base.component.scss',
         './cor-page.component.scss'
     ],
-    providers: [MessageService]
+    providers: [MessageService, CorCrudVM]
 })
 @CrudMetadata("EventoPageComponent", [Cor, CorFilter])
-export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
+export class CorPageComponent  {
+
+    @ViewChild('crudRef') crudRef?: CrudComponent<Cor, CorFilter>;
 
     readonly filterFields: FilterField[] = [
         {
@@ -72,99 +55,24 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         }
     ];
 
-    constructor(corService: CorService,
-                messageService: MessageService
-    ) {
-        super(corService, messageService, null as any);
+    constructor(
+        public vm: CorCrudVM,
+        private corService: CorService,
+        private messageService: MessageService,
+        private router: Router
+    ) {}
+
+    ngOnInit(): void {
+        this.vm.init();
     }
 
-    override isFormularioValido(): boolean {
-        return !!(this.model.nome?.trim() && this.model.corHex);
+    onPage(event: any) {
+        this.vm.filter.page = event.page;
+        this.vm.filter.size = event.rows;
+        this.vm.doFilter().subscribe();
     }
 
-    carregarCores() {
-        this.loading = true;
-        this.service.listar(this.filter).subscribe({
-            next: (response) => {
-                this.dataSource = response.content;
-                this.totalRecords = response.totalElements;
-                this.loading = false;
-            },
-            error: (error) => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Erro',
-                    detail: 'Erro ao carregar cores'
-                });
-                this.loading = false;
-            }
-        });
-    }
-
-    onInitNewRow(event: any) {
-        const hexInicial = '#000000';
-        event.data.corHex = hexInicial;
-        event.data.corRgbA = this.hexToRgba(hexInicial);
-    }
-
-    onSavingCor(event: any) {
-        const data = event.data;
-
-        if (!data.nome || !data.nome.trim()) {
-            return;
-        }
-
-        // Garante que temos o RGBA
-        if (!data.corRgbA && data.corHex) {
-            data.corRgbA = this.hexToRgba(data.corHex);
-        }
-
-        if (event.isNew) {
-            this.service.criar(data).subscribe({
-                next: () => {
-                    this.carregarCores();
-                },
-                error: (error) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erro',
-                        detail: 'Erro ao Salvar!!'
-                    });
-                }
-            });
-        } else {
-            this.service.atualizar(data.id, data).subscribe({
-                next: () => {
-                    this.carregarCores();
-                },
-                error: (error) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erro',
-                        detail: 'Erro ao atualizar!!'
-                    });
-                }
-            });
-        }
-    }
-
-    onDeletingCor(event: any) {
-        const data = event.data;
-        this.service.deletar(data.id).subscribe({
-            next: () => {
-                this.carregarCores();
-            },
-            error: (error) => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Erro',
-                    detail: 'Erro ao excluir!!'
-                });
-            }
-        });
-    }
-
-    onColorChange(cor: Cor, event: any) {
+    onColorChange(cor: any, event: any) {
         const color = typeof event === 'string' ? event : event?.value || event;
 
         if (color && typeof color === 'string') {
@@ -174,7 +82,7 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         }
     }
 
-    onHexChange(cor: Cor, hex: string) {
+    onHexChange(cor: any, hex: string) {
         if (hex && typeof hex === 'string') {
             cor.corRgbA = this.hexToRgba(hex);
         }
@@ -201,13 +109,10 @@ export class CorPageComponent extends CrudBaseComponent<Cor, CorFilter> {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    override filtrar() {
-        this.filter.page = 0;
-        this.carregarCores();
+    onClearFilters() {
+        this.vm.filter = this.vm['newFilter']();
+        this.vm.doFilter().subscribe();
     }
 
-    override limpar() {
-        super.limpar();
-        this.carregarCores();
-    }
+    onCloseCrud() { this.router.navigate(['/']); }
 }

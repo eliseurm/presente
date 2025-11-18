@@ -31,7 +31,7 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
   @Input() showListFilterButton = true;
   @Input() showListNewButton = true;
   @Input() showListClearButton = true;
-  @Input() showListCloseButton = false;
+  @Input() showListCloseButton = true;
 
   @Input() showEditSaveButton = true;
   @Input() showEditCancelButton = true;
@@ -87,7 +87,10 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
     this.parent?.doFilter().subscribe();
   }
 
-  onListToolbarCloseButtonAction() { this.closeButtonAction.emit(); }
+  onListToolbarCloseButtonAction() {
+    try { (this.parent as any)?.onListCloseRequested?.(); } catch {}
+    this.closeButtonAction.emit();
+  }
 
   // Edit toolbar actions
 

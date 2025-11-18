@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import br.eng.eliseu.presente.config.json.LenientObjectIdResolver;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.*;
@@ -26,7 +27,7 @@ public class Evento {
     private String descricao;
 
     @ManyToOne
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Cliente.class)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Cliente.class, resolver = LenientObjectIdResolver.class)
     @JsonIdentityReference(alwaysAsId = true)
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;

@@ -1,60 +1,75 @@
-<div class="crud-container">
+<crud #crudRef [parent]="vm" [listToolbarTitle]="'Pessoas'" [editToolbarTitle]="'Editar Pessoa'"
+      [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
+
+  <!-- Filtros -->
+  <div crud-list-filter-fields class="w-full text-left">
     <crud-filter
-        [filter]="filter"
-        [fields]="filterFields"
-        [loading]="loading"
-        (onSearch)="filtrar()"
-        (onClear)="limpar()"
-    />
+      [filter]="vm.filter"
+      [fields]="filterFields"
+      [loading]="false"
+      (onSearch)="vm.doFilter().subscribe()"
+      (onClear)="onClearFilters()"
+    ></crud-filter>
+  </div>
 
-    <p-card class="results-card">
-        <ng-template pTemplate="header">
-            <div class="card-header-content">
-                <h3>Lista de Pessoas</h3>
-            </div>
-        </ng-template>
+  <!-- Grid de listagem -->
+  <div crud-list-grid class="w-full">
+    <p-table [value]="vm.dataSource"
+             [paginator]="true"
+             [rows]="vm.filter.size || 10"
+             [totalRecords]="vm.totalRecords"
+             [lazy]="false"
+             responsiveLayout="scroll"
+             (onPage)="onPage($event)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th style="width:1%">Ações</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr (dblclick)="crudRef.onRowDblClick(row)">
+          <td>{{ row?.nome }}</td>
+          <td>{{ row?.email }}</td>
+          <td>{{ row?.telefone }}</td>
+          <td>{{ row?.status }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                    (click)="crudRef.onRowDblClick(row)"></button>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
+                    (click)="onDeleteRow(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-        <erm-data-grid
-            [dataSource]="dataSource"
-            [loading]="loading"
-            (onInitNewRow)="onInitNewRow($event)"
-            (onSaving)="onSavingItem($event)"
-            (onDeleting)="onDeletingItem($event)">
+  <!-- Formulário de edição -->
+  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Nome *</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">E-mail *</label>
+        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email" />
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Telefone</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone" />
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Status</label>
+        <p-select class="w-full" [options]="statusOptions" optionLabel="label" optionValue="value"
+                  [(ngModel)]="vm.model.status" name="status" placeholder="Selecione"></p-select>
+      </div>
+    </div>
+  </div>
 
-            <erm-editing
-                mode="popup"
-                [allowAdding]="true"
-                [allowUpdating]="true"
-                [allowDeleting]="true"
-                [confirmDelete]="true">
+</crud>
 
-                <erm-popup
-                    title="Gerenciar Pessoa"
-                    [showTitle]="true"
-                    width="700px"
-                    height="auto">
-                </erm-popup>
-
-                <erm-form [colCount]="2">
-                    <erm-item dataField="nome" label="Nome">
-                        <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
-                    </erm-item>
-                    <erm-item dataField="email" label="E-mail">
-                        <erm-validation-rule type="required" message="E-mail é obrigatório"></erm-validation-rule>
-                    </erm-item>
-                    <erm-item dataField="telefone" label="Telefone"></erm-item>
-                    <erm-item dataField="status" label="Status">
-                        <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
-                    </erm-item>
-                </erm-form>
-            </erm-editing>
-
-            <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-            <erm-column dataField="nome" caption="Nome"></erm-column>
-            <erm-column dataField="email" caption="E-mail"></erm-column>
-            <erm-column dataField="telefone" caption="Telefone"></erm-column>
-            <erm-column dataField="status" caption="Status"></erm-column>
-        </erm-data-grid>
-    </p-card>
-    <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-</div>
+<p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import br.eng.eliseu.presente.config.json.LenientObjectIdResolver;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class EventoProduto {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "produto_id", nullable = false)
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Produto.class)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Produto.class, resolver = LenientObjectIdResolver.class)
     @JsonIdentityReference(alwaysAsId = true)
     private Produto produto;
 

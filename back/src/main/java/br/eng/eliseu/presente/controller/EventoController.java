@@ -47,13 +47,8 @@ public class EventoController {
             Evento atualizado = eventoService.atualizar(id, evento);
             return ResponseEntity.ok(atualizado);
         } catch (RuntimeException e) {
-            // Fallback de upsert: se não existir, cria um novo registro
-            try {
-                Evento criado = eventoService.criar(evento);
-                return ResponseEntity.ok(criado);
-            } catch (RuntimeException ex) {
-                return ResponseEntity.notFound().build();
-            }
+            // Não fazer upsert aqui: comportamento correto é retornar 404 quando não encontrado
+            return ResponseEntity.notFound().build();
         }
     }
 

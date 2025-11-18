@@ -244,31 +244,31 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         // Pessoas
         if (entidade.getPessoas() != null) {
-            List<EventoPessoa> normalizadas = new ArrayList<>();
+            // Deduplica por pessoaId (última ocorrência prevalece)
+            Map<Long, EventoPessoa> byPessoa = new LinkedHashMap<>();
             for (EventoPessoa ep : entidade.getPessoas()) {
                 if (ep == null) continue;
-                ep.setEvento(entidade);
                 Long pessoaId = ep.getPessoa() != null ? ep.getPessoa().getId() : null;
-                if (pessoaId != null) {
-                    pessoaRepository.findById(pessoaId).ifPresent(ep::setPessoa);
-                    normalizadas.add(ep);
-                }
+                if (pessoaId == null) continue;
+                // Converte referência para gerenciada
+                pessoaRepository.findById(pessoaId).ifPresent(ep::setPessoa);
+                byPessoa.put(pessoaId, ep);
             }
-            entidade.setPessoas(normalizadas);
+            entidade.setPessoas(new ArrayList<>(byPessoa.values()));
+            // back-reference será ajustada no prepararParaAtualizacao para a entidadeExistente
         }
         // Produtos (agora Set para evitar 'bag')
         if (entidade.getProdutos() != null) {
             Set<EventoProduto> normalizadas = new HashSet<>();
             for (EventoProduto eprod : entidade.getProdutos()) {
                 if (eprod == null) continue;
-                eprod.setEvento(entidade);
                 Long produtoId = eprod.getProduto() != null ? eprod.getProduto().getId() : null;
-                if (produtoId != null) {
-                    produtoRepository.findById(produtoId).ifPresent(eprod::setProduto);
-                    normalizadas.add(eprod);
-                }
+                if (produtoId == null) continue;
+                produtoRepository.findById(produtoId).ifPresent(eprod::setProduto);
+                normalizadas.add(eprod);
             }
             entidade.setProdutos(normalizadas);
+            // back-reference será ajustada no prepararParaAtualizacao para a entidadeExistente
         }
     }
 
@@ -299,14 +299,21 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
         entidadeExistente.getPessoas().clear();
         if (entidade.getPessoas() != null) {
-            entidadeExistente.getPessoas().addAll(entidade.getPessoas());
+            for (EventoPessoa ep : entidade.getPessoas()) {
+                // garante back-reference correta para a entidade gerenciada
+                ep.setEvento(entidadeExistente);
+                entidadeExistente.getPessoas().add(ep);
+            }
         }
         if (entidadeExistente.getProdutos() == null) {
             entidadeExistente.setProdutos(new HashSet<>());
         }
         entidadeExistente.getProdutos().clear();
         if (entidade.getProdutos() != null) {
-            entidadeExistente.getProdutos().addAll(entidade.getProdutos());
+            for (EventoProduto eprod : entidade.getProdutos()) {
+                eprod.setEvento(entidadeExistente);
+                entidadeExistente.getProdutos().add(eprod);
+            }
         }
     }
 

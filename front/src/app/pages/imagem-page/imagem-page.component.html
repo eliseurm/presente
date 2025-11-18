@@ -1,64 +1,74 @@
-<div class="crud-container">
-  <crud-filter
-    [filter]="filter"
-    [fields]="filterFields"
-    [loading]="loading"
-    (onSearch)="filtrar()"
-    (onClear)="limpar()"
-  />
+<crud #crudRef [parent]="vm" [listToolbarTitle]="'Imagens'" [editToolbarTitle]="'Editar Imagem'"
+      [collapsibleFilters]="true" [showListCloseButton]="true"
+      (saveButtonAction)="onBeforeSaveHandleUpload()"
+      (closeButtonAction)="onCloseCrud()">
 
-  <p-card class="results-card">
-    <ng-template pTemplate="header">
-      <div class="card-header-content">
-        <h3>Lista de Imagens</h3>
-      </div>
-    </ng-template>
+  <!-- Filtros -->
+  <div crud-list-filter-fields class="w-full text-left">
+    <crud-filter
+      [filter]="vm.filter"
+      [fields]="filterFields"
+      [loading]="false"
+      (onSearch)="vm.doFilter().subscribe()"
+      (onClear)="vm.filter = vm['newFilter'](); vm.doFilter().subscribe()"
+    ></crud-filter>
+  </div>
 
-    <erm-data-grid
-      [dataSource]="dataSource"
-      [loading]="loading"
-      (onInitNewRow)="onInitNewRow($event)"
-      (onSaving)="onSavingItem($event)"
-      (onDeleting)="onDeletingItem($event)">
-
-      <erm-editing
-        mode="popup"
-        [allowAdding]="true"
-        [allowUpdating]="true"
-        [allowDeleting]="true"
-        [confirmDelete]="true">
-
-        <erm-popup title="Gerenciar Imagem" [showTitle]="true" width="700px" height="auto"></erm-popup>
-
-        <erm-form [colCount]="1">
-          <erm-item dataField="nome" label="Nome">
-            <erm-validation-rule type="required" message="Nome é obrigatório"></erm-validation-rule>
-          </erm-item>
-          <erm-item dataField="thumb" label="Arquivo" editorType="template" editCellTemplate="fileEditor"></erm-item>
-        </erm-form>
-      </erm-editing>
-
-      <erm-column dataField="id" caption="ID" [visible]="false"></erm-column>
-      <erm-column dataField="nome" caption="Nome"></erm-column>
-      <erm-column dataField="thumb" caption="Imagem" cellTemplate="thumbTemplate" editCellTemplate="fileEditor"></erm-column>
-
-      <ng-template ermTemplate="thumbTemplate" let-data="data">
-        <img *ngIf="getThumbUrl(data) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
+  <!-- Grid de listagem -->
+  <div crud-list-grid class="w-full">
+    <p-table [value]="vm.dataSource"
+             [paginator]="true"
+             [rows]="vm.filter.size || 10"
+             [totalRecords]="vm.totalRecords"
+             [lazy]="false"
+             responsiveLayout="scroll"
+             (onPage)="onPage($event)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>Imagem</th>
+          <th style="width:1%">Ações</th>
+        </tr>
       </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr (dblclick)="crudRef.onRowDblClick(row)">
+          <td>{{ row?.nome }}</td>
+          <td>
+            <img *ngIf="getThumbUrl(row) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
+          </td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                    (click)="crudRef.onRowDblClick(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-      <ng-template ermTemplate="fileEditor" let-data="data">
-        <div class="field" style="display:flex;align-items:center;gap:12px;">
+  <!-- Formulário de edição -->
+  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Nome *</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
+      </div>
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">Arquivo</label>
+        <div class="flex items-center gap-3">
           <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none" />
-          <p-button label="Selecionar Imagem" icon="pi pi-upload" (onClick)="fileInput.click()"></p-button>
+          <button pButton type="button" label="Selecionar Imagem" icon="pi pi-upload" (click)="fileInput.click()"></button>
           <span *ngIf="tempFile?.name" style="font-size:0.9rem;color:#555;">{{ tempFile?.name }}</span>
+        </div>
+        <div class="flex gap-4 items-start mt-2">
           <img *ngIf="previewUrl; else currentPreview" [src]="previewUrl" alt="preview" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
           <ng-template #currentPreview>
-            <img *ngIf="getThumbUrl(data) as src" [src]="src" alt="atual" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
+            <img *ngIf="getThumbUrl(vm.model) as src" [src]="src" alt="atual" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
           </ng-template>
         </div>
-      </ng-template>
+      </div>
+    </div>
+  </div>
 
-    </erm-data-grid>
-  </p-card>
-  <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-</div>
+</crud>
+
+<p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>

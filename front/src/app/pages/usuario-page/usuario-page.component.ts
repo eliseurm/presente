@@ -1,35 +1,24 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 
-import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
 import { UsuarioService } from '@/services/usuario.service';
 import { Usuario } from '@/shared/model/usuario';
 import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
 import { FilterField } from '@/shared/components/crud-filter/filter-field';
 import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
-import {
-  ErmColumnComponent,
-  ErmDataGridComponent,
-  ErmEditingComponent,
-  ErmFormComponent,
-  ErmItemComponent,
-  ErmPopupComponent,
-  ErmTemplateDirective,
-  ErmValidationRuleComponent
-} from '@/shared/components/erm-data-grid';
 import { EnumSelectComponent } from '@/shared/components/enum-select/enum-select.component';
 import { PapelEnum } from '@/shared/model/enum/papel.enum';
 import { StatusEnum } from '@/shared/model/enum/status.enum';
-import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
-import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import {Tamanho} from "@/shared/model/tamanho";
-import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
+import { CrudMetadata } from '@/shared/core/crud.metadata.decorator';
+import { CrudComponent } from '@/shared/crud/crud.component';
+import { TableModule } from 'primeng/table';
+import { UsuarioCrudVM } from './usuario-crud.vm';
 
 @Component({
   selector: 'usuario-page',
@@ -37,45 +26,26 @@ import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
   imports: [
     CommonModule,
     FormsModule,
-    CardModule,
     ButtonModule,
     InputTextModule,
     ToastModule,
     CrudFilterComponent,
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmPopupComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmColumnComponent,
-    ErmValidationRuleComponent,
-    ErmTemplateDirective,
+    CrudComponent,
+    TableModule,
     EnumSelectComponent
   ],
   templateUrl: './usuario-page.component.html',
   styleUrls: [
     '../../shared/components/crud-base/crud-base.component.scss'
   ],
-  providers: [MessageService]
+  providers: [MessageService, UsuarioCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [Usuario, UsuarioFilter])
-export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilter> {
+@CrudMetadata('UsuarioPageComponent', [Usuario, UsuarioFilter])
+export class UsuarioPageComponent {
+  @ViewChild('crudRef') crudRef?: CrudComponent<Usuario, UsuarioFilter>;
 
-  // Expor enums para o template
   papelEnumType: any = PapelEnum;
   statusEnumType: any = StatusEnum;
-
-  // Usar opções compatíveis com backend (usa toString no enum -> nomes em Português)
-  // readonly papelOptions = [
-  //   { label: 'Administrador', value: 'Administrador' },
-  //   { label: 'Cliente', value: 'Cliente' },
-  //   { label: 'Usuário', value: 'Usuário' }
-  // ];
-  // readonly statusOptions = [
-  //   { label: 'Ativo', value: 'Ativo' },
-  //   { label: 'Pausado', value: 'Pausado' },
-  //   { label: 'Encerrado', value: 'Encerrado' }
-  // ];
 
   readonly filterFields: FilterField[] = [
     { key: 'username', label: 'Usuário', type: 'text', placeholder: 'Filtrar por usuário' },
@@ -83,105 +53,37 @@ export class UsuarioPageComponent extends CrudBaseComponent<Usuario, UsuarioFilt
     { key: 'status', label: 'Status', type: 'enum', placeholder: 'Selecione o status', enumObject: StatusEnum, optionLabel: 'descricao' }
   ];
 
+  constructor(
+    public vm: UsuarioCrudVM,
+    private usuarioService: UsuarioService,
+    private messageService: MessageService,
+    private router: Router
+  ) {}
 
-    constructor(
-    service: UsuarioService,
-    messageService: MessageService
-  ) {
-    super(service, messageService, null as any);
+  ngOnInit(): void { this.vm.init(); }
+
+  onPage(event: any) {
+    this.vm.filter.page = event.page;
+    this.vm.filter.size = event.rows;
+    this.vm.doFilter().subscribe();
   }
 
-  override isFormularioValido(): boolean {
-    return !!(this.model?.username?.trim());
+  onClearFilters() {
+    this.vm.filter = this.vm['newFilter']();
+    this.vm.doFilter().subscribe();
   }
 
-  // Normaliza os dados carregados para que os campos de enum fiquem compatíveis com o editor
-  override carregarDataSource(): void {
-    this.loading = true;
-    this.service.listar(this.filter).subscribe({
-      next: (response: any) => {
-        const content = response?.content || [];
-        const papelValues = Object.values(PapelEnum) as any[];
-        const statusValues = Object.values(StatusEnum) as any[];
-        this.dataSource = content.map((item: any) => {
-          const novo: any = { ...item };
-          // Mapear papel/status strings -> objetos do enum
-          if (novo?.papel && typeof novo.papel === 'string') {
-            const str = novo.papel as string;
-            // Tenta por key exata
-            let found = (PapelEnum as any)[str];
-            if (!found) {
-              const alvo = str.toLowerCase();
-              // Tenta por descricao (case-insensitive)
-              found = papelValues.find(v => (v.descricao || '').toLowerCase() === alvo);
-            }
-            novo.papel = found || { key: str, descricao: str };
-          }
-          if (novo?.status && typeof novo.status === 'string') {
-            const str = novo.status as string;
-            let found = (StatusEnum as any)[str];
-            if (!found) {
-              const alvo = str.toLowerCase();
-              found = statusValues.find(v => (v.descricao || '').toLowerCase() === alvo);
-            }
-            novo.status = found || { key: str, descricao: str };
-          }
-          return novo;
-        });
-        this.totalRecords = response?.totalElements ?? content.length;
-        this.loading = false;
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail: `Erro ao carregar Informaçoes` });
-        this.loading = false;
-      }
-    });
-  }
-
-  onSavingItem(event: any) {
-    const data: any = event.data as any;
-
-    const id = data?.id;
-
-    // Normaliza enums para enviar os valores esperados pelo backend (usa toString -> nomes PT-BR)
-    const papelVal = data?.papel;
-    const statusVal = data?.status;
-
-    const papelDesc = typeof papelVal === 'object' && papelVal ? (papelVal.descricao || papelVal.key || papelVal) : papelVal;
-    const statusDesc = typeof statusVal === 'object' && statusVal ? (statusVal.descricao || statusVal.key || statusVal) : statusVal;
-
-    const payload: any = {
-      id,
-      username: data?.username,
-      senha: data?.senha,
-      papel: papelDesc || undefined,
-      status: statusDesc || undefined
-    };
-
-    const op$ = id ? this.service.atualizar(id, payload) : this.service.criar(payload);
-    op$.subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregarDataSource();
-      },
-      error: (error) => {
-        const detail = error?.error?.message || 'Erro ao salvar usuário';
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail });
-      }
-    });
-  }
-
-  onDeletingItem(event: any) {
-    const id = (event?.data as any)?.id;
+  onDeleteRow(row: any) {
+    const id = row?.id;
     if (!id) return;
-    this.service.deletar(id).subscribe({
+    this.usuarioService.deletar(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
-        this.carregarDataSource();
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Excluído com sucesso' });
+        this.vm.doFilter().subscribe();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir usuário' })
     });
   }
 
-    protected readonly tipoProdutoEnumType = ProdutoTipoEnum;
+  onCloseCrud() { this.router.navigate(['/']); }
 }

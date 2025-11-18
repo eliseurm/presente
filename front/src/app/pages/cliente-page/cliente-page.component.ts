@@ -1,35 +1,25 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 
-import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
 import { ClienteService } from '@/services/cliente.service';
 import { Cliente } from '@/shared/model/cliente';
 import { ClienteFilter } from '@/shared/model/filter/cliente-filter';
 import { FilterField } from '@/shared/components/crud-filter/filter-field';
 
 import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
-import {
-  ErmColumnComponent,
-  ErmDataGridComponent,
-  ErmEditingComponent,
-  ErmFormComponent,
-  ErmItemComponent,
-  ErmPopupComponent,
-  ErmTemplateDirective,
-  ErmValidationRuleComponent
-} from '@/shared/components/erm-data-grid';
 import { SelectModule } from 'primeng/select';
 import { UsuarioService } from '@/services/usuario.service';
 import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import {Cor} from "@/shared/model/cor";
-import {CorFilter} from "@/shared/model/filter/cor-filter";
+import { CrudComponent } from '@/shared/crud/crud.component';
+import { TableModule } from 'primeng/table';
+import { ClienteCrudVM } from './cliente-crud.vm';
 
 @Component({
   selector: 'cliente-page',
@@ -37,27 +27,22 @@ import {CorFilter} from "@/shared/model/filter/cor-filter";
   imports: [
     CommonModule,
     FormsModule,
-    CardModule,
     ButtonModule,
     InputTextModule,
     ToastModule,
     CrudFilterComponent,
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmPopupComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmColumnComponent,
-    ErmValidationRuleComponent,
-    ErmTemplateDirective,
+    CrudComponent,
+    TableModule,
     SelectModule
   ],
   templateUrl: './cliente-page.component.html',
   styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],
-  providers: [MessageService]
+  providers: [MessageService, ClienteCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [Cliente, ClienteFilter])
-export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilter> {
+@CrudMetadata("ClientePageComponent", [Cliente, ClienteFilter])
+export class ClientePageComponent  {
+
+  @ViewChild('crudRef') crudRef?: CrudComponent<Cliente, ClienteFilter>;
 
   usuariosOptions: { label: string; value: number }[] = [];
 
@@ -68,15 +53,15 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
   ];
 
   constructor(
-    service: ClienteService,
-    messageService: MessageService,
-    private usuarioService: UsuarioService
-  ) {
-    super(service, messageService, null as any);
-  }
+    public vm: ClienteCrudVM,
+    private clienteService: ClienteService,
+    private usuarioService: UsuarioService,
+    private messageService: MessageService,
+    private router: Router
+  ) {}
 
-  override ngOnInit(): void {
-    super.ngOnInit?.();
+  ngOnInit(): void {
+    this.vm.init();
     // Carrega usuários para o select-box
     const filtroUsuarios = new UsuarioFilter({ page: 0, size: 1000, sort: 'id', direction: 'ASC', papel: 'CLIENTE' });
     this.usuarioService.listar(filtroUsuarios).subscribe({
@@ -91,35 +76,38 @@ export class ClientePageComponent extends CrudBaseComponent<Cliente, ClienteFilt
     });
   }
 
-  override isFormularioValido(): boolean {
-    return !!(this.model?.nome?.trim());
+  onPage(event: any) {
+    this.vm.filter.page = event.page;
+    this.vm.filter.size = event.rows;
+    this.vm.doFilter().subscribe();
   }
 
-  onSavingItem(event: any) {
-    const data: Cliente = event.data as Cliente;
-    const id = (data as any).id;
-    const op$ = id ? this.service.atualizar(id, data) : this.service.criar(data);
-    op$.subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado ${id ? 'atualizado' : 'criado'} com sucesso` });
-        this.carregarDataSource();
-      },
-      error: (error) => {
-        const detail = error?.error?.message || 'Erro ao salvar cliente';
-        this.messageService.add({ severity: 'error', summary: 'Erro', detail });
-      }
-    });
+  onClearFilters() {
+    this.vm.filter = this.vm['newFilter']();
+    this.vm.doFilter().subscribe();
   }
 
-  onDeletingItem(event: any) {
-    const id = (event?.data as any)?.id;
+  onDeleteRow(row: any) {
+    const id = row?.id;
     if (!id) return;
-    this.service.deletar(id).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
-        this.carregarDataSource();
-      },
+    this.clienteService.deletar(id).subscribe({
+      next: () => { this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Excluído com sucesso' }); this.vm.doFilter().subscribe(); },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir cliente' })
     });
   }
+
+  // Evita erro de template TS2339 ao acessar .id quando o modelo pode ser number | object
+  getUsuarioIdFromModel(): number | null {
+    try {
+      const u: any = (this.vm as any)?.model?.['usuario'];
+      if (!u) return null;
+      if (typeof u === 'number') return u;
+      if (typeof u === 'object') return u.id ?? null;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  onCloseCrud() { this.router.navigate(['/']); }
 }

@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -69,6 +70,7 @@ export class ProdutoPageComponent  {
     private tamanhoService: TamanhoService,
     private imagemService: ImagemService,
     private messageService: MessageService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -107,9 +109,7 @@ export class ProdutoPageComponent  {
     this.vm.doFilter().subscribe();
   }
 
-  onCloseCrud() {
-    // Caso exista navegação de fechamento, pode ser tratada aqui
-  }
+  onCloseCrud() { this.router.navigate(['/']); }
 
   onInitNewRow(event: any) {
     event.data.status = true;
