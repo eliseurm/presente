@@ -23,7 +23,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             const isAuthRoute = router.url?.startsWith('/auth');
             const isAssets = (error.url || '').includes('/assets/');
 
-            if ((error.status === 401 || error.status === 403) && !isAuthRoute && !isAssets) {
+            // Em 401: sessão inválida/expirada → limpar credenciais e redirecionar para login
+            if (error.status === 401 && !isAuthRoute && !isAssets) {
                 if (!isRedirectingToLogin) {
                     isRedirectingToLogin = true;
 
@@ -48,6 +49,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                     });
                 }
             }
+
+            // Em 403: acesso negado → não limpar token nem redirecionar automaticamente
+            // Deixa o componente/tela tratar a mensagem conforme necessário
+
             return throwError(() => error);
         })
     );

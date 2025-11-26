@@ -19,6 +19,20 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     this.filter = this.newFilter();
   }
 
+  // Evita que a listagem inicial dispare sem clienteId (pois CLIENTE precisa do escopo)
+  // Mantemos o carregamento por ID quando a rota possuir :id
+  override init(): void {
+    this.newModelIfNull();
+    this.newFilterIfNull();
+    this.loadFromStorage();
+    const id = this.route?.snapshot.paramMap.get('id');
+    if (id) {
+      this.onIdParam(id);
+    }
+    // Caso não haja :id, não chamamos doFilter automaticamente aqui.
+    // A tela (EventoPage) chamará doFilter após selecionar/definir clienteId.
+  }
+
   protected newModel(): Evento {
     return {
       id: undefined,

@@ -4,6 +4,9 @@ import { AbstractCrud } from '@/shared/crud/abstract.crud';
 import { Cliente } from '@/shared/model/cliente';
 import { ClienteFilter } from '@/shared/model/filter/cliente-filter';
 import { ClienteService } from '@/services/cliente.service';
+import { AuthService } from '@/pages/auth/auth-service';
+import { Observable, of } from 'rxjs';
+import { PageResponse } from '@/shared/model/page-response';
 
 @Injectable()
 export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
@@ -11,6 +14,7 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
     port: ClienteService,
     route: ActivatedRoute,
     router: Router,
+    private auth: AuthService,
   ) {
     super(port, route, router);
     this.model = this.newModel();
@@ -41,6 +45,22 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
   }
 
   override doSave() {
+    // CLIENTE só pode editar Nome; não pode criar
+    if (this.auth.isCliente()) {
+      const id = (this.model as any)?.id;
+      if (!id) {
+        // bloqueia criação
+        this.errorsVisible = true;
+        this.errorMessages = ['Ação não permitida: CLIENTE não pode criar clientes.'];
+        // Retorna observable vazio para compatibilidade
+        return of(undefined as any);
+      }
+      const payload: any = { id, nome: (this.model as any)?.nome, status: (this.model as any)?.['status'] };
+      this.model = payload;
+      return super.doSave();
+    }
+
+    // ADMIN mantém comportamento completo
     const payload: any = { ...this.model } as any;
     const u = (this.model as any)?.usuario;
     if (u) {
@@ -49,5 +69,63 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
     }
     this.model = payload;
     return super.doSave();
+  }
+
+  // CLIENTE não pode listar globalmente: usa /cliente/me e adapta o PageResponse para a grid
+  override doFilter(): Observable<PageResponse<Cliente>> {
+    if (this.auth.isCliente()) {
+      return new Observable<PageResponse<Cliente>>((subscriber) => {
+        (this.port as ClienteService).getMe().subscribe({
+          next: (list) => {
+            const page: PageResponse<Cliente> = {
+              content: list || [],
+              totalElements: (list || []).length,
+              totalPages: 1,
+              number: 0,
+              size: (list || []).length,
+              first: true,
+              last: true,
+              numberOfElements: (list || []).length,
+            } as any;
+            this.dataSource = page.content;
+            this.totalRecords = page.totalElements;
+            this.saveToStorage();
+            subscriber.next(page);
+            subscriber.complete();
+          },
+          error: (err) => {
+            // Delega tratamento ao handler base
+            const empty = { content: [], totalElements: 0 } as any as PageResponse<Cliente>;
+            subscriber.next(empty);
+            subscriber.complete();
+          }
+        });
+      });
+    }
+    return super.doFilter();
+  }
+
+  // CLIENTE não pode criar novos clientes
+  override doCreateNew(): void {
+    if (this.auth.isCliente()) {
+      // Bloqueia criação para CLIENTE
+      this.errorsVisible = true;
+      this.errorMessages = ['Ação não permitida para seu perfil (CLIENTE).'];
+      return;
+    }
+    super.doCreateNew();
+  }
+
+  // CLIENTE não pode excluir clientes
+  override doRemove(idOrModel: any): Observable<void> {
+    if (this.auth.isCliente()) {
+      this.errorsVisible = true;
+      this.errorMessages = ['Ação não permitida para seu perfil (CLIENTE).'];
+      // Retorna observable vazio para manter contrato
+      return new Observable<void>((subscriber) => {
+        subscriber.complete();
+      });
+    }
+    return super.doRemove(idOrModel);
   }
 }

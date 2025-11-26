@@ -1,6 +1,8 @@
 package br.eng.eliseu.presente.security;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
@@ -23,21 +25,34 @@ public class JwtService {
     }
 
     public String generateToken(Authentication authentication, long expiryInSeconds) {
-        Instant now = Instant.now();
-
         String scope = authentication
                 .getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        return generateTokenWithClaims(
+                authentication.getName(),
+                scope,
+                Map.of(),
+                expiryInSeconds
+        );
+    }
+
+    public String generateTokenWithClaims(String subject, String scope, Map<String, Object> extraClaims, long expiryInSeconds) {
+        Instant now = Instant.now();
+
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuer("spring-security-jwt")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiryInSeconds))
-                .subject(authentication.getName())
-                .claim("scope", scope)
-                .build();
+                .subject(subject)
+                .claim("scope", scope);
 
+        if (extraClaims != null) {
+            extraClaims.forEach(builder::claim);
+        }
+
+        JwtClaimsSet claims = builder.build();
         return encoder.encode(JwtEncoderParameters.from(claims))
                 .getTokenValue();
     }

@@ -50,6 +50,7 @@
   <!-- Formulário de edição -->
   <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Nome *</label>
         <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
@@ -67,6 +68,37 @@
         <p-select class="w-full" [options]="statusOptions" optionLabel="label" optionValue="value"
                   [(ngModel)]="vm.model.status" name="status" placeholder="Selecione"></p-select>
       </div>
+      <!-- CEP sozinho na linha, com máscara 99.999-999 -->
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">CEP</label>
+        <input class="w-full" pInputText type="text"
+               [ngModel]="cepMask" name="cepMask"
+               maxlength="10"
+               placeholder="99.999-999"
+               (input)="onCepInput($event.target.value)"
+               (blur)="onCepBlur()" />
+      </div>
+
+      <!-- Endereço sozinho na linha -->
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">Endereço</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.endereco" name="endereco" />
+      </div>
+
+      <!-- Complemento sozinho na linha -->
+      <div class="flex flex-col gap-2 w-full md:col-span-2">
+        <label class="block">Complemento</label>
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.complemento" name="complemento" />
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Cidade</label>
+          <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.cidade" name="cidade" />
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <label class="block">Estado</label>
+          <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.estado" name="estado" />
+      </div>
+
     </div>
   </div>
 

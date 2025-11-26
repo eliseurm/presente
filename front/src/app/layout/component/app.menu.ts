@@ -3,6 +3,7 @@ import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
 import {MenuItem} from 'primeng/api';
 import {AppMenuitem} from './app.menuitem';
+import { AuthService } from '@/pages/auth/auth-service';
 
 @Component({
     selector: 'app-menu',
@@ -13,7 +14,8 @@ import {AppMenuitem} from './app.menuitem';
             @for (item of model; track item.id || $index; let i = $index) {
                 @if (!item.separator) {
                     <li app-menuitem [item]="item" [index]="i" [root]="true"></li>
-                } @else {
+                }
+                @else {
                     <li class="menu-separator"></li>
                 }
             }
@@ -23,33 +25,59 @@ import {AppMenuitem} from './app.menuitem';
 export class AppMenu {
     model: MenuItem[] = [];
 
+    constructor(private auth: AuthService) {}
+
     ngOnInit() {
-        this.model = [
-            {
-                label: 'Home',
-                items: [
-                    // Navega direto para a página do presente com uma key de exemplo válida
-                    {label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/home']},
-                    {label: 'Presente', icon: 'pi pi-fw pi-gift', routerLink: ['/presente', 'abc123']},
-                    {label: 'Testes', icon: 'pi pi-fw pi-gift', routerLink: ['/teste']},
-                ]
-            },
-            {
-                label: 'Cadastros',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/pages'],
-                items: [
-                    {label: 'Eventos', icon: 'pi pi-fw pi-sparkles', routerLink: ['/evento']},
-                    {label: 'Cliente', icon: 'pi pi-fw pi-users', routerLink: ['/cliente']},
-                    {label: 'Usuário', icon: 'pi pi-fw pi-user', routerLink: ['/usuario']},
-                    {label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa']},
-                    {label: 'Produto', icon: 'pi pi-fw pi-box', routerLink: ['/produto']},
-                    {label: 'Imagem', icon: 'pi pi-fw pi-image', routerLink: ['/imagem']},
-                    {label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor']},
-                    {label: 'Tamanho', icon: 'pi pi-fw pi-arrows-v', routerLink: ['/tamanho']},
-                ]
-            },
-        ];
+        this.model = this.buildMenu();
+    }
+
+    private buildMenu(): MenuItem[] {
+        const isAdmin = this.auth.isAdmin();
+        const isCliente = this.auth.isCliente();
+        const isUsuario = this.auth.isUsuario();
+
+        // Seções comuns
+        const homeSection: MenuItem = {
+            label: 'Home',
+            items: [
+                { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/home'] },
+                // Link público/sem guarda; manter Presente sempre visível
+                { label: 'Presente', icon: 'pi pi-fw pi-gift', routerLink: ['/presente', 'abc123'] },
+            ]
+        };
+
+        // Seção Cadastros varia por papel
+        const cadastrosItems: MenuItem[] = [];
+
+        if (isAdmin || isCliente) {
+            // Evento e Cliente para ADMIN e CLIENTE
+            cadastrosItems.push(
+                { label: 'Eventos', icon: 'pi pi-fw pi-sparkles', routerLink: ['/evento'] },
+                { label: 'Cliente', icon: 'pi pi-fw pi-users', routerLink: ['/cliente'] },
+            );
+        }
+
+        if (isAdmin) {
+            // Apenas ADMIN vê os demais cadastros
+            cadastrosItems.push(
+                { label: 'Usuário', icon: 'pi pi-fw pi-user', routerLink: ['/usuario'] },
+                { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
+                { label: 'Produto', icon: 'pi pi-fw pi-box', routerLink: ['/produto'] },
+                { label: 'Imagem', icon: 'pi pi-fw pi-image', routerLink: ['/imagem'] },
+                { label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor'] },
+                { label: 'Tamanho', icon: 'pi pi-fw pi-arrows-v', routerLink: ['/tamanho'] },
+            );
+        }
+
+        const cadastrosSection: MenuItem | null = cadastrosItems.length
+            ? { label: 'Cadastros', icon: 'pi pi-fw pi-briefcase', items: cadastrosItems }
+            : null;
+
+        // Usuário básico (USUARIO): por enquanto sem página de Perfil implementada, manter apenas Home/Presente
+        const sections: MenuItem[] = [homeSection];
+        if (cadastrosSection) sections.push(cadastrosSection);
+
+        return sections;
     }
 }
 

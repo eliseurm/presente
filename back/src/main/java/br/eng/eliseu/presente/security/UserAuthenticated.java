@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import br.eng.eliseu.presente.model.Usuario;
+import br.eng.eliseu.presente.model.PapelEnum;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -28,7 +29,13 @@ public class UserAuthenticated implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(() -> "read");
+        PapelEnum papel = user.getPapel();
+        String roleName = switch (papel) {
+            case ADMINISTRADOR -> "ROLE_ADMIN";
+            case CLIENTE -> "ROLE_CLIENTE";
+            case USUARIO -> "ROLE_USUARIO";
+        };
+        return List.of(() -> roleName);
     }
 
     @Override

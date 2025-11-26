@@ -85,6 +85,10 @@ select * from usuario ;
 
 select * from tamanho ;
 
+select * from usuario ;
+
+select * from pessoa ;
+
 select * from cliente ;
 
 select * from evento ;

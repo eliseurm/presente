@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
+import { HttpClient } from '@angular/common/http';
 
 import { PessoaService } from '@/services/pessoa.service';
 import { Pessoa } from '@/shared/model/pessoa';
@@ -64,10 +65,29 @@ export class PessoaPageComponent  {
         public vm: PessoaCrudVM,
         private pessoaService: PessoaService,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        private http: HttpClient
     ) {}
 
-    ngOnInit(): void { this.vm.init(); }
+    // CEP exibido com máscara; o modelo armazena apenas dígitos
+    cepMask: string = '';
+
+    ngOnInit(): void {
+        this.vm.init();
+        // Sincroniza máscara quando o modelo é recarregado
+        this.vm.refreshModel.subscribe(() => {
+            this.syncCepMaskFromModel();
+        });
+        this.syncCepMaskFromModel();
+    }
+
+    private syncCepMaskFromModel() {
+        const cep = (this.vm.model as any)?.cep || '';
+        const digits = this.onlyDigits(cep);
+        this.cepMask = this.formatCep(digits);
+        // Garante que o modelo fique sem máscara
+        (this.vm.model as any).cep = digits || undefined;
+    }
 
     onPage(event: any) {
         this.vm.filter.page = event.page;
@@ -90,4 +110,52 @@ export class PessoaPageComponent  {
     }
 
     onCloseCrud() { this.router.navigate(['/']); }
+
+    // ===== CEP: máscara e ViaCep =====
+    onCepInput(val: string) {
+        const digits = this.onlyDigits(val).slice(0, 8);
+        this.cepMask = this.formatCep(digits);
+        (this.vm.model as any).cep = digits || undefined;
+        if (digits.length === 8) {
+            // Busca ViaCep ao completar 8 dígitos
+            this.buscarViaCep(digits);
+        }
+    }
+
+    onCepBlur() {
+        const digits = this.onlyDigits(this.cepMask);
+        if (digits.length === 8) {
+            this.buscarViaCep(digits);
+        }
+    }
+
+    private buscarViaCep(cepDigits: string) {
+        this.http.get<any>(`https://viacep.com.br/ws/${cepDigits}/json/`).subscribe({
+            next: (resp) => {
+                if (resp?.erro) {
+                    this.messageService.add({ severity: 'warn', summary: 'CEP inválido', detail: 'Não encontrado no ViaCep.' });
+                    return;
+                }
+                // Preenche endereço, cidade e estado conforme resposta
+                (this.vm.model as any).endereco = resp?.logradouro || (this.vm.model as any).endereco;
+                (this.vm.model as any).cidade = resp?.localidade || (this.vm.model as any).cidade;
+                (this.vm.model as any).estado = resp?.uf || (this.vm.model as any).estado;
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao consultar ViaCep.' });
+            }
+        });
+    }
+
+    private onlyDigits(v: string | undefined | null): string {
+        return (v || '').replace(/\D+/g, '');
+    }
+
+    private formatCep(digits: string): string {
+        if (!digits) return '';
+        const d = digits.substring(0, 8);
+        if (d.length <= 5) return d;
+        // 99.999-999
+        return `${d.substring(0,2)}.${d.substring(2,5)}-${d.substring(5)}`;
+    }
 }

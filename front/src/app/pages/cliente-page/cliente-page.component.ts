@@ -20,6 +20,7 @@ import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { TableModule } from 'primeng/table';
 import { ClienteCrudVM } from './cliente-crud.vm';
+import { AuthService } from '@/pages/auth/auth-service';
 
 @Component({
   selector: 'cliente-page',
@@ -45,6 +46,10 @@ export class ClientePageComponent  {
   @ViewChild('crudRef') crudRef?: CrudComponent<Cliente, ClienteFilter>;
 
   usuariosOptions: { label: string; value: number }[] = [];
+  readonly statusOptions: { label: string; value: string }[] = [
+    { label: 'Ativo', value: 'ATIVO' },
+    { label: 'Inativo', value: 'INATIVO' }
+  ];
 
   readonly filterFields: FilterField[] = [
     { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -57,7 +62,8 @@ export class ClientePageComponent  {
     private clienteService: ClienteService,
     private usuarioService: UsuarioService,
     private messageService: MessageService,
-    private router: Router
+    private router: Router,
+    private auth: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -88,6 +94,10 @@ export class ClientePageComponent  {
   }
 
   onDeleteRow(row: any) {
+    if (this.isCliente()) {
+      this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Ação não permitida para seu perfil (CLIENTE).' });
+      return;
+    }
     const id = row?.id;
     if (!id) return;
     this.clienteService.deletar(id).subscribe({
@@ -110,4 +120,6 @@ export class ClientePageComponent  {
   }
 
   onCloseCrud() { this.router.navigate(['/']); }
+
+  isCliente(): boolean { return this.auth.isCliente(); }
 }

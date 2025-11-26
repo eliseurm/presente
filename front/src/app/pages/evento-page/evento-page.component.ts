@@ -129,8 +129,22 @@ export class EventoPageComponent implements OnInit {
 
     private carregarOpcoes(): void {
         const base: any = { page: 0, size: 9999, sort: 'id', direction: 'ASC' };
-        this.clienteService.listar(base).subscribe({ next: page => {
-            this.clientesOptions = page.content || [];
+        // Carrega somente os clientes vinculados ao usuário (evita 403 para CLIENTE)
+        this.clienteService.getMe().subscribe({ next: (clientes) => {
+            this.clientesOptions = clientes || [];
+            // Se houver apenas um cliente, auto-seleciona no filtro
+            if (this.clientesOptions.length === 1) {
+                const unico = this.clientesOptions[0];
+                if (unico?.id) {
+                    (this.vm.filter as any).clienteId = unico.id;
+                    // Predefine também no modelo para criação/edição
+                    if (!(this.vm.model as any)?.cliente) {
+                        (this.vm.model as any).cliente = unico.id;
+                    }
+                    // Dispara uma filtragem inicial já com clienteId para evitar 403
+                    try { this.vm.doFilter().subscribe(); } catch {}
+                }
+            }
             // Atualiza opções do filtro Cliente
             const idx = this.filterFields.findIndex(f => f.key === 'clienteId');
             if (idx >= 0) {
@@ -140,9 +154,15 @@ export class EventoPageComponent implements OnInit {
                 };
             }
             this.preencherCamposDeExibicao();
+        }, error: _ => {
+            // 403 aqui indicará que o token não possui papel/escopo; mostrar aviso
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar seus clientes (acesso negado).' });
         }});
-        this.pessoaService.listar(base).subscribe({ next: page => { this.pessoasOptions = page.content || []; this.preencherCamposDeExibicao(); } });
-        this.produtoService.listar(base).subscribe({ next: page => { this.produtosOptions = page.content || []; this.preencherCamposDeExibicao(); } });
+        // Pessoas: não listar globalmente para evitar 403 para CLIENTE; serão buscadas via lookup no autocomplete
+        this.produtoService.listar(base).subscribe({ next: page => { this.produtosOptions = page.content || []; this.preencherCamposDeExibicao(); }, error: _ => {
+            // Produtos não são críticos para o carregamento inicial
+            this.produtosOptions = [];
+        } });
     }
 
     onPage(event: any) {
@@ -153,6 +173,11 @@ export class EventoPageComponent implements OnInit {
 
     onClearFilters() {
         this.vm.filter = this.vm['newFilter']();
+        // Preserva clienteId se houver apenas um cliente disponível
+        if (this.clientesOptions && this.clientesOptions.length === 1) {
+            const unico = this.clientesOptions[0];
+            if (unico?.id) (this.vm.filter as any).clienteId = unico.id;
+        }
         this.vm.doFilter().subscribe();
     }
 
@@ -216,20 +241,20 @@ export class EventoPageComponent implements OnInit {
         event.data.status = null;
     }
 
-    // Busca remota de pessoas para o Autocomplete
+    // Busca remota de pessoas (lookup escopado)
     searchPessoas(event: any) {
         const query = (event?.query || '').trim();
-        const filtro: any = {
-            nome: query || undefined,
-            page: 0,
-            size: 10,
-            sort: 'nome',
-            direction: 'ASC'
-        };
         this.carregandoPessoas = true;
-        this.pessoaService.listar(filtro).subscribe({
-            next: page => {
-                this.pessoasSugestoes = page?.content || [];
+        // Determina clienteId atual (filtro > modelo)
+        let clienteId: number | undefined = (this.vm.filter as any)?.clienteId;
+        const mc = (this.vm.model as any)?.cliente;
+        if (!clienteId && mc) {
+            if (typeof mc === 'object') clienteId = mc.id ?? undefined;
+            if (typeof mc === 'number') clienteId = mc;
+        }
+        this.pessoaService.lookup(query || undefined, clienteId).subscribe({
+            next: list => {
+                this.pessoasSugestoes = list || [];
                 this.carregandoPessoas = false;
             },
             error: _ => {
@@ -340,18 +365,11 @@ export class EventoPageComponent implements OnInit {
             row.pessoaNome = cached.nome;
             return;
         }
-        // Busca por id caso não esteja no cache de opções
-        try {
-            this.pessoaService.getById(id).subscribe({
-                next: (p) => { row._pessoaObj = p; row.pessoa = p?.id; row.pessoaNome = p?.nome; },
-                error: () => { const tmp = { id, nome: row?.pessoaNome || String(id) } as any; row._pessoaObj = tmp; row.pessoa = id; row.pessoaNome = tmp.nome; }
-            });
-        } catch {
-            const tmp = { id, nome: row?.pessoaNome || String(id) } as any;
-            row._pessoaObj = tmp;
-            row.pessoa = id;
-            row.pessoaNome = tmp.nome;
-        }
+        // Evita chamada /pessoa/{id} (ADMIN-only). Usa placeholder local.
+        const tmp = { id, nome: row?.pessoaNome || String(id) } as any;
+        row._pessoaObj = tmp;
+        row.pessoa = id;
+        row.pessoaNome = tmp.nome;
     }
 
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)

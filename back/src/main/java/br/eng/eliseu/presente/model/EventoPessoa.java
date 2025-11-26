@@ -37,6 +37,9 @@ public class EventoPessoa {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
+    @Column(name = "numero_magico", length = 8)
+    private String numeroMagico;
+
     public static EventoPessoa of(Evento evento, Pessoa pessoa) {
         return EventoPessoa.builder()
                 .evento(evento)

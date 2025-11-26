@@ -7,6 +7,7 @@ import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +24,14 @@ public class EventoController {
     private final EventoService eventoService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or (#filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
     public ResponseEntity<Page<Evento>> listar(EventoFilter filtro) {
 
         return ResponseEntity.ok(eventoService.listar(filtro));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<Evento> buscarPorId(@PathVariable Long id) {
         return eventoService.buscarPorId(id)
                 .map(ResponseEntity::ok)
@@ -36,12 +39,14 @@ public class EventoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or ( #evento != null and #evento.cliente != null and @authService.isLinkedToClient(#evento.cliente.id) )")
     public ResponseEntity<Evento> criar(@RequestBody Evento evento) {
 
         return ResponseEntity.ok(eventoService.criar(evento));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<Evento> atualizar(@PathVariable Long id, @RequestBody Evento evento) {
         try {
             Evento atualizado = eventoService.atualizar(id, evento);
@@ -53,6 +58,7 @@ public class EventoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         try {
             eventoService.deletar(id);
@@ -63,6 +69,7 @@ public class EventoController {
     }
 
     @DeleteMapping("/batch")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> deletarEmLote(@RequestBody List<Long> ids) {
         int deletados = eventoService.deletarEmLote(ids);
         return ResponseEntity.ok(Map.of(
@@ -72,6 +79,7 @@ public class EventoController {
     }
 
     @PostMapping("/{id}/pessoas/import")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<Map<String, Object>> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         int adicionados = eventoService.importarPessoasCsv(id, file);
         return ResponseEntity.ok(Map.of("adicionados", adicionados));
@@ -83,6 +91,7 @@ public class EventoController {
     public static record UpdateStatusRequest(StatusEnum status) {}
 
     @PostMapping("/{id}/pessoas")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<EventoPessoa> adicionarOuAtualizarPessoa(
             @PathVariable("id") Long eventoId,
             @RequestBody AddPessoaRequest req
@@ -94,6 +103,7 @@ public class EventoController {
     }
 
     @PutMapping("/{id}/pessoas/{eventoPessoaId}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<EventoPessoa> atualizarStatusPessoa(
             @PathVariable("id") Long eventoId,
             @PathVariable Long eventoPessoaId,
@@ -104,6 +114,7 @@ public class EventoController {
     }
 
     @DeleteMapping("/{id}/pessoas/{eventoPessoaId}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<Void> removerPessoa(
             @PathVariable("id") Long eventoId,
             @PathVariable Long eventoPessoaId
@@ -117,6 +128,7 @@ public class EventoController {
     public static record AddProdutoRequest(Long produtoId, StatusEnum status) {}
 
     @PostMapping("/{id}/produtos")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<EventoProduto> adicionarOuAtualizarProduto(
             @PathVariable("id") Long eventoId,
             @RequestBody AddProdutoRequest req
@@ -128,6 +140,7 @@ public class EventoController {
     }
 
     @PutMapping("/{id}/produtos/{eventoProdutoId}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<EventoProduto> atualizarStatusProduto(
             @PathVariable("id") Long eventoId,
             @PathVariable Long eventoProdutoId,
@@ -138,6 +151,7 @@ public class EventoController {
     }
 
     @DeleteMapping("/{id}/produtos/{eventoProdutoId}")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<Void> removerProduto(
             @PathVariable("id") Long eventoId,
             @PathVariable Long eventoProdutoId

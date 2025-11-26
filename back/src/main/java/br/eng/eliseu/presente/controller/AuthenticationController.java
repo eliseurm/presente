@@ -2,6 +2,7 @@ package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.Usuario;
 import br.eng.eliseu.presente.repository.UsuarioRepository;
+import br.eng.eliseu.presente.repository.ClienteRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,14 +19,17 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
 
     public AuthenticationController(
             AuthenticationService authenticationService,
             AuthenticationManager authenticationManager,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            ClienteRepository clienteRepository) {
         this.authenticationService = authenticationService;
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
+        this.clienteRepository = clienteRepository;
     }
 
     @PostMapping("/login")
@@ -45,8 +49,20 @@ public class AuthenticationController {
             Usuario usuario = usuarioRepository.findByUsername(loginRequest.username())
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            // Gera token com expiração baseada no "remember me"
-            String token = authenticationService.authenticate(authentication, remember);
+            // Monta claims em PT-BR
+            var clienteIds = clienteRepository.findByUsuario_Id(usuario.getId())
+                    .stream().map(c -> c.getId()).toList();
+
+            // Gera token com claims e expiração baseada no "remember me"
+            String token = authenticationService.authenticateWithClaims(
+                    authentication,
+                    remember,
+                    java.util.Map.of(
+                            "usuario_id", usuario.getId(),
+                            "cliente_ids", clienteIds
+                    ),
+                    usuario.getUsername()
+            );
 
             // Extrai role limpo (sem ROLE_ prefix)
             String role = authentication.getAuthorities().stream()

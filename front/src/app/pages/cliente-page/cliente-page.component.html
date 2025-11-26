@@ -1,5 +1,11 @@
 <crud #crudRef [parent]="vm" [listToolbarTitle]="'Clientes'" [editToolbarTitle]="'Editar Cliente'"
-      [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
+      [collapsibleFilters]="true"
+      [showListCloseButton]="true"
+      [showListNewButton]="!isCliente()"
+      [showEditSaveButton]="!isCliente()"
+      [showEditNewButton]="!isCliente()"
+      [showEditDeleteButton]="!isCliente()"
+      (closeButtonAction)="onCloseCrud()">
 
   <!-- Filtros -->
   <div crud-list-filter-fields class="w-full text-left">
@@ -37,9 +43,11 @@
           <td>{{ row?.telefone }}</td>
           <td>{{ row?.usuario?.username || '-' }}</td>
           <td>
+            <!-- Editar disponível para todos os papéis -->
             <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                     (click)="crudRef.onRowDblClick(row)"></button>
-            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
+            <!-- Excluir somente para não-CLIENTE -->
+            <button *ngIf="!isCliente()" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
                     (click)="onDeleteRow(row)"></button>
           </td>
         </tr>
@@ -55,12 +63,20 @@
         <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
       </div>
       <div class="flex flex-col gap-2 w-full">
+        <label class="block">Status</label>
+        <p-select class="w-full"
+                  [options]="statusOptions"
+                  optionLabel="label" optionValue="value"
+                  [(ngModel)]="vm.model['status']" name="status"
+                  placeholder="Selecione"></p-select>
+      </div>
+      <div class="flex flex-col gap-2 w-full">
         <label class="block">E-mail</label>
-        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email" />
+        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email" [disabled]="isCliente()" />
       </div>
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Telefone</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone" />
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone" [disabled]="isCliente()" />
       </div>
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Usuário</label>
@@ -69,11 +85,12 @@
                   optionLabel="label" optionValue="value"
                   [ngModel]="getUsuarioIdFromModel()" name="usuario"
                   (ngModelChange)="vm.model['usuario'] = $event ? { id: $event } : null"
+                  [disabled]="isCliente()"
                   placeholder="Selecione"></p-select>
       </div>
       <div class="flex flex-col gap-2 w-full md:col-span-2">
         <label class="block">Anotações</label>
-        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
+        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.anotacoes" name="anotacoes" [disabled]="isCliente()"></textarea>
       </div>
     </div>
   </div>

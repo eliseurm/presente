@@ -9,6 +9,9 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -58,10 +61,21 @@ public class ClienteService extends AbstractCrudService<Cliente, Long, ClienteFi
 
     @Override
     protected void prepararParaAtualizacao(Long id, Cliente entidade, Cliente entidadeExistente) {
+        // Se for ROLE_CLIENTE, só permitir alterar Nome e Status
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isCliente = auth != null && auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_CLIENTE"::equals);
+        if (isCliente) {
+            entidadeExistente.setNome(entidade.getNome());
+            entidadeExistente.setStatus(entidade.getStatus());
+            // Demais campos são ignorados para CLIENTE
+            return;
+        }
+        // ADMIN (ou demais papéis) podem atualizar todos os campos
         entidadeExistente.setNome(entidade.getNome());
         entidadeExistente.setEmail(entidade.getEmail());
         entidadeExistente.setTelefone(entidade.getTelefone());
         entidadeExistente.setUsuario(entidade.getUsuario());
         entidadeExistente.setAnotacoes(entidade.getAnotacoes());
+        entidadeExistente.setStatus(entidade.getStatus());
     }
 }

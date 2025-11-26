@@ -4,13 +4,14 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-export type Role = 'ADMINISTRADOR' | 'CLIENTE';
+export type Role = 'ADMIN' | 'ADMINISTRADOR' | 'CLIENTE' | 'USUARIO';
 
 export interface IUser {
     id?: number;
     username?: string;
     email: string;
     role?: Role;
+    cliente_ids?: number[];
     avatarUrl?: string;
 }
 
@@ -38,6 +39,12 @@ export class AuthService {
     get userRole() {
         return this._user?.role;
     }
+
+    // Helpers de papel
+    isAdmin(): boolean { return (this.userRole as string)?.toUpperCase() === 'ADMIN'; }
+    isCliente(): boolean { return (this.userRole as string)?.toUpperCase() === 'CLIENTE'; }
+    isUsuario(): boolean { return (this.userRole as string)?.toUpperCase() === 'USUARIO'; }
+    getClienteIds(): number[] { return (this._user?.cliente_ids ?? []) as number[]; }
 
     private _lastAuthenticatedPath = this.defaultPath;
     set lastAuthenticatedPath(value: string) {
@@ -78,6 +85,74 @@ export class AuthService {
         else localStorage.removeItem(this.storageKey);
     }
 
+    // Gerência de token
+    getToken(): string | null {
+        return localStorage.getItem('auth.token') || sessionStorage.getItem('auth.token');
+    }
+
+    setToken(token: string, remember = false) {
+        if (remember) {
+            localStorage.setItem('auth.token', token);
+            sessionStorage.removeItem('auth.token');
+        } else {
+            sessionStorage.setItem('auth.token', token);
+            localStorage.removeItem('auth.token');
+        }
+    }
+
+    clearToken() {
+        localStorage.removeItem('auth.token');
+        sessionStorage.removeItem('auth.token');
+    }
+
+    /**
+     * Decodifica o payload do JWT sem validar assinatura (uso de UI).
+     */
+    decodeToken<T = any>(token?: string | null): T | null {
+        try {
+            const t = token ?? this.getToken();
+            if (!t) return null;
+            const parts = t.split('.');
+            if (parts.length < 2) return null;
+            const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = atob(payload);
+            return JSON.parse(json) as T;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Restaura usuário a partir do storage e do token (claims) ao iniciar o app.
+     */
+    restore(): void {
+        // Se já houver usuário em memória, não faz nada
+        if (this._user) return;
+        // Tenta restaurar do storage
+        const stored = this.restoreFromStorage();
+        if (stored) {
+            this._user = stored;
+            return;
+        }
+        // Sem user armazenado: tenta decodificar do token para preencher informações mínimas
+        const claims = this.decodeToken<any>();
+        if (claims) {
+            // role vem em authorities (scope) no claim "scope" (string com espaços)
+            const scope: string = (claims['scope'] || '') as string;
+            const firstRole = (scope.split(' ').find(r => r.startsWith('ROLE_')) || '').replace('ROLE_', '') as Role;
+            const clienteIds: number[] = (claims['cliente_ids'] || []) as number[];
+            const username = (claims['sub'] || '') as string;
+            const user: IUser = {
+                username,
+                email: username,
+                role: (firstRole as Role) || undefined,
+                cliente_ids: clienteIds,
+                avatarUrl: defaultAvatar
+            };
+            this.persist(user);
+        }
+    }
+
 
     async logIn(email: string, password: string, remember = false) {
         try {
@@ -97,30 +172,38 @@ export class AuthService {
             );
 
             // Armazenar o token JWT baseado no remember
-            if (res.remember || remember) {
-                localStorage.setItem('auth.token', res.token);
-                sessionStorage.removeItem('auth.token'); // Garante que não fica duplicado
-            } else {
-                sessionStorage.setItem('auth.token', res.token);
-                localStorage.removeItem('auth.token'); // Garante que não fica duplicado
-            }
+            this.setToken(res.token, (res.remember || remember));
 
             const user: IUser = {
                 id: res.id,
                 username: res.username,
                 email: res.username,
-                role: res.role as Role,
+                role: (res.role?.toUpperCase?.() as Role) || undefined,
                 avatarUrl: defaultAvatar
             };
 
+            // Se claims estiverem presentes no token, complementa dados
+            const claims = this.decodeToken<any>(res.token);
+            if (claims && Array.isArray(claims['cliente_ids'])) {
+                user.cliente_ids = claims['cliente_ids'];
+            }
+
             this.persist(user);
 
-            // Redireciona para a URL salva ou para a rota padrão
-            const redirectUrl = this.getRedirectUrl();
-            await this.router.navigate([redirectUrl]);
+            // Redireciona para a URL salva ou rota padrão por papel
+            const saved = this.getRedirectUrl();
+            const fallback = ((): string => {
+                const role = (user.role || '').toUpperCase();
+                if (role === 'ADMIN' || role === 'ADMINISTRADOR') return '/home';
+                if (role === 'CLIENTE') return '/evento';
+                // USUARIO e demais
+                return '/home';
+            })();
+            await this.router.navigate([saved || fallback]);
 
             return { isOk: true, data: user };
-        } catch (e: any) {
+        }
+        catch (e: any) {
             const msg = e?.error?.message || 'Falha de autenticação';
             return { isOk: false, message: msg };
         }

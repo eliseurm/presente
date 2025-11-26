@@ -5,6 +5,7 @@ export class Cliente {
   telefone?: string;
   usuario?: UsuarioRef | number | null;
   anotacoes?: string;
+  status?: string;
 }
 
 export interface UsuarioRef {

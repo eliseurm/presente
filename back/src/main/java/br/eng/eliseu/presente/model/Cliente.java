@@ -25,6 +25,9 @@ public class Cliente {
 
     private String anotacoes;
 
+    // Status do cliente (ex.: ATIVO, INATIVO)
+    private String status;
+
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 

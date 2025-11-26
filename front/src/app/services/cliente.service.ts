@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BaseCrudService } from '@/shared/services/base-crud.service';
 import { Cliente } from '@/shared/model/cliente';
 import { ClienteFilter } from '@/shared/model/filter/cliente-filter';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteService extends BaseCrudService<Cliente, ClienteFilter> {
@@ -10,5 +11,10 @@ export class ClienteService extends BaseCrudService<Cliente, ClienteFilter> {
 
   constructor(http: HttpClient) {
     super(http);
+  }
+
+  // Retorna apenas os clientes vinculados ao usuário autenticado
+  getMe(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(`${this.apiUrl}/me`);
   }
 }

@@ -5,6 +5,13 @@ export class Pessoa {
     email?: string;
     telefone?: string;
     status?: string;
+
+    endereco?: string;
+    complemento?: string;
+    cidade?: string;
+    estado?: string;
+    cep?: string;
+
     criadoEm?: string;
     alteradoEm?: string;
 }
