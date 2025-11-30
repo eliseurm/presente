@@ -51,14 +51,36 @@ export class EnumSelectComponent implements OnInit, ControlValueAccessor {
     }
 
     onSelectionChange(event: any): void {
-        const value = event.value;
+        const value = event?.value;
         this.selectedValue = value;
-        this.onChange(value);
+        // Emite a chave (string) do enum para o modelo do formulário
+        const emit = value?.key ?? value?.name ?? value ?? null;
+        this.onChange(emit);
         this.onTouch();
     }
 
     writeValue(value: any): void {
-        this.selectedValue = value;
+        // Aceita string (ex.: 'ATIVO') ou objeto ({ key: 'ATIVO', descricao: 'Ativo' })
+        if (value == null) {
+            this.selectedValue = null;
+            return;
+        }
+        // Se já for um objeto com 'key' e existir nas opções, alinhar pela referência da lista
+        if (typeof value === 'object') {
+            const key = value?.key ?? value?.name ?? null;
+            if (key != null) {
+                const found = this.findOptionByKeyOrDescricao(String(key));
+                this.selectedValue = found ?? value;
+                return;
+            }
+            // Sem chave conhecida, mantém como está
+            this.selectedValue = value;
+            return;
+        }
+        // Se for string, localizar a opção correspondente por key ou descricao
+        const str = String(value);
+        const found = this.findOptionByKeyOrDescricao(str);
+        this.selectedValue = found ?? null;
     }
 
     registerOnChange(fn: any): void {
@@ -67,5 +89,14 @@ export class EnumSelectComponent implements OnInit, ControlValueAccessor {
 
     registerOnTouched(fn: any): void {
         this.onTouch = fn;
+    }
+
+    private findOptionByKeyOrDescricao(val: string): any | null {
+        if (!this.options || this.options.length === 0) return null;
+        const lower = val.toLowerCase();
+        const byKey = this.options.find((o: any) => String(o?.key ?? o?.name ?? '').toLowerCase() === lower);
+        if (byKey) return byKey;
+        const byDesc = this.options.find((o: any) => String(o?.descricao ?? '').toLowerCase() === lower);
+        return byDesc ?? null;
     }
 }

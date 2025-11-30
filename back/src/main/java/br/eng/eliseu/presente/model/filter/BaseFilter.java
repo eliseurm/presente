@@ -10,4 +10,6 @@ public abstract class BaseFilter {
     private Integer size = 10;
     private String sort = "id";
     private String direction = "DESC";
+    // Campos a expandir (CSV). Ex.: "pessoas,cliente". Opcional e desabilitado por padrão.
+    private String expand;
 }

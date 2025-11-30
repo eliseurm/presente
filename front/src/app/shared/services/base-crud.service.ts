@@ -41,8 +41,12 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
     }
 
     // Implementação do CrudPort (wrappers padronizados)
-    getById(id: any): Observable<T> {
-        return this.buscarPorId(id);
+    getById(id: any, expand?: string | string[]): Observable<T> {
+        const params: any = {};
+        if (expand && (Array.isArray(expand) ? expand.length > 0 : String(expand).trim().length > 0)) {
+            params['expand'] = Array.isArray(expand) ? expand.join(',') : expand;
+        }
+        return this.http.get<T>(`${this.apiUrl}/${id}`, { params });
     }
 
     salvar(model: T): Observable<T> {
@@ -68,6 +72,11 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
             if (!['page', 'size', 'sort', 'direction'].includes(key)) {
                 const value = (filtro as any)[key];
                 if (value !== undefined && value !== null && value !== '') {
+                    if (key === 'expand') {
+                        // Serializa expand como CSV
+                        params[key] = Array.isArray(value) ? value.join(',') : value;
+                        return;
+                    }
                     // Se for um objeto enum, pega a propriedade 'key'
                     if (typeof value === 'object' && value.key) {
                         params[key] = value.key;

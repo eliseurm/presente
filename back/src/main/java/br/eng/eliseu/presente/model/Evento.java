@@ -1,7 +1,6 @@
 package br.eng.eliseu.presente.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import br.eng.eliseu.presente.config.json.LenientObjectIdResolver;
@@ -27,8 +26,7 @@ public class Evento {
     private String descricao;
 
     @ManyToOne
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Cliente.class, resolver = LenientObjectIdResolver.class)
-    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties({"usuario"})
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
@@ -75,11 +73,6 @@ public class Evento {
     @PreUpdate
     public void preUpdate(){
         alteradoEm = LocalDateTime.now();
-        if (fimPrevisto != null && fimPrevisto.isBefore(LocalDateTime.now())) {
-            fim = LocalDateTime.now();
-        }
-        if (fim != null) {
-            status = StatusEnum.ENCERRADO;
-        }
+        // Removida a lógica automática que alterava campos de data/status.
     }
 }

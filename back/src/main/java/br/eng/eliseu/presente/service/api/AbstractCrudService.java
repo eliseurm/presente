@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,7 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     }
 
     @Override
+    @Transactional
     public T atualizar(ID id, T entidade) {
         return getRepository().findById(id)
                 .map(entidadeExistente -> {

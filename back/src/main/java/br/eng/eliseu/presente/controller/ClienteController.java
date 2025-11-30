@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ public class ClienteController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Cliente> criar(@RequestBody Cliente cliente) {
+
         return ResponseEntity.ok(clienteService.criar(cliente));
     }
 
@@ -90,13 +92,20 @@ public class ClienteController {
         if (auth == null) {
             return ResponseEntity.ok(List.of());
         }
-        String username = auth.getName();
-        var usuarioOpt = usuarioRepository.findByUsername(username);
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.ok(List.of());
+
+        List<Cliente> clientes = new ArrayList<>();
+        if(auth.getAuthorities().stream().filter(a -> a.getAuthority().equals("ROLE_ADMIN")).findFirst().isPresent()) {
+            clientes = clienteRepository.findAll();
         }
-        Long usuarioId = usuarioOpt.get().getId();
-        List<Cliente> clientes = clienteRepository.findByUsuario_Id(usuarioId);
+        else{
+            String username = auth.getName();
+            var usuarioOpt = usuarioRepository.findByUsername(username);
+            if (usuarioOpt.isEmpty()) {
+                return ResponseEntity.ok(List.of());
+            }
+            Long usuarioId = usuarioOpt.get().getId();
+            clientes = clienteRepository.findByUsuario_Id(usuarioId);
+        }
         return ResponseEntity.ok(clientes);
     }
 }

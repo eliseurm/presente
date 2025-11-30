@@ -6,6 +6,7 @@ import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {ToastModule} from 'primeng/toast';
 import {Tabs, TabPanel, TabPanels, TabList, Tab} from 'primeng/tabs';
+import { DatePickerModule } from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DialogModule} from 'primeng/dialog';
@@ -60,6 +61,7 @@ import {
         TabPanels,
         TabList,
         Tab,
+        DatePickerModule,
         EnumSelectComponent,
         CrudFilterComponent,
         CrudComponent,
@@ -87,7 +89,6 @@ export class EventoPageComponent implements OnInit {
 
     // Opções
     clientesOptions: Cliente[] = [];
-    pessoasOptions: Pessoa[] = [];
     produtosOptions: Produto[] = [];
     statusEnumType: any = StatusEnum;
 
@@ -96,13 +97,6 @@ export class EventoPageComponent implements OnInit {
     produtosSugestoes: Produto[] = [];
     carregandoPessoas = false;
     carregandoProdutos = false;
-
-    csvFile: File | null = null;
-
-    // Diálogo de busca
-    buscarDialog = false;
-    filtroBuscaNome: string = '';
-    loadingBusca = false;
 
     filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -122,6 +116,7 @@ export class EventoPageComponent implements OnInit {
 
     ngOnInit(): void {
         this.vm.init();
+        this.vm.enableExpand(['cliente', 'pessoas', 'produtos']);
         // Quando o modelo é recarregado (abrir edição, salvar, etc.), atualiza labels auxiliares
         this.vm.refreshModel.subscribe(() => this.preencherCamposDeExibicao());
         this.carregarOpcoes();
@@ -130,21 +125,23 @@ export class EventoPageComponent implements OnInit {
     private carregarOpcoes(): void {
         const base: any = { page: 0, size: 9999, sort: 'id', direction: 'ASC' };
         // Carrega somente os clientes vinculados ao usuário (evita 403 para CLIENTE)
-        this.clienteService.getMe().subscribe({ next: (clientes) => {
+        this.clienteService.getMe().subscribe({
+            next: (clientes) => {
             this.clientesOptions = clientes || [];
             // Se houver apenas um cliente, auto-seleciona no filtro
             if (this.clientesOptions.length === 1) {
                 const unico = this.clientesOptions[0];
                 if (unico?.id) {
                     (this.vm.filter as any).clienteId = unico.id;
-                    // Predefine também no modelo para criação/edição
+                    // Predefine também no modelo para criação/edição mantendo OBJETO completo
                     if (!(this.vm.model as any)?.cliente) {
-                        (this.vm.model as any).cliente = unico.id;
+                        (this.vm.model as any).cliente = unico; // manter objeto completo
                     }
                     // Dispara uma filtragem inicial já com clienteId para evitar 403
                     try { this.vm.doFilter().subscribe(); } catch {}
                 }
             }
+
             // Atualiza opções do filtro Cliente
             const idx = this.filterFields.findIndex(f => f.key === 'clienteId');
             if (idx >= 0) {
@@ -154,15 +151,23 @@ export class EventoPageComponent implements OnInit {
                 };
             }
             this.preencherCamposDeExibicao();
-        }, error: _ => {
+        },
+            error: _ => {
             // 403 aqui indicará que o token não possui papel/escopo; mostrar aviso
             this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar seus clientes (acesso negado).' });
         }});
+
         // Pessoas: não listar globalmente para evitar 403 para CLIENTE; serão buscadas via lookup no autocomplete
-        this.produtoService.listar(base).subscribe({ next: page => { this.produtosOptions = page.content || []; this.preencherCamposDeExibicao(); }, error: _ => {
+        this.produtoService.listar(base).subscribe({
+            next: page => {
+                this.produtosOptions = page.content || [];
+                this.preencherCamposDeExibicao();
+            },
+            error: _ => {
             // Produtos não são críticos para o carregamento inicial
             this.produtosOptions = [];
-        } });
+            }
+        });
     }
 
     onPage(event: any) {
@@ -199,11 +204,8 @@ export class EventoPageComponent implements OnInit {
 
     // Rótulos de exibição nas células da grid, evitando [object Object]
     getPessoaRotulo(row: any): string {
-        if (!row) return '';
-        if (row.pessoaNome) return row.pessoaNome;
-        const id = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
-        const obj = this.pessoasOptions.find(p => p.id === id);
-        return obj?.nome || (id != null ? String(id) : '');
+        if (!row || typeof row.pessoa !== 'object') return '';
+        return row.pessoa.nome;
     }
 
     getProdutoRotulo(row: any): string {
@@ -212,23 +214,6 @@ export class EventoPageComponent implements OnInit {
         const id = typeof row.produto === 'object' ? row.produto?.id : row.produto;
         const obj = this.produtosOptions.find(p => p.id === id);
         return obj?.nome || (id != null ? String(id) : '');
-    }
-
-    addPessoa() {
-        const pessoas = (this.vm.model.pessoas = this.vm.model.pessoas || []);
-        pessoas.push({} as EventoPessoa);
-    }
-    removePessoa(index: number) {
-        if (!this.vm.model.pessoas) return;
-        this.vm.model.pessoas.splice(index, 1);
-    }
-    addProduto() {
-        const produtos = (this.vm.model.produtos = this.vm.model.produtos || []);
-        produtos.push({} as EventoProduto);
-    }
-    removeProduto(index: number) {
-        if (!this.vm.model.produtos) return;
-        this.vm.model.produtos.splice(index, 1);
     }
 
     // ======= Handlers para ERM Data Grid nas abas =======
@@ -275,6 +260,10 @@ export class EventoPageComponent implements OnInit {
             event.cancel = true;
             return;
         }
+        // Normaliza status para valor serializável ao backend (enum string)
+        if (row.status && typeof row.status === 'object') {
+            row.status = (row.status as any).key ?? (row.status as any).name ?? row.status;
+        }
         // Evita duplicidade
         const duplicate = this.vm.model.pessoas.some((p:any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
         if (duplicate) {
@@ -283,9 +272,9 @@ export class EventoPageComponent implements OnInit {
             return;
         }
         // Normaliza campos para exibição/persistência
-        const pessoaObj = typeof selected === 'object' ? selected : this.pessoasOptions.find(p => p.id === pessoaId);
-        row.pessoa = pessoaId; // mantém ID para o payload
-        row.pessoaNome = pessoaObj?.nome || String(pessoaId); // label para exibição na grid
+        // const pessoaObj = typeof selected === 'object' ? selected : this.pessoasOptions.find(p => p.id === pessoaId);
+        // row.pessoa = pessoaId; // mantém ID para o payload
+        // row.pessoaNome = pessoaObj?.nome || String(pessoaId); // label para exibição na grid
         this.messageService.add({severity:'success', summary:'OK', detail:'Pessoa registrada na lista do evento (pendente de Gravar).'});
     }
 
@@ -337,6 +326,10 @@ export class EventoPageComponent implements OnInit {
             event.cancel = true;
             return;
         }
+        // Normaliza status para valor serializável ao backend (enum string)
+        if (row.status && typeof row.status === 'object') {
+            row.status = (row.status as any).key ?? (row.status as any).name ?? row.status;
+        }
         const duplicate = this.vm.model.produtos.some((pr:any) => (pr?.produto?.id || pr?.produto) === produtoId && pr !== row);
         if (duplicate) {
             this.messageService.add({severity:'warn', summary:'Atenção', detail:'Esse produto já está na lista.'});
@@ -352,29 +345,15 @@ export class EventoPageComponent implements OnInit {
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Pessoa)
     onEditingStartPessoa(event: any) {
         const row: any = event?.data || {};
-        const id = typeof row?.pessoa === 'object' ? row.pessoa?.id : row?.pessoa;
-        if (!id) {
-            row._pessoaObj = null;
-            row.pessoa = null;
-            return;
-        }
-        const cached = this.pessoasOptions.find(p => p.id === id);
-        if (cached) {
-            row._pessoaObj = cached;
-            row.pessoa = cached.id;
-            row.pessoaNome = cached.nome;
-            return;
-        }
-        // Evita chamada /pessoa/{id} (ADMIN-only). Usa placeholder local.
-        const tmp = { id, nome: row?.pessoaNome || String(id) } as any;
-        row._pessoaObj = tmp;
-        row.pessoa = id;
-        row.pessoaNome = tmp.nome;
+        // Garante que o Status apareça selecionado no enum-select do popup
+        row.status = this.getStatusOption(row.status);
     }
 
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)
     onEditingStartProduto(event: any) {
         const row: any = event?.data || {};
+        // Garante que o Status apareça selecionado no enum-select do popup
+        row.status = this.getStatusOption(row.status);
         const id = typeof row?.produto === 'object' ? row.produto?.id : row?.produto;
         if (!id) {
             row._produtoObj = null;
@@ -407,13 +386,13 @@ export class EventoPageComponent implements OnInit {
             const item = event?.value ?? row?._pessoaObj;
             row._pessoaObj = item;
             row.pessoa = item?.id ?? null;
-            row.pessoaNome = item?.nome ?? '';
+            // row.pessoaNome = item?.nome ?? '';
         } catch {}
     }
     onPessoaLimpar(row: any) {
         row._pessoaObj = null;
         row.pessoa = null;
-        row.pessoaNome = '';
+        // row.pessoaNome = '';
     }
 
     // Sincronização imediata ao selecionar/limpar no AutoComplete (Produto)
@@ -434,20 +413,34 @@ export class EventoPageComponent implements OnInit {
     // Preenche labels auxiliares para exibição na grid
     private preencherCamposDeExibicao(): void {
         try {
-            if (Array.isArray(this.vm.model?.pessoas)) {
-                this.vm.model.pessoas.forEach((ep: any) => {
-                    const id = typeof ep?.pessoa === 'object' ? ep.pessoa?.id : ep?.pessoa;
-                    const obj = this.pessoasOptions.find(p => p.id === id);
-                    ep.pessoaNome = ep.pessoaNome || obj?.nome || (id != null ? String(id) : '');
-                });
+            if (this.vm.model) {
+                // Mantém cliente como objeto completo; para datas, converte para Date (necessário ao p-datepicker)
+                this.vm.model.inicio = this.toDateOrNull(this.vm.model.inicio) as any;
+                this.vm.model.fimPrevisto = this.toDateOrNull(this.vm.model.fimPrevisto) as any;
+                this.vm.model.fim = this.toDateOrNull(this.vm.model.fim) as any;
+                // Se cliente vier como ID por alguma chamada antiga, tenta casar com opções para transformar em objeto
+                const cli: any = (this.vm.model as any).cliente;
+                if (cli && typeof cli !== 'object') {
+                    const match = this.clientesOptions.find(c => c.id === cli);
+                    if (match) {
+                        (this.vm.model as any).cliente = match;
+                    }
+                }
             }
-            if (Array.isArray(this.vm.model?.produtos)) {
-                this.vm.model.produtos.forEach((pr: any) => {
-                    const id = typeof pr?.produto === 'object' ? pr.produto?.id : pr?.produto;
-                    const obj = this.produtosOptions.find(p => p.id === id);
-                    pr.produtoNome = pr.produtoNome || obj?.nome || (id != null ? String(id) : '');
-                });
-            }
+            // if (Array.isArray(this.vm.model?.pessoas)) {
+            //     this.vm.model.pessoas.forEach((ep: any) => {
+            //         if(typeof ep?.pessoa === 'object') {
+            //             this.pessoasOptions.push(ep.pessoa);
+            //         }
+            //     });
+            // }
+            // if (Array.isArray(this.vm.model?.produtos)) {
+            //     this.vm.model.produtos.forEach((pr: any) => {
+            //         const id = typeof pr?.produto === 'object' ? pr.produto?.id : pr?.produto;
+            //         const obj = this.produtosOptions.find(p => p.id === id);
+            //         pr.produtoNome = pr.produtoNome || obj?.nome || (id != null ? String(id) : '');
+            //     });
+            // }
         } catch {}
     }
 
@@ -459,7 +452,36 @@ export class EventoPageComponent implements OnInit {
         this.messageService.add({severity:'success', summary:'OK', detail:'Produto removido da lista (pendente de Gravar).'});
     }
 
+    private toDateOrNull(val: string | Date | null | undefined): Date | null {
+        if (!val) return null;
+        if (val instanceof Date) return val;
+        const str = String(val);
+        // aceita formatos ISO com minutos
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+    }
 
+    // Converte valor de status (string | objeto | null) na opção esperada pelo enum-select
+    private getStatusOption(val: any): any {
+        if (!val) return null;
+        // Se já for um objeto com 'key' ou 'descricao', mantém
+        if (typeof val === 'object') return val;
+        // Caso seja string, procura a opção correspondente em StatusEnum
+        try {
+            const options = Object.values(this.statusEnumType) as any[];
+            const lower = String(val).toLowerCase();
+            const found = options.find(opt => String(opt?.key ?? opt?.name ?? '').toLowerCase() === lower || String(opt?.descricao ?? '').toLowerCase() === lower);
+            return found || val;
+        } catch {
+            return val;
+        }
+    }
+
+    // Limpa campos de data da aba Geral
+    clearDate(field: 'inicio' | 'fimPrevisto' | 'fim'): void {
+        if (!this.vm?.model) return;
+        (this.vm.model as any)[field] = null;
+    }
 }
 
 // Helpers de exibição (espaço reservado)

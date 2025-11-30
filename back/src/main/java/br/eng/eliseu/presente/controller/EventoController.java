@@ -32,8 +32,8 @@ public class EventoController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Evento> buscarPorId(@PathVariable Long id) {
-        return eventoService.buscarPorId(id)
+    public ResponseEntity<Evento> buscarPorId(@PathVariable Long id, @RequestParam(value = "expand", required = false) String expand) {
+        return eventoService.buscarPorIdComExpand(id, expand)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

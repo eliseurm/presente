@@ -1,247 +1,297 @@
 <crud #crudRef [parent]="vm" [listToolbarTitle]="'Eventos'" [editToolbarTitle]="'Editar Evento'"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-  <!-- Filtros da lista -->
-  <div crud-list-filter-fields class="w-full text-left">
-    <crud-filter
-      [filter]="vm.filter"
-      [fields]="filterFields"
-      [loading]="false"
-      (onSearch)="vm.doFilter().subscribe()"
-      (onClear)="onClearFilters()"
-    ></crud-filter>
-  </div>
-
-  <!-- Grid de listagem -->
-  <div crud-list-grid class="w-full">
-    <p-table [value]="vm.dataSource"
-             [paginator]="true"
-             [rows]="vm.filter.size || 10"
-             [totalRecords]="vm.totalRecords"
-             [lazy]="false"
-             responsiveLayout="scroll"
-             (onPage)="onPage($event)">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Cliente</th>
-          <th>Nome</th>
-          <th>Status</th>
-          <th>Previsto</th>
-          <th>Início</th>
-          <th>Fim</th>
-          <th style="width:1%">Ações</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr (dblclick)="crudRef.onRowDblClick(row)">
-          <td>{{ row?.cliente?.nome }}</td>
-          <td>{{ row?.nome }}</td>
-          <td>{{ getStatusDescricao(row?.status) }}</td>
-          <td>{{ row?.fimPrevisto | date:'short' }}</td>
-          <td>{{ row?.inicio | date:'short' }}</td>
-          <td>{{ row?.fim | date:'short' }}</td>
-          <td>
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                    (click)="crudRef.onRowDblClick(row)"></button>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
-
-  <!-- Formulário de edição com abas -->
-  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-    <p-tabs [value]="'0'" class="w-full">
-      <p-tablist>
-        <p-tab [value]="'0'">Geral</p-tab>
-        <p-tab [value]="'1'">Pessoas</p-tab>
-        <p-tab [value]="'2'">Produtos</p-tab>
-      </p-tablist>
-      <p-tabpanels>
-
-        <p-tabpanel [value]="'0'">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="flex flex-col gap-2 w-full md:w-3/4">
-              <label class="block">Nome *</label>
-              <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:w-1/2">
-              <label class="block">Status *</label>
-              <enum-select class="w-full" [enumObject]="statusEnumType" [(ngModel)]="vm.model.status" name="status"></enum-select>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:w-1/2">
-              <label class="block">Cliente *</label>
-              <p-select class="w-full" [options]="clientesOptions" optionLabel="nome" optionValue="id"
-                        [(ngModel)]="vm.model.cliente" name="cliente"
-                        (onChange)="vm.model.cliente = $event.value"
-                        placeholder="Selecione"></p-select>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:w-1/2">
-              <label class="block">Início *</label>
-              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.inicio" name="inicio"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:w-1/2">
-              <label class="block">Previsto *</label>
-              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.fimPrevisto" name="fimPrevisto"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:w-1/2">
-              <label class="block">Fim</label>
-              <input class="w-full" type="datetime-local" pInputText [(ngModel)]="vm.model.fim" name="fim"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:col-span-2">
-              <label class="block">Descrição</label>
-              <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:col-span-2">
-              <label class="block">Anotações</label>
-              <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
-            </div>
-          </div>
-        </p-tabpanel>
-
-        <p-tabpanel [value]="'1'">
-          <erm-data-grid
-            [dataSource]="vm.model.pessoas || []"
+    <!-- Filtros da lista -->
+    <div crud-list-filter-fields class="w-full text-left">
+        <crud-filter
+            [filter]="vm.filter"
+            [fields]="filterFields"
             [loading]="false"
-            (onInitNewRow)="onInitNewPessoa($event)"
-            (onEditingStart)="onEditingStartPessoa($event)"
-            (onSaving)="onSavingPessoa($event)"
-            (onDeleting)="onDeletingPessoa($event)">
+            (onSearch)="vm.doFilter().subscribe()"
+            (onClear)="onClearFilters()"
+        ></crud-filter>
+    </div>
 
-            <erm-editing
-              mode="popup"
-              [allowAdding]="true"
-              [allowUpdating]="true"
-              [allowDeleting]="true"
-              [confirmDelete]="true">
-
-              <erm-popup title="Pessoa do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
-              <erm-form [colCount]="2">
-                <erm-item dataField="pessoa" label="Pessoa" editorType="template">
-                  <erm-validation-rule type="required" message="Pessoa é obrigatória"></erm-validation-rule>
-                </erm-item>
-                <erm-item dataField="status" label="Status" editorType="template">
-                  <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
-                </erm-item>
-              </erm-form>
-            </erm-editing>
-
-            <!-- Colunas -->
-            <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
-            <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-            <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoa" cellTemplate="pessoaDisplay"></erm-column>
-            <erm-column dataField="status" caption="Status" editCellTemplate="status" cellTemplate="statusDisplay"></erm-column>
-
-            <!-- Templates de edição -->
-            <ng-template ermTemplate="pessoa" let-row>
-              <p-autoComplete class="w-full"
-                              [(ngModel)]="row._pessoaObj"
-                              [ngModelOptions]="{standalone:true}"
-                              [suggestions]="pessoasSugestoes"
-                              (completeMethod)="searchPessoas($event)"
-                              (onSelect)="onPessoaSelecionada(row, $event)"
-                              (onClear)="onPessoaLimpar(row)"
-                              (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
-                              optionLabel="nome"
-                              [dropdown]="true"
-                              [forceSelection]="true"
-                              placeholder="Buscar pessoa por nome">
-                <ng-template pTemplate="item" let-item>
-                  {{ item?.nome }}
-                </ng-template>
-                <ng-template pTemplate="selectedItem" let-item>
-                  {{ item?.nome }}
-                </ng-template>
-              </p-autoComplete>
+    <!-- Grid de listagem -->
+    <div crud-list-grid class="w-full">
+        <p-table [value]="vm.dataSource"
+                 [paginator]="true"
+                 [rows]="vm.filter.size || 10"
+                 [totalRecords]="vm.totalRecords"
+                 [lazy]="false"
+                 responsiveLayout="scroll"
+                 (onPage)="onPage($event)">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Cliente</th>
+                    <th>Nome</th>
+                    <th>Status</th>
+                    <th>Previsto</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th style="width:1%">Ações</th>
+                </tr>
             </ng-template>
-            <!-- Exibição na célula -->
-            <ng-template ermTemplate="pessoaDisplay" let-row>
-              {{ getPessoaRotulo(row) }}
+            <ng-template pTemplate="body" let-row>
+                <tr (dblclick)="crudRef.onRowDblClick(row)">
+                    <td>{{ row?.cliente?.nome }}</td>
+                    <td>{{ row?.nome }}</td>
+                    <td>{{ getStatusDescricao(row?.status) }}</td>
+                    <td>{{ row?.fimPrevisto | date:'short' }}</td>
+                    <td>{{ row?.inicio | date:'short' }}</td>
+                    <td>{{ row?.fim | date:'short' }}</td>
+                    <td>
+                        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                                (click)="crudRef.onRowDblClick(row)"></button>
+                    </td>
+                </tr>
             </ng-template>
-            <ng-template ermTemplate="status" let-row>
-              <enum-select class="w-full"
-                           [enumObject]="statusEnumType"
-                           [(ngModel)]="row.status"
-                           [ngModelOptions]="{standalone:true}"
-              ></enum-select>
-            </ng-template>
-            <ng-template ermTemplate="statusDisplay" let-row>
-              {{ getStatusDescricao(row?.status) }}
-            </ng-template>
-          </erm-data-grid>
-        </p-tabpanel>
+        </p-table>
+    </div>
 
-        <p-tabpanel [value]="'2'">
-          <erm-data-grid
-            [dataSource]="vm.model.produtos || []"
-            [loading]="false"
-            (onInitNewRow)="onInitNewProduto($event)"
-            (onEditingStart)="onEditingStartProduto($event)"
-            (onSaving)="onSavingProduto($event)"
-            (onDeleting)="onDeletingProduto($event)">
+    <!-- Formulário de edição com abas -->
+    <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+        <p-tabs [value]="'0'" class="w-full">
+            <p-tablist>
+                <p-tab [value]="'0'">Geral</p-tab>
+                <p-tab [value]="'1'">Pessoas</p-tab>
+                <p-tab [value]="'2'">Produtos</p-tab>
+            </p-tablist>
+            <p-tabpanels>
 
-            <erm-editing
-              mode="popup"
-              [allowAdding]="true"
-              [allowUpdating]="true"
-              [allowDeleting]="true"
-              [confirmDelete]="true">
+                <p-tabpanel [value]="'0'">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="flex flex-col gap-2 w-full md:w-3/4">
+                            <label class="block">Nome *</label>
+                            <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:w-1/2">
+                            <label class="block">Status *</label>
+                            <enum-select class="w-full"
+                                         [enumObject]="statusEnumType"
+                                         [(ngModel)]="vm.model.status"
+                                         name="status"
+                            ></enum-select>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:w-1/2">
+                            <label class="block">Cliente *</label>
+                            <p-select class="w-full"
+                                      optionLabel="nome"
+                                      dataKey="id"
+                                      name="cliente"
+                                      placeholder="Selecione"
+                                      [options]="clientesOptions"
+                                      [(ngModel)]="vm.model.cliente"
+                            ></p-select>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:w-1/2">
+                            <label class="block">Início</label>
+                            <p-datepicker class="w-full"
+                                         [(ngModel)]="vm.model.inicio"
+                                         name="inicio"
+                                         inputId="inicio"
+                                         [showClear]="true"
+                                         [showTime]="true"
+                                         hourFormat="24"
+                                         [showIcon]="true"
+                                         iconDisplay="input"
+                                         [touchUI]="false"
+                                         appendTo="body"
+                                         [baseZIndex]="9999"></p-datepicker>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:w-1/2">
+                            <label class="block">Previsto</label>
+                            <p-datepicker class="w-full"
+                                         [(ngModel)]="vm.model.fimPrevisto"
+                                         name="fimPrevisto"
+                                         inputId="fimPrevisto"
+                                         [showClear]="true"
+                                         [showTime]="true"
+                                         hourFormat="24"
+                                         [showIcon]="true"
+                                         iconDisplay="input"
+                                         [touchUI]="false"
+                                         appendTo="body"
+                                         [baseZIndex]="9999"></p-datepicker>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:w-1/2">
+                            <label class="block">Fim</label>
+                            <p-datepicker class="w-full"
+                                         [(ngModel)]="vm.model.fim"
+                                         name="fim"
+                                         inputId="fim"
+                                         [showClear]="true"
+                                         [showTime]="true"
+                                         hourFormat="24"
+                                         [showIcon]="true"
+                                         iconDisplay="input"
+                                         [touchUI]="false"
+                                         appendTo="body"
+                                         [baseZIndex]="9999"></p-datepicker>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:col-span-2">
+                            <label class="block">Descrição</label>
+                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full md:col-span-2">
+                            <label class="block">Anotações</label>
+                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
+                        </div>
+                    </div>
+                </p-tabpanel>
 
-              <erm-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
-              <erm-form [colCount]="2">
-                <erm-item dataField="produto" label="Produto" editorType="template">
-                  <erm-validation-rule type="required" message="Produto é obrigatório"></erm-validation-rule>
-                </erm-item>
-                <erm-item dataField="status" label="Status" editorType="template">
-                  <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
-                </erm-item>
-              </erm-form>
-            </erm-editing>
+                <p-tabpanel [value]="'1'">
+                    <erm-data-grid
+                        [dataSource]="vm.model.pessoas || []"
+                        [loading]="false"
+                        (onInitNewRow)="onInitNewPessoa($event)"
+                        (onEditDialogOpen)="onEditingStartPessoa($event)"
+                        (onSaving)="onSavingPessoa($event)"
+                        (onDeleting)="onDeletingPessoa($event)">
 
-            <!-- Colunas -->
-            <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
-            <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-            <erm-column dataField="produto" caption="Produto" editCellTemplate="produto" cellTemplate="produtoDisplay"></erm-column>
-            <erm-column dataField="status" caption="Status" editCellTemplate="status" cellTemplate="statusDisplay"></erm-column>
+                        <erm-editing
+                            mode="popup"
+                            [allowAdding]="true"
+                            [allowUpdating]="true"
+                            [allowDeleting]="true"
+                            [confirmDelete]="true">
 
-            <!-- Templates de edição -->
-            <ng-template ermTemplate="produto" let-row>
-              <p-autoComplete class="w-full"
-                              [(ngModel)]="row._produtoObj"
-                              [ngModelOptions]="{standalone:true}"
-                              [suggestions]="produtosSugestoes"
-                              (completeMethod)="searchProdutos($event)"
-                              (onSelect)="onProdutoSelecionado(row, $event)"
-                              (onClear)="onProdutoLimpar(row)"
-                              (onBlur)="onProdutoSelecionado(row, { value: row._produtoObj })"
-                              optionLabel="nome"
-                              [dropdown]="true"
-                              [forceSelection]="true"
-                              placeholder="Buscar produto por nome">
-                <ng-template pTemplate="item" let-item>
-                  {{ item?.nome }}
-                </ng-template>
-                <ng-template pTemplate="selectedItem" let-item>
-                  {{ item?.nome }}
-                </ng-template>
-              </p-autoComplete>
-            </ng-template>
-            <!-- Exibição na célula -->
-            <ng-template ermTemplate="produtoDisplay" let-row>
-              {{ getProdutoRotulo(row) }}
-            </ng-template>
-            <ng-template ermTemplate="status" let-row>
-              <enum-select class="w-full"
-                           [enumObject]="statusEnumType"
-                           [(ngModel)]="row.status"
-                           [ngModelOptions]="{standalone:true}"></enum-select>
-            </ng-template>
-          </erm-data-grid>
-        </p-tabpanel>
+                            <erm-popup title="Pessoa do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
 
-      </p-tabpanels>
-    </p-tabs>
-  </div>
+                            <erm-form [colCount]="2">
+                                <erm-item dataField="pessoa" label="Pessoa" editorType="template">
+                                    <erm-validation-rule type="required" message="Pessoa é obrigatória"></erm-validation-rule>
+                                </erm-item>
+                                <erm-item dataField="status" label="Status" editorType="template">
+                                    <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
+                                </erm-item>
+                            </erm-form>
+                        </erm-editing>
+
+                        <!-- Colunas -->
+                        <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
+                        <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
+                        <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
+                        <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
+
+                        <ng-template ermTemplate="pessoaCellTemplate" let-row>
+                            {{ getPessoaRotulo(row) }}
+                        </ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-row>
+                            {{ getStatusDescricao(row?.status) }}
+                        </ng-template>
+
+                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row>
+                            <p-autoComplete class="w-full"
+                                            [(ngModel)]="row.pessoa"
+                                            [ngModelOptions]="{standalone:true}"
+                                            [suggestions]="pessoasSugestoes"
+                                            (completeMethod)="searchPessoas($event)"
+                                            (onSelect)="onPessoaSelecionada(row, $event)"
+                                            (onClear)="onPessoaLimpar(row)"
+                                            (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
+                                            optionLabel="nome"
+                                            [dropdown]="true"
+                                            [forceSelection]="true"
+                                            placeholder="Buscar pessoa por nome">
+                                <ng-template pTemplate="item" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                                <ng-template pTemplate="selectedItem" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                            </p-autoComplete>
+                        </ng-template>
+
+                        <ng-template ermTemplate="statusEditCellTemplate" let-row>
+                            <enum-select class="w-full"
+                                         [enumObject]="statusEnumType"
+                                         [(ngModel)]="row.status"
+                                         [ngModelOptions]="{standalone:true}"
+                            ></enum-select>
+                        </ng-template>
+
+                    </erm-data-grid>
+                </p-tabpanel>
+
+                <p-tabpanel [value]="'2'">
+                    <erm-data-grid
+                        [dataSource]="vm.model.produtos || []"
+                        [loading]="false"
+                        (onInitNewRow)="onInitNewProduto($event)"
+                        (onEditDialogOpen)="onEditingStartProduto($event)"
+                        (onSaving)="onSavingProduto($event)"
+                        (onDeleting)="onDeletingProduto($event)">
+
+                        <erm-editing
+                            mode="popup"
+                            [allowAdding]="true"
+                            [allowUpdating]="true"
+                            [allowDeleting]="true"
+                            [confirmDelete]="true">
+
+                            <erm-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
+
+                            <erm-form [colCount]="2">
+                                <erm-item dataField="produto" label="Produto" editorType="template">
+                                    <erm-validation-rule type="required" message="Produto é obrigatório"></erm-validation-rule>
+                                </erm-item>
+                                <erm-item dataField="status" label="Status" editorType="template">
+                                    <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
+                                </erm-item>
+                            </erm-form>
+
+                        </erm-editing>
+
+                        <!-- Colunas -->
+                        <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
+                        <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
+                        <erm-column dataField="produto" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></erm-column>
+                        <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
+
+                        <ng-template ermTemplate="produtoCellTemplate" let-row>
+                            {{ getProdutoRotulo(row) }}
+                        </ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-row>
+                            {{ getStatusDescricao(row?.status) }}
+                        </ng-template>
+
+                        <ng-template ermTemplate="produtoEditCellTemplate" let-row>
+                            <p-autoComplete class="w-full"
+                                            [(ngModel)]="row._produtoObj"
+                                            [ngModelOptions]="{standalone:true}"
+                                            [suggestions]="produtosSugestoes"
+                                            (completeMethod)="searchProdutos($event)"
+                                            (onSelect)="onProdutoSelecionado(row, $event)"
+                                            (onClear)="onProdutoLimpar(row)"
+                                            (onBlur)="onProdutoSelecionado(row, { value: row._produtoObj })"
+                                            optionLabel="nome"
+                                            [dropdown]="true"
+                                            [forceSelection]="true"
+                                            placeholder="Buscar produto por nome">
+                                <ng-template pTemplate="item" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                                <ng-template pTemplate="selectedItem" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                            </p-autoComplete>
+                        </ng-template>
+
+                        <ng-template ermTemplate="statusEditCellTemplate" let-row>
+                            <enum-select class="w-full"
+                                         [enumObject]="statusEnumType"
+                                         [(ngModel)]="row.status"
+                                         [ngModelOptions]="{standalone:true}"
+                            ></enum-select>
+                        </ng-template>
+
+                    </erm-data-grid>
+                </p-tabpanel>
+
+            </p-tabpanels>
+        </p-tabs>
+    </div>
 
 </crud>
 

@@ -67,11 +67,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     const clienteOk = !!clienteId;
     if (!clienteOk) errors.push('Selecione o cliente.');
 
-    const inicioOk = !!this.model?.inicio;
-    if (!inicioOk) errors.push('Informe a data/hora de início.');
-
-    const previstoOk = !!this.model?.fimPrevisto;
-    if (!previstoOk) errors.push('Informe a data/hora prevista de término.');
+    // Datas passam a ser opcionais: não validar como obrigatórias
 
     this.errorMessages = errors;
     this.errorsVisible = errors.length > 0;
@@ -86,6 +82,16 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     // cliente: enviar apenas o id
     const clienteId = this.getClienteId();
     payload.cliente = clienteId ? { id: clienteId } : null;
+
+    // Normaliza datas: string vazia/undefined -> null; Date -> 'YYYY-MM-DDTHH:mm' (horário local)
+    const fixDate = (v: any) => {
+      if (v === '' || v === undefined) return null;
+      if (v instanceof Date) return this.toLocalMinuteString(v);
+      return v;
+    };
+    payload.inicio = fixDate(payload.inicio);
+    payload.fimPrevisto = fixDate(payload.fimPrevisto);
+    payload.fim = fixDate(payload.fim);
 
     // pessoas: enviar apenas { pessoa: {id}, status: KEY }
     if (Array.isArray(payload.pessoas)) {
@@ -136,5 +142,16 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     if (typeof c === 'object') return c.id ?? undefined;
     if (typeof c === 'number') return c;
     return undefined;
+  }
+
+  // Converte Date para string local no padrão 'YYYY-MM-DDTHH:mm' (sem fuso/segundos)
+  private toLocalMinuteString(d: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hour = pad(d.getHours());
+    const minute = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hour}:${minute}`;
   }
 }

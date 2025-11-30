@@ -197,6 +197,37 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             if (filtro.getStatus() != null && !filtro.getStatus().isBlank()) {
                 predicates.add(cb.equal(root.get("status"), StatusEnum.valueOf(filtro.getStatus())));
             }
+
+            // Suporte condicional a expand na listagem
+            // Quando expand contém relações, aplicamos fetch joins para evitar LazyInitializationException
+            String expand = filtro.getExpand();
+            if (expand != null && !expand.isBlank()) {
+                String csv = expand;
+                // normaliza para comparação simples
+                java.util.Set<String> exps = java.util.Arrays.stream(csv.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(String::toLowerCase)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                boolean distinct = false;
+                if (exps.contains("cliente")) {
+                    root.fetch("cliente", jakarta.persistence.criteria.JoinType.LEFT);
+                }
+                if (exps.contains("pessoas")) {
+                    var pessoasFetch = root.fetch("pessoas", jakarta.persistence.criteria.JoinType.LEFT);
+                    try { pessoasFetch.fetch("pessoa", jakarta.persistence.criteria.JoinType.LEFT); } catch (IllegalArgumentException ignored) {}
+                    distinct = true; // to-many
+                }
+                if (exps.contains("produtos")) {
+                    var produtosFetch = root.fetch("produtos", jakarta.persistence.criteria.JoinType.LEFT);
+                    try { produtosFetch.fetch("produto", jakarta.persistence.criteria.JoinType.LEFT); } catch (IllegalArgumentException ignored) {}
+                    distinct = true; // to-many
+                }
+                if (distinct) {
+                    query.distinct(true);
+                }
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -231,6 +262,18 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
         });
         return opt;
+    }
+
+    // Suporte ao expand para GET /evento/{id}?expand=...
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Evento> buscarPorIdComExpand(Long id, String expand) {
+        boolean hasExpand = expand != null && !expand.isBlank();
+        if (!hasExpand) {
+            return buscarPorId(id);
+        }
+        // Para simplificar inicialmente, quando houver qualquer expand pedimos o objeto todo expandido.
+        return eventoRepository.findByIdExpandedAll(id);
     }
 
     private void normalizarAssociacoes(Evento entidade) {
@@ -287,33 +330,99 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         entidadeExistente.setNome(entidade.getNome());
         entidadeExistente.setDescricao(entidade.getDescricao());
         entidadeExistente.setCliente(entidade.getCliente());
-        entidadeExistente.setStatus(entidade.getStatus());
         entidadeExistente.setAnotacoes(entidade.getAnotacoes());
         entidadeExistente.setInicio(entidade.getInicio());
         entidadeExistente.setFimPrevisto(entidade.getFimPrevisto());
         entidadeExistente.setFim(entidade.getFim());
-
-        // Sincroniza listas com as coleções normalizadas
+        entidadeExistente.setStatus(entidade.getStatus());
+        // Sincroniza coleções sem usar clear()+add(), evitando inserções duplicadas e violação de unique constraint
+        // ===== Pessoas (List) =====
         if (entidadeExistente.getPessoas() == null) {
             entidadeExistente.setPessoas(new ArrayList<>());
         }
-        entidadeExistente.getPessoas().clear();
+        List<EventoPessoa> existentesPessoa = entidadeExistente.getPessoas();
+        Map<Long, EventoPessoa> mapExistentesPorPessoa = new LinkedHashMap<>();
+        for (EventoPessoa ep : existentesPessoa) {
+            Long pessoaId = ep != null && ep.getPessoa() != null ? ep.getPessoa().getId() : null;
+            if (pessoaId != null) mapExistentesPorPessoa.put(pessoaId, ep);
+        }
+        Map<Long, EventoPessoa> mapNovosPorPessoa = new LinkedHashMap<>();
         if (entidade.getPessoas() != null) {
-            for (EventoPessoa ep : entidade.getPessoas()) {
-                // garante back-reference correta para a entidade gerenciada
-                ep.setEvento(entidadeExistente);
-                entidadeExistente.getPessoas().add(ep);
+            for (EventoPessoa epNovo : entidade.getPessoas()) {
+                if (epNovo == null || epNovo.getPessoa() == null || epNovo.getPessoa().getId() == null) continue;
+                mapNovosPorPessoa.put(epNovo.getPessoa().getId(), epNovo);
             }
         }
+        // Atualiza existentes e remove os que não vieram no payload
+        Iterator<EventoPessoa> itExistentes = existentesPessoa.iterator();
+        while (itExistentes.hasNext()) {
+            EventoPessoa atual = itExistentes.next();
+            Long pessoaId = atual.getPessoa() != null ? atual.getPessoa().getId() : null;
+            if (pessoaId == null || !mapNovosPorPessoa.containsKey(pessoaId)) {
+                // remover vínculo ausente
+                itExistentes.remove();
+                continue;
+            }
+            // atualizar campos mutáveis do vínculo
+            EventoPessoa fonte = mapNovosPorPessoa.get(pessoaId);
+            atual.setStatus(fonte.getStatus());
+            atual.setNumeroMagico(fonte.getNumeroMagico());
+            // back-reference garantida
+            atual.setEvento(entidadeExistente);
+            // já consumido
+            mapNovosPorPessoa.remove(pessoaId);
+        }
+        // Adiciona apenas os novos que não existiam
+        for (Map.Entry<Long, EventoPessoa> entry : mapNovosPorPessoa.entrySet()) {
+            EventoPessoa fonte = entry.getValue();
+            EventoPessoa novo = new EventoPessoa();
+            novo.setEvento(entidadeExistente);
+            novo.setPessoa(fonte.getPessoa()); // referência já gerenciada em normalizarAssociacoes
+            novo.setStatus(fonte.getStatus());
+            novo.setNumeroMagico(fonte.getNumeroMagico());
+            existentesPessoa.add(novo);
+        }
+
+        // ===== Produtos (Set) =====
         if (entidadeExistente.getProdutos() == null) {
             entidadeExistente.setProdutos(new HashSet<>());
         }
-        entidadeExistente.getProdutos().clear();
+        Set<EventoProduto> existentesProd = entidadeExistente.getProdutos();
+        Map<Long, EventoProduto> mapExistentesPorProduto = new LinkedHashMap<>();
+        for (EventoProduto ep : existentesProd) {
+            Long prodId = ep != null && ep.getProduto() != null ? ep.getProduto().getId() : null;
+            if (prodId != null) mapExistentesPorProduto.put(prodId, ep);
+        }
+        Map<Long, EventoProduto> mapNovosPorProduto = new LinkedHashMap<>();
         if (entidade.getProdutos() != null) {
-            for (EventoProduto eprod : entidade.getProdutos()) {
-                eprod.setEvento(entidadeExistente);
-                entidadeExistente.getProdutos().add(eprod);
+            for (EventoProduto eprodNovo : entidade.getProdutos()) {
+                if (eprodNovo == null || eprodNovo.getProduto() == null || eprodNovo.getProduto().getId() == null) continue;
+                mapNovosPorProduto.put(eprodNovo.getProduto().getId(), eprodNovo);
             }
+        }
+        // Atualiza existentes e remove ausentes
+        Iterator<EventoProduto> itProd = existentesProd.iterator();
+        while (itProd.hasNext()) {
+            EventoProduto atual = itProd.next();
+            Long prodId = atual.getProduto() != null ? atual.getProduto().getId() : null;
+            if (prodId == null || !mapNovosPorProduto.containsKey(prodId)) {
+                itProd.remove();
+                continue;
+            }
+            EventoProduto fonte = mapNovosPorProduto.get(prodId);
+            atual.setStatus(fonte.getStatus());
+            atual.setEvento(entidadeExistente);
+            // consumir
+            mapNovosPorProduto.remove(prodId);
+        }
+        // Adiciona novos vínculos de produto
+        for (Map.Entry<Long, EventoProduto> entry : mapNovosPorProduto.entrySet()) {
+            EventoProduto fonte = entry.getValue();
+            EventoProduto novo = new EventoProduto();
+            novo.setEvento(entidadeExistente);
+            novo.setProduto(fonte.getProduto()); // já gerenciada
+            novo.setStatus(fonte.getStatus());
+            existentesProd.add(novo);
         }
     }
 

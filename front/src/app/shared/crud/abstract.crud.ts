@@ -5,6 +5,7 @@ import { CrudPort } from '@/shared/services/crud-port';
 import { Mode } from '@/shared/crud/crud.mode';
 import { PageResponse } from '@/shared/model/page-response';
 import { BaseFilter } from '@/shared/model/filter/base-filter';
+import { stringify as flattedStringify, parse as flattedParse } from 'flatted';
 
 export abstract class AbstractCrud<T extends { id?: any; version?: number }, F extends BaseFilter> {
   // Estado base
@@ -26,6 +27,10 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
 
   protected storage: Storage = sessionStorage;
 
+  // Expand genérico (desabilitado por padrão)
+  protected useExpand = false;
+  protected expandFields: string[] = [];
+
   protected constructor(
     protected port: CrudPort<T, F>,
     protected route?: ActivatedRoute,
@@ -40,7 +45,8 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     const id = this.route?.snapshot.paramMap.get('id');
     if (id) {
       this.onIdParam(id);
-    } else {
+    }
+    else {
       // Carrega listagem inicial
       this.doFilter().subscribe();
     }
@@ -48,7 +54,9 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
 
   // CRUD
   doFilter(): Observable<PageResponse<T>> {
-    return this.port.listar(this.filter).pipe(
+    // aplica expand opcionalmente sem poluir o filtro persistido
+    const filtroComExpand = this.attachExpandToFilterIfNeeded();
+    return this.port.listar(filtroComExpand).pipe(
       tap((page) => {
         this.dataSource = page.content;
         this.totalRecords = page.totalElements;
@@ -106,7 +114,32 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     });
   }
 
-  protected callGetByIdService(id: any): Observable<T> { return this.port.getById(id); }
+  protected callGetByIdService(id: any): Observable<T> { return this.port.getById(id, this.getExpandParam()); }
+
+  // Permite ao componente chamar abertura de linha de forma uniforme e com suporte a expand
+  public onRowOpen(row: T): void {
+    const id = row && (row as any).id;
+    if (id != null) {
+      this.port.getById(id, this.getExpandParam()).subscribe({
+        next: (m) => {
+          this.verifyAndLockRegistry(m).subscribe({
+            next: (locked) => {
+              this.model = locked;
+              this.mode = Mode.Edit;
+              this.refreshModel.next();
+            },
+            error: (e) => this.handleError(e, 'Falha ao bloquear registro')
+          });
+        },
+        error: (e) => this.handleError(e, 'Falha ao carregar registro')
+      });
+    } else {
+      // fallback: sem ID, usa o próprio objeto
+      this.model = row;
+      this.mode = Mode.Edit;
+      this.refreshModel.next();
+    }
+  }
 
   // Concorrência otimista: stub (JPA @Version no back já garante)
   protected verifyAndLockRegistry(m: T): Observable<T> { return of(m); }
@@ -120,14 +153,15 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
   // Storage
   protected saveToStorage(): void {
     try {
-      this.storage.setItem(this.storageKey('filter'), JSON.stringify(this.filter));
+      // usa flatted para maior resiliência
+      this.storage.setItem(this.storageKey('filter'), flattedStringify(this.filter));
     } catch {}
   }
 
   protected loadFromStorage(): void {
     try {
       const val = this.storage.getItem(this.storageKey('filter'));
-      if (val) this.filter = Object.assign(this.newFilter(), JSON.parse(val));
+      if (val) this.filter = Object.assign(this.newFilter(), flattedParse(val));
     } catch {}
   }
 
@@ -170,5 +204,32 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     // Evita exibir a mensagem técnica do HttpClient completa
     if (msg && msg.startsWith('Http failure response')) return '';
     return msg;
+  }
+
+  // Expand helpers
+  protected getExpandParam(): string | string[] | undefined {
+    if (!this.useExpand) return undefined;
+    if (this.expandFields && this.expandFields.length > 0) return this.expandFields;
+    return undefined; // habilitado, mas sem campos definidos
+  }
+
+  protected attachExpandToFilterIfNeeded(): F {
+    const expand = this.getExpandParam();
+    if (expand) {
+      const f: any = { ...(this.filter as any), expand };
+      return f as F;
+    }
+    return this.filter;
+  }
+
+  // API pública para consumidores habilitarem/desabilitarem expand
+  public enableExpand(fields?: string[]): void {
+    this.useExpand = true;
+    this.expandFields = fields || [];
+  }
+
+  public disableExpand(): void {
+    this.useExpand = false;
+    this.expandFields = [];
   }
 }

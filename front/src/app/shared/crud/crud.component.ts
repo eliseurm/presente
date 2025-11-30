@@ -127,9 +127,15 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
   // Suporte a duplo clique na tabela (consumidor chama este método no (onRowDblclick))
   onRowDblClick(row: T) {
     if (this.parent) {
-      (this.parent as any).model = row as any;
-      this.parent.mode = Mode.Edit;
-      this.parent.refreshModel.next();
+      // Usa o fluxo genérico de abertura para respeitar a opção de expand
+      if ((this.parent as any).onRowOpen) {
+        (this.parent as any).onRowOpen(row);
+      } else {
+        // fallback antigo: mantém comportamento prévio
+        (this.parent as any).model = row as any;
+        this.parent.mode = Mode.Edit;
+        this.parent.refreshModel.next();
+      }
     }
   }
 

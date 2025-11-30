@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface CrudService<T, ID, F> {
     Page<T> listar(F filtro);
     Optional<T> buscarPorId(ID id);
+    default Optional<T> buscarPorIdComExpand(ID id, String expand) { return buscarPorId(id); }
     T criar(T entidade);
     T atualizar(ID id, T entidade);
     void deletar(ID id);

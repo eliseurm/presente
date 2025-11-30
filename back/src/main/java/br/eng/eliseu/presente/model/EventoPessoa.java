@@ -2,9 +2,7 @@
 package br.eng.eliseu.presente.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import br.eng.eliseu.presente.config.json.LenientObjectIdResolver;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,8 +28,7 @@ public class EventoPessoa {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pessoa_id", nullable = false)
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Pessoa.class, resolver = LenientObjectIdResolver.class)
-    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties({})
     private Pessoa pessoa;
 
     @Enumerated(EnumType.STRING)
