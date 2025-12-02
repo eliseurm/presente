@@ -6,6 +6,8 @@ import br.eng.eliseu.presente.model.EventoProduto;
 import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.service.EventoService;
+import br.eng.eliseu.presente.model.EventoEscolha;
+import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ import java.util.Map;
 public class EventoController {
 
     private final EventoService eventoService;
+    private final EventoEscolhaRepository eventoEscolhaRepository;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or (#filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
@@ -178,5 +181,36 @@ public class EventoController {
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<Map<String, Object>> parar(@PathVariable("id") Long id) {
         return ResponseEntity.ok(eventoService.pararEvento(id));
+    }
+
+    // ======= Escolhas por Pessoa (somente quando editar a pessoa) =======
+
+    @GetMapping("/{id}/pessoas/{pessoaId}/escolha/ultima")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<EventoEscolha> obterUltimaEscolha(
+            @PathVariable("id") Long eventoId,
+            @PathVariable Long pessoaId
+    ) {
+        return eventoEscolhaRepository
+                .findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/{id}/pessoas/{pessoaId}/escolha/historico")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<List<EventoEscolha>> obterHistoricoAnterior(
+            @PathVariable("id") Long eventoId,
+            @PathVariable Long pessoaId
+    ) {
+        List<EventoEscolha> todas = eventoEscolhaRepository
+                .findByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId);
+        if (todas.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+        // Remove a última (mais recente) para retornar somente anteriores
+        List<EventoEscolha> anteriores = new java.util.ArrayList<>(todas);
+        anteriores.remove(0);
+        return ResponseEntity.ok(anteriores);
     }
 }
