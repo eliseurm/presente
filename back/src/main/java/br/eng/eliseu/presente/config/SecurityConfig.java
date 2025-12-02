@@ -59,6 +59,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/pessoa/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/presente/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagem/*/arquivo").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(conf -> conf.jwt(jwt -> jwt

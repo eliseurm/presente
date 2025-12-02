@@ -6,6 +6,8 @@ import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
 import br.eng.eliseu.presente.repository.ProdutoRepository;
+import br.eng.eliseu.presente.repository.EventoPessoaRepository;
+import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     private final PessoaRepository pessoaRepository;
     private final ProdutoRepository produtoRepository;
     private final ClienteRepository clienteRepository;
+    private final EventoPessoaRepository eventoPessoaRepository;
+    private final EventoEscolhaRepository eventoEscolhaRepository;
 
     @Override
     protected EventoRepository getRepository() {
@@ -142,6 +146,97 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         eventoRepository.save(evento);
         return vinculo;
+    }
+
+    // ================= Controle do Evento: Iniciar/Parar =================
+
+    @Transactional
+    public Map<String, Object> iniciarEvento(Long eventoId, String baseUrl) {
+        Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getPessoas() == null || evento.getPessoas().isEmpty()) {
+            return Map.of("gerados", 0, "links", List.of());
+        }
+
+        int gerados = 0;
+        List<String> links = new ArrayList<>();
+
+        for (EventoPessoa ep : evento.getPessoas()) {
+            if (ep == null) continue;
+            if (ep.getStatus() == StatusEnum.ATIVO) {
+                if (ep.getNomeMagicNumber() == null || ep.getNomeMagicNumber().isBlank()) {
+                    String token = gerarNomeMagicNumber(ep.getPessoa());
+                    ep.setNomeMagicNumber(token);
+                    gerados++;
+                    if (baseUrl != null && !baseUrl.isBlank()) {
+                        links.add(formatarLink(baseUrl, token));
+                    }
+                }
+            }
+        }
+
+        if (evento.getInicio() == null) {
+            evento.setInicio(java.time.LocalDateTime.now());
+        }
+
+        eventoRepository.save(evento);
+        return Map.of(
+                "gerados", gerados,
+                "links", links
+        );
+    }
+
+    @Transactional
+    public Map<String, Object> pararEvento(Long eventoId) {
+        Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        if (evento.getPessoas() == null || evento.getPessoas().isEmpty()) {
+            return Map.of("pausados", 0);
+        }
+
+        int pausados = 0;
+        for (EventoPessoa ep : evento.getPessoas()) {
+            if (ep == null) continue;
+            if (ep.getNomeMagicNumber() != null && !ep.getNomeMagicNumber().isBlank()) {
+                if (ep.getStatus() != StatusEnum.PAUSADO) {
+                    ep.setStatus(StatusEnum.PAUSADO);
+                    pausados++;
+                }
+            }
+        }
+
+        evento.setFim(java.time.LocalDateTime.now());
+        eventoRepository.save(evento);
+        return Map.of("pausados", pausados);
+    }
+
+    private static String gerarNomeMagicNumber(Pessoa pessoa) {
+        String primeiroNome = "";
+        if (pessoa != null && pessoa.getNome() != null) {
+            String[] partes = pessoa.getNome().trim().split("\\s+");
+            if (partes.length > 0) primeiroNome = partes[0];
+        }
+        if (primeiroNome.isBlank()) primeiroNome = "Convidado";
+
+        String code8 = gerarCodigoAlfaNum(8);
+        return primeiroNome + "_" + code8;
+    }
+
+    private static String gerarCodigoAlfaNum(int tam) {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem confusões como I, O, 0, 1
+        StringBuilder sb = new StringBuilder(tam);
+        java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+        for (int i = 0; i < tam; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    private static String formatarLink(String baseUrl, String token) {
+        String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        return base + "/presente/" + token;
     }
 
     @Transactional
@@ -366,7 +461,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             // atualizar campos mutáveis do vínculo
             EventoPessoa fonte = mapNovosPorPessoa.get(pessoaId);
             atual.setStatus(fonte.getStatus());
-            atual.setNumeroMagico(fonte.getNumeroMagico());
+            atual.setNomeMagicNumber(fonte.getNomeMagicNumber());
             // back-reference garantida
             atual.setEvento(entidadeExistente);
             // já consumido
@@ -379,7 +474,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             novo.setEvento(entidadeExistente);
             novo.setPessoa(fonte.getPessoa()); // referência já gerenciada em normalizarAssociacoes
             novo.setStatus(fonte.getStatus());
-            novo.setNumeroMagico(fonte.getNumeroMagico());
+            novo.setNomeMagicNumber(fonte.getNomeMagicNumber());
             existentesPessoa.add(novo);
         }
 

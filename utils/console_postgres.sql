@@ -92,6 +92,8 @@ select * from cliente ;
 
 select * from evento ;
 
+select * from chave_magica ;
+
 select *
 from evento e
 join cliente c on e.cliente_id=c.id

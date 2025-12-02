@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -51,6 +52,14 @@ public class Evento {
     @Fetch(FetchMode.SUBSELECT)
     @JsonManagedReference(value = "evento-pessoas")
     private List<EventoPessoa> pessoas;
+
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Fetch(FetchMode.SUBSELECT)
+    @JsonManagedReference(value = "evento-escolhas")
+    @JsonIgnore // Evita carregar/serializar escolhas na listagem e previne LazyInitializationException
+    private List<EventoEscolha> escolhas;
+
+
 
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;

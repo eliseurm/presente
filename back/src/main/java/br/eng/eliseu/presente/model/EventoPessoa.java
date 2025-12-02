@@ -3,7 +3,6 @@ package br.eng.eliseu.presente.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import br.eng.eliseu.presente.config.json.LenientObjectIdResolver;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,8 +33,9 @@ public class EventoPessoa {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
-    @Column(name = "numero_magico", length = 8)
-    private String numeroMagico;
+    // Armazena o token completo no formato: primeiroNome_code8 (ex.: Maria_A1B2C3D4)
+    @Column(name = "numero_magico", length = 64)
+    private String nomeMagicNumber;
 
     public static EventoPessoa of(Evento evento, Pessoa pessoa) {
         return EventoPessoa.builder()

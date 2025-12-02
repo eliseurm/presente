@@ -159,4 +159,24 @@ public class EventoController {
         eventoService.removeProdutoVinculo(eventoId, eventoProdutoId);
         return ResponseEntity.noContent().build();
     }
+
+    // ======= Controle do Evento: Iniciar / Parar =======
+
+    public static record IniciarRequest(String baseUrl) {}
+
+    @PostMapping("/{id}/iniciar")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<Map<String, Object>> iniciar(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) IniciarRequest req
+    ) {
+        String baseUrl = req != null ? req.baseUrl() : null;
+        return ResponseEntity.ok(eventoService.iniciarEvento(id, baseUrl));
+    }
+
+    @PostMapping("/{id}/parar")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<Map<String, Object>> parar(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(eventoService.pararEvento(id));
+    }
 }
