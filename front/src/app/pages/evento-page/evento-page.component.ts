@@ -22,17 +22,16 @@ import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.c
 import {EventoService} from '@/services/evento.service';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
-import {EventoPessoa} from '@/shared/model/evento-pessoa';
-import {EventoProduto} from '@/shared/model/evento-produto';
-import {PessoaService} from '@/services/pessoa.service';
-import {ProdutoService} from '@/services/produto.service';
-import {ClienteService} from '@/services/cliente.service';
 import {Pessoa} from '@/shared/model/pessoa';
 import {Produto} from '@/shared/model/produto';
 import {Cliente} from '@/shared/model/cliente';
 import {StatusEnum} from '@/shared/model/enum/status.enum';
 import {EventoCrudVM} from './evento-crud.vm';
 import {Router} from '@angular/router';
+import {PessoaService} from '@/services/pessoa.service';
+import {ProdutoService} from '@/services/produto.service';
+import {ClienteService} from '@/services/cliente.service';
+import { environment } from '../../../environments/environment';
 import {
     ErmColumnComponent,
     ErmDataGridComponent,
@@ -202,6 +201,76 @@ export class EventoPageComponent implements OnInit {
         return '';
     }
 
+    // ================= Ações: Iniciar / Parar Evento =================
+    onIniciarEvento() {
+        const id = this.vm.model?.id;
+        if (!id) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Grave o evento antes de iniciar.'});
+            return;
+        }
+        const baseUrl = this.getPublicBaseUrl();
+        this.eventoService.iniciarEvento(id as number, baseUrl).subscribe({
+            next: (res) => {
+                const n = res?.gerados ?? 0;
+                this.messageService.add({severity:'success', summary:'Evento iniciado', detail:`${n} link(s) gerados`});
+                // Recarrega o evento para refletir tokens e datas
+                this.vm.onIdParam(String(id));
+            },
+            error: (err) => {
+                const msg = err?.error?.message || 'Falha ao iniciar o evento.';
+                this.messageService.add({severity:'error', summary:'Erro', detail: msg});
+            }
+        });
+    }
+
+    onPararEvento() {
+        const id = this.vm.model?.id;
+        if (!id) return;
+        this.eventoService.pararEvento(id as number).subscribe({
+            next: (res) => {
+                const n = res?.pausados ?? 0;
+                this.messageService.add({severity:'success', summary:'Evento pausado', detail:`${n} pessoa(s) pausadas`});
+                this.vm.onIdParam(String(id));
+            },
+            error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Falha ao parar o evento.'})
+        });
+    }
+
+    private getPublicBaseUrl(): string {
+        // Deriva a base pública removendo sufixo /api da environment.apiUrl
+        const api = environment.apiUrl || '';
+        return api.replace(/\/+api\/?$/, '');
+    }
+
+    buildTokenLink(token?: string): string {
+        if (!token) return '#';
+        return `${this.getPublicBaseUrl()}/presente/${encodeURIComponent(token)}`;
+    }
+
+    abrirPresente(token?: string) {
+        if (!token) return;
+        const url = this.buildTokenLink(token);
+        window.open(url, '_blank', 'noopener');
+    }
+
+    async copiarLink(token?: string) {
+        if (!token) return;
+        const url = this.buildTokenLink(token);
+        try {
+            await navigator.clipboard.writeText(url);
+            this.messageService.add({severity:'info', summary:'Copiado', detail:'Link copiado para a área de transferência'});
+        } catch {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch {}
+            document.body.removeChild(ta);
+            this.messageService.add({severity:'info', summary:'Copiado', detail:'Link copiado para a área de transferência'});
+        }
+    }
+
     // Rótulos de exibição nas células da grid, evitando [object Object]
     getPessoaRotulo(row: any): string {
         if (!row || typeof row.pessoa !== 'object') return '';
@@ -272,9 +341,6 @@ export class EventoPageComponent implements OnInit {
             return;
         }
         // Normaliza campos para exibição/persistência
-        // const pessoaObj = typeof selected === 'object' ? selected : this.pessoasOptions.find(p => p.id === pessoaId);
-        // row.pessoa = pessoaId; // mantém ID para o payload
-        // row.pessoaNome = pessoaObj?.nome || String(pessoaId); // label para exibição na grid
         this.messageService.add({severity:'success', summary:'OK', detail:'Pessoa registrada na lista do evento (pendente de Gravar).'});
     }
 
@@ -386,13 +452,11 @@ export class EventoPageComponent implements OnInit {
             const item = event?.value ?? row?._pessoaObj;
             row._pessoaObj = item;
             row.pessoa = item?.id ?? null;
-            // row.pessoaNome = item?.nome ?? '';
         } catch {}
     }
     onPessoaLimpar(row: any) {
         row._pessoaObj = null;
         row.pessoa = null;
-        // row.pessoaNome = '';
     }
 
     // Sincronização imediata ao selecionar/limpar no AutoComplete (Produto)
@@ -427,20 +491,6 @@ export class EventoPageComponent implements OnInit {
                     }
                 }
             }
-            // if (Array.isArray(this.vm.model?.pessoas)) {
-            //     this.vm.model.pessoas.forEach((ep: any) => {
-            //         if(typeof ep?.pessoa === 'object') {
-            //             this.pessoasOptions.push(ep.pessoa);
-            //         }
-            //     });
-            // }
-            // if (Array.isArray(this.vm.model?.produtos)) {
-            //     this.vm.model.produtos.forEach((pr: any) => {
-            //         const id = typeof pr?.produto === 'object' ? pr.produto?.id : pr?.produto;
-            //         const obj = this.produtosOptions.find(p => p.id === id);
-            //         pr.produtoNome = pr.produtoNome || obj?.nome || (id != null ? String(id) : '');
-            //     });
-            // }
         } catch {}
     }
 

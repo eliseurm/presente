@@ -4,5 +4,6 @@ export class EventoPessoa {
     id?: number;
     pessoa!: Pessoa | { id: number };
     status?: any; // StatusEnum
-    numeroMagico?: string;
+    // Deve refletir o backend: campo "nomeMagicNumber" (ex.: Maria_A1B2C3D4)
+    nomeMagicNumber?: string;
 }

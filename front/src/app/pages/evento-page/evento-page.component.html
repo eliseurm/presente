@@ -60,6 +60,19 @@
             <p-tabpanels>
 
                 <p-tabpanel [value]="'0'">
+                    <!-- Ações de controle do evento: Iniciar / Parar -->
+                    <div class="flex gap-2 items-center mb-2" *ngIf="vm.model?.id">
+                        <button pButton type="button" label="Iniciar"
+                                icon="pi pi-play"
+                                class="p-button-success"
+                                (click)="onIniciarEvento()"></button>
+                        <button pButton type="button" label="Parar"
+                                icon="pi pi-pause"
+                                class="p-button-warning"
+                                (click)="onPararEvento()"></button>
+                        <span class="text-sm opacity-70" *ngIf="vm.model?.inicio">Iniciado: {{ vm.model?.inicio | date:'short' }}</span>
+                        <span class="text-sm opacity-70" *ngIf="vm.model?.fim">• Fim: {{ vm.model?.fim | date:'short' }}</span>
+                    </div>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="flex flex-col gap-2 w-full md:w-3/4">
                             <label class="block">Nome *</label>
@@ -173,6 +186,8 @@
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
                         <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
+                        <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
+                        <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCell"></erm-column>
 
                         <ng-template ermTemplate="pessoaCellTemplate" let-row>
                             {{ getPessoaRotulo(row) }}
@@ -209,6 +224,28 @@
                                          [(ngModel)]="row.status"
                                          [ngModelOptions]="{standalone:true}"
                             ></enum-select>
+                        </ng-template>
+
+                        <ng-template ermTemplate="magicLinkCell" let-row>
+                            <ng-container *ngIf="row?.nomeMagicNumber; else semToken">
+                                <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">
+                                    {{ row?.nomeMagicNumber }}
+                                </a>
+                            </ng-container>
+                            <ng-template #semToken>
+                                <span class="text-xs opacity-60">—</span>
+                            </ng-template>
+                        </ng-template>
+
+                        <ng-template ermTemplate="acoesCell" let-row>
+                            <button pButton type="button" icon="pi pi-external-link" class="p-button-text p-button-sm"
+                                    [disabled]="!row?.nomeMagicNumber"
+                                    pTooltip="Abrir Presente" tooltipPosition="top"
+                                    (click)="abrirPresente(row?.nomeMagicNumber)"></button>
+                            <button pButton type="button" icon="pi pi-copy" class="p-button-text p-button-sm"
+                                    [disabled]="!row?.nomeMagicNumber"
+                                    pTooltip="Copiar Link" tooltipPosition="top"
+                                    (click)="copiarLink(row?.nomeMagicNumber)"></button>
                         </ng-template>
 
                     </erm-data-grid>

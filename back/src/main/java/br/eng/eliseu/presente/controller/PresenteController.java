@@ -42,8 +42,8 @@ public class PresenteController {
 
     public static record HistoricoResponse(List<EventoEscolha> anteriores) {}
 
-    // GET /presente/{token}
-    @GetMapping("/{token}")
+    // GET /presente/{token} (JSON)
+    @GetMapping(path = "/{token}", produces = "application/json")
     @Transactional(readOnly = true)
     public ResponseEntity<ResumoResponse> carregar(@PathVariable("token") String token) {
         EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token)
@@ -59,6 +59,12 @@ public class PresenteController {
                 .map(EventoProduto::getProduto)
                 .filter(Objects::nonNull)
                 .distinct()
+                .peek(p -> {
+                    // Inicializa coleções necessárias para a tela (tamanhos, cores, imagens)
+                    if (p.getTamanhos() != null) p.getTamanhos().size();
+                    if (p.getCores() != null) p.getCores().size();
+                    if (p.getImagens() != null) p.getImagens().size();
+                })
                 .collect(Collectors.toList());
 
         // Última escolha
@@ -86,6 +92,31 @@ public class PresenteController {
                 mensagem
         );
         return ResponseEntity.ok(resp);
+    }
+
+    // GET /presente/{token} (HTML) — quando o navegador solicitar text/html
+    @GetMapping(path = "/{token}", produces = "text/html")
+    public ResponseEntity<String> carregarPagina(@PathVariable("token") String token) {
+        String safeToken = org.springframework.web.util.HtmlUtils.htmlEscape(token);
+        String html = "" +
+                "<!doctype html>" +
+                "<html lang=\"pt-BR\">" +
+                "<head>" +
+                "  <meta charset=\"utf-8\">" +
+                "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
+                "  <title>Escolha do Presente</title>" +
+                "  <link rel=\"stylesheet\" href=\"/presente/styles.css\">" +
+                "</head>" +
+                "<body>" +
+                "  <main class=\"container\">" +
+                "    <h1>Escolha do Presente</h1>" +
+                "    <div id=\"app\">Carregando...</div>" +
+                "  </main>" +
+                "  <script>window.PRESENTE_TOKEN='" + safeToken + "';</script>" +
+                "  <script type=\"module\" src=\"/presente/app.js\"></script>" +
+                "</body>" +
+                "</html>";
+        return ResponseEntity.ok(html);
     }
 
     // POST /presente/{token}/escolher

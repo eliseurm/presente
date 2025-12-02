@@ -19,4 +19,21 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         formData.append('file', file);
         return this.http.post<{ adicionados: number }>(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
     }
+
+    iniciarEvento(eventoId: number, baseUrl?: string): Observable<{ gerados: number; links: string[] }> {
+        const body = baseUrl ? { baseUrl } : {};
+        return this.http.post<{ gerados: number; links: string[] }>(`${this.apiUrl}/${eventoId}/iniciar`, body);
+    }
+
+    pararEvento(eventoId: number): Observable<{ pausados: number }> {
+        return this.http.post<{ pausados: number }>(`${this.apiUrl}/${eventoId}/parar`, {});
+    }
+
+    getUltimaEscolha(eventoId: number, pessoaId: number): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`);
+    }
+
+    getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
+    }
 }
