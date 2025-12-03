@@ -1,8 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 import { PresenteService } from './presente.service';
 import { ProdutoComponent } from '@/presente-page/produto-component/produto-component';
@@ -12,10 +14,13 @@ type Produto = {
     id: number;
     nome: string;
     descricao: string;
-    preco: number;
-    tamanhos: string[];
+    preco?: number;
+    tamanhos: { id: number; label: string }[];
+    cores: { id: number; label: string }[];
     imagens: string[];
-    tamanhoSelecionado?: string | null;
+    tamanhoSelecionado?: { id: number; label: string } | null;
+    corSelecionada?: { id: number; label: string } | null;
+    _errors?: string[];
 };
 
 @Component({
@@ -26,15 +31,19 @@ type Produto = {
         RouterModule,
         FormsModule,
         ProgressSpinnerModule,
+        ToastModule,
         PresenteTopbarComponent,
         ProdutoComponent
     ],
     templateUrl: './presente-escolha.component.html',
-    styleUrls: ['./presente-escolha.component.scss']
+    styleUrls: ['./presente-escolha.component.scss'],
+    providers: [MessageService]
 })
 export class PresenteEscolhaComponent {
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private service = inject(PresenteService);
+    private messageService = inject(MessageService);
 
     keyMagico = '';
     valido = false;
@@ -45,33 +54,75 @@ export class PresenteEscolhaComponent {
     nomeExibicao: string | null = null;
 
     selectedProductId: number | null = null;
+    detailMode = false;
+    produtos: Produto[] = [];
 
-    produtos: Produto[] = [
-        { id: 1, nome: 'Caneca personalizada', descricao: 'Caneca de cerâmica 350ml com estampa exclusiva.', preco: 69.9, tamanhos: ['P', 'M', 'G'], imagens: ['https://picsum.photos/seed/caneca-1/800/600', 'https://picsum.photos/seed/caneca-2/800/600', 'https://picsum.photos/seed/caneca-3/800/600'] },
-        { id: 2, nome: 'Camisa do time', descricao: 'Camisa oficial, tecido dry-fit, edição 2025.', preco: 249.0, tamanhos: ['PP', 'P', 'M', 'G', 'GG'], imagens: ['https://picsum.photos/seed/camisa-1/800/600', 'https://picsum.photos/seed/camisa-2/800/600'] },
-        { id: 3, nome: 'Kit de chocolates', descricao: 'Seleção premium de chocolates artesanais.', preco: 119.5, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/choc-1/800/600', 'https://picsum.photos/seed/choc-2/800/600'] },
-        { id: 4, nome: 'Mochila urbana', descricao: 'Mochila resistente, compartimento para notebook.', preco: 199.9, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/mochila-1/800/600', 'https://picsum.photos/seed/mochila-2/800/600'] },
-        { id: 5, nome: 'Fone Bluetooth', descricao: 'Cancelamento de ruído e bateria de longa duração.', preco: 329.0, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/fone-1/800/600', 'https://picsum.photos/seed/fone-2/800/600'] },
-        { id: 6, nome: 'Garrafa térmica', descricao: 'Aço inox 750ml, mantém gelado por 24h.', preco: 99.0, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/garrafa-1/800/600', 'https://picsum.photos/seed/garrafa-2/800/600'] },
-        { id: 7, nome: 'Jaqueta corta-vento', descricao: 'Leve, compacta e resistente à água.', preco: 279.9, tamanhos: ['P', 'M', 'G', 'GG'], imagens: ['https://picsum.photos/seed/jaqueta-1/800/600', 'https://picsum.photos/seed/jaqueta-2/800/600'] },
-        { id: 8, nome: 'Tênis casual', descricao: 'Conforto para o dia a dia, solado em EVA.', preco: 349.0, tamanhos: ['37', '38', '39', '40', '41', '42', '43'], imagens: ['https://picsum.photos/seed/tenis-1/800/600', 'https://picsum.photos/seed/tenis-2/800/600', 'https://picsum.photos/seed/tenis-3/800/600'] },
-        { id: 9, nome: 'Relógio esportivo', descricao: 'Monitoramento de atividades e notificações.', preco: 459.0, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/relogio-1/800/600', 'https://picsum.photos/seed/relogio-2/800/600'] },
-        { id: 10, nome: 'Óculos de sol', descricao: 'Lentes UV400 com proteção total.', preco: 189.0, tamanhos: ['Único'], imagens: ['https://picsum.photos/seed/oculos-1/800/600', 'https://picsum.photos/seed/oculos-2/800/600'] }
-    ];
+    // resumo retornado pelo backend
+    resumo: any = null;
+    podeRefazer = false;
+    expirado = false;
+    ultimaEscolha: any = null;
+    // mensagens de feedback na tela de detalhe
+    confirmError = '';
+    confirmSuccess = '';
 
     ngOnInit() {
-        this.keyMagico = this.route.snapshot.paramMap.get('keyMagico') ?? '';
+        // A rota pública deve ser /presente/:token (mantém compatibilidade com :keyMagico)
+        this.keyMagico = this.route.snapshot.paramMap.get('token') ?? this.route.snapshot.paramMap.get('keyMagico') ?? '';
+        const produtoIdParam = this.route.snapshot.paramMap.get('produtoId');
+        this.detailMode = !!produtoIdParam;
+        this.selectedProductId = produtoIdParam ? Number(produtoIdParam) : null;
         this.nomeExibicao = this.route.snapshot.queryParamMap.get('nome');
 
         this.service
-            .validarKey(this.keyMagico)
-            .then((ok) => {
-                this.valido = ok;
-                if (!ok) this.erroMsg = 'Este link não é válido ou não está mais ativo.';
+            .getResumo(this.keyMagico)
+            .then((res) => {
+                this.resumo = res;
+                this.valido = true;
+                this.podeRefazer = !!res?.podeRefazer;
+                this.expirado = !!res?.expirado;
+                this.ultimaEscolha = res?.ultimaEscolha || null;
+                this.nomeExibicao = res?.pessoaNome || this.nomeExibicao;
+                this.produtos = (res?.produtos || []).map((p: any) => this.mapProduto(p));
+
+                // Se já existe última escolha e não estamos explicitamente em modo refazer, abrir direto no detalhe
+                if (!this.detailMode && this.ultimaEscolha?.produto?.id) {
+                    const pid = Number(this.ultimaEscolha.produto.id);
+                    this.irParaDetalhe(pid);
+                }
+
+                // Pré-seleciona tamanho/cor na tela de detalhe a partir de query params ou última escolha
+                if (this.detailMode && this.selectedProductId) {
+                    const qp = this.route.snapshot.queryParamMap;
+                    const qsTam = qp.get('tamanhoId');
+                    const qsCor = qp.get('corId');
+                    const prod = this.produtos.find(p => p.id === this.selectedProductId!);
+                    if (prod) {
+                        const selectById = (list: {id:number;label:string}[]|undefined, idStr: string|null) => {
+                            if (!list || !idStr) return null;
+                            const id = Number(idStr);
+                            return list.find(x => x.id === id) || null;
+                        };
+                        // Query params primeiro
+                        const selTam = selectById(prod.tamanhos, qsTam);
+                        const selCor = selectById(prod.cores, qsCor);
+                        if (selTam) prod.tamanhoSelecionado = selTam;
+                        if (selCor) prod.corSelecionada = selCor;
+                        // Se não vierem params, usa última escolha (quando do mesmo produto)
+                        if (!selTam && this.ultimaEscolha?.produto?.id === prod.id && this.ultimaEscolha?.tamanho?.id) {
+                            const tid = Number(this.ultimaEscolha.tamanho.id);
+                            prod.tamanhoSelecionado = (prod.tamanhos || []).find(t => t.id === tid) || prod.tamanhos?.[0] || null;
+                        }
+                        if (!selCor && this.ultimaEscolha?.produto?.id === prod.id && this.ultimaEscolha?.cor?.id) {
+                            const cid = Number(this.ultimaEscolha.cor.id);
+                            prod.corSelecionada = (prod.cores || []).find(c => c.id === cid) || prod.cores?.[0] || null;
+                        }
+                    }
+                }
             })
             .catch(() => {
                 this.valido = false;
-                this.erroMsg = 'Não foi possível validar o link agora.';
+                this.erroMsg = 'Este link não é válido ou não está mais ativo.';
             })
             .finally(() => (this.carregando = false));
     }
@@ -84,7 +135,96 @@ export class PresenteEscolhaComponent {
         return this.selectedProductId !== null && this.selectedProductId !== p.id;
     }
 
-    alternarSelecao(p: Produto) {
-        this.selectedProductId = this.isSelecionado(p) ? null : p.id;
+    async alternarSelecao(p: Produto) {
+        // Exigir seleção explícita de tamanho/cor quando houver opções
+        const precisaTam = Array.isArray(p.tamanhos) && p.tamanhos.length > 0;
+        const precisaCor = Array.isArray(p.cores) && p.cores.length > 0;
+        if (precisaTam && !p.tamanhoSelecionado) {
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione um tamanho.', life: 4000 });
+            return;
+        }
+        if (precisaCor && !p.corSelecionada) {
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione uma cor.', life: 4000 });
+            return;
+        }
+
+        // Persistência imediata (POST /api/presente/salvar) enviando um objeto de EventoEscolha
+        try {
+            const escolha = {
+                evento: { id: this.resumo?.eventoId },
+                pessoa: { id: this.resumo?.pessoaId },
+                produto: { id: p.id },
+                tamanho: { id: p.tamanhoSelecionado?.id || (p.tamanhos?.[0]?.id ?? null) },
+                cor: { id: p.corSelecionada?.id || (p.cores?.[0]?.id ?? null) }
+            };
+            if (!escolha.tamanho.id || !escolha.cor.id) {
+                this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione o tamanho e a cor.', life: 4000 });
+                return;
+            }
+            const resp = await this.service.salvarEscolha(escolha);
+            this.ultimaEscolha = resp;
+            // Entra no modo resumo SEM alterar a URL (link mágico permanece estável)
+            this.detailMode = true;
+            this.selectedProductId = p.id;
+            this.messageService.add({ severity: 'success', summary: 'Pronto!', detail: 'Presente selecionado com sucesso.', life: 4000 });
+        } catch (e: any) {
+            const msg = e?.error?.message || 'Não foi possível salvar sua escolha.';
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg, life: 5000 });
+        }
+    }
+
+    private irParaDetalhe(produtoId: number) {
+        // Mantemos a URL estável; alternamos apenas o estado da tela
+        this.detailMode = true;
+        this.selectedProductId = produtoId;
+    }
+
+    voltarParaLista() {
+        this.detailMode = false;
+        this.selectedProductId = null;
+    }
+
+    // Confirmar não é mais necessário no fluxo novo (persistimos ao selecionar na lista).
+    // Mantemos a função para compatibilidade, mas ela só valida estado atual.
+    async confirmarEscolha() {
+        this.messageService.add({ severity: 'info', summary: 'Informação', detail: 'Sua escolha já foi salva ao selecionar o presente.', life: 3000 });
+    }
+
+    private mapProduto(p: any): Produto {
+        const tamanhos = Array.isArray(p?.tamanhos)
+            ? p.tamanhos.map((t: any) => ({ id: t?.id ?? t, label: t?.tamanho ?? t?.descricao ?? String(t) }))
+            : [];
+        const cores = Array.isArray(p?.cores)
+            ? p.cores.map((c: any) => ({ id: c?.id ?? c, label: c?.nome ?? c?.descricao ?? String(c) }))
+            : [];
+        const imagens = Array.isArray(p?.imagens)
+            ? p.imagens.map((i: any) => this.getImagemUrl(i))
+            : [];
+        return {
+            id: p?.id,
+            nome: p?.nome,
+            descricao: p?.descricao,
+            preco: p?.preco,
+            tamanhos,
+            cores,
+            imagens,
+            tamanhoSelecionado: null,
+            corSelecionada: null,
+            _errors: []
+        } as Produto;
+    }
+
+    private getImagemUrl(img: any): string {
+        // Backend costuma expor imagens como objetos {id, nome,...}; arquivo disponível em /api/imagem/{id}/arquivo
+        if (img && typeof img === 'object' && img.id) {
+            return `/api/imagem/${img.id}/arquivo`;
+        }
+        // Fallback para campos diretos
+        return img?.url || img?.link || img?.src || '';
+    }
+
+    get selectedProduct(): Produto | null {
+        if (this.selectedProductId == null) return null;
+        return this.produtos.find(p => p.id === this.selectedProductId) || null;
     }
 }

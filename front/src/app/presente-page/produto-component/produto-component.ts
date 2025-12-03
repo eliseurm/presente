@@ -16,10 +16,12 @@ export type Produto = {
     id: number;
     nome: string;
     descricao: string;
-    preco: number;
-    tamanhos: string[];
+    preco?: number;
+    tamanhos: { id: number; label: string }[];
+    cores?: { id: number; label: string }[];
     imagens: string[];
-    tamanhoSelecionado?: string | null;
+    tamanhoSelecionado?: { id: number; label: string } | null;
+    corSelecionada?: { id: number; label: string } | null;
 };
 
 @Component({
@@ -34,11 +36,17 @@ export class ProdutoComponent {
     @Input() produto!: Produto;
     @Input() selected = false;
     @Input() disabled = false;
+    @Input() compact = false;
+    @Input() errors: string[] = [];
 
     @Output() toggle = new EventEmitter<void>();
 
     get tamanhoOptions() {
-        return (this.produto?.tamanhos ?? []).map((t) => ({ label: t, value: t }));
+        return (this.produto?.tamanhos ?? []).map((t) => ({ label: t.label ?? String(t), value: t }));
+    }
+
+    get corOptions() {
+        return (this.produto?.cores ?? []).map((c) => ({ label: c.label ?? String(c), value: c }));
     }
 
     onToggleClick() {

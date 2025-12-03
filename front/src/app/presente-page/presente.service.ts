@@ -7,24 +7,30 @@ import { environment } from '../../environments/environment';
 export class PresenteService {
   private http = inject(HttpClient);
 
-  // base pública: derive de apiUrl (remove sufixo /api, se houver)
-  private get publicBase() {
-    return (environment.apiUrl || '').replace(/\/+api\/?$/, '');
-  }
-
   async getResumo(token: string): Promise<any> {
-    const url = `${this.publicBase}/presente/${encodeURIComponent(token)}`;
+    const base = environment.apiUrl || '';
+    const url = `${base}/presente/${encodeURIComponent(token)}`;
     return await firstValueFrom(this.http.get<any>(url));
   }
 
   async postEscolha(token: string, payload: { produtoId: number; tamanhoId: number; corId: number }): Promise<any> {
-    const url = `${this.publicBase}/presente/${encodeURIComponent(token)}/escolher`;
+    // Deprecated path (mantido por compatibilidade se ainda for utilizado em algum lugar)
+    const base = environment.apiUrl || '';
+    const url = `${base}/presente/${encodeURIComponent(token)}/escolher`;
     return await firstValueFrom(this.http.post<any>(url, payload));
   }
 
   async getHistorico(token: string): Promise<{ anteriores: any[] }> {
-    const url = `${this.publicBase}/presente/${encodeURIComponent(token)}/historico`;
+    const base = environment.apiUrl || '';
+    const url = `${base}/presente/${encodeURIComponent(token)}/historico`;
     return await firstValueFrom(this.http.get<{ anteriores: any[] }>(url));
+  }
+
+  // Novo endpoint conforme especificação: POST /presente/salvar com um objeto de EventoEscolha
+  async salvarEscolha(escolha: any): Promise<any> {
+    const base = environment.apiUrl || '';
+    const url = `${base}/presente/salvar`;
+    return await firstValueFrom(this.http.post<any>(url, escolha));
   }
 
   async validarKey(token: string): Promise<boolean> {

@@ -33,6 +33,9 @@ public class PresenteController {
             LocalDateTime dataPrevista,
             Long pessoaId,
             String pessoaNome,
+            String pessoaEmail,
+            String pessoaTelefone,
+            String pessoaEndereco,
             List<Produto> produtos,
             EventoEscolha ultimaEscolha,
             boolean podeRefazer,
@@ -46,11 +49,9 @@ public class PresenteController {
     @GetMapping(path = "/{token}", produces = "application/json")
     @Transactional(readOnly = true)
     public ResponseEntity<ResumoResponse> carregar(@PathVariable("token") String token) {
-        EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
+        EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
 
-        Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
+        Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
         // Produtos associados ao evento
         List<Produto> produtos = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
@@ -79,12 +80,26 @@ public class PresenteController {
             mensagem = "O tempo para escolha expirou. Nenhuma escolha foi registrada.";
         }
 
+        // Dados adicionais da pessoa
+        Pessoa pessoa = ep.getPessoa();
+        String email = null;
+        String telefone = null;
+        String endereco = null;
+        if (pessoa != null) {
+            try { email = pessoa.getEmail(); } catch (Exception ignore) {}
+            try { telefone = pessoa.getTelefone(); } catch (Exception ignore) {}
+            try { endereco = pessoa.getEndereco(); } catch (Exception ignore) {}
+        }
+
         ResumoResponse resp = new ResumoResponse(
                 evento.getId(),
                 evento.getNome(),
                 evento.getFimPrevisto(),
                 ep.getPessoa().getId(),
                 ep.getPessoa().getNome(),
+                email,
+                telefone,
+                endereco,
                 produtos,
                 ultima,
                 podeRefazer,
@@ -173,6 +188,64 @@ public class PresenteController {
                 .build();
 
         EventoEscolha salva = eventoEscolhaRepository.save(escolha);
+        return ResponseEntity.ok(salva);
+    }
+
+    // POST /presente/salvar (recebe um objeto EventoEscolha "carregado")
+    @PostMapping("/salvar")
+    @Transactional
+    public ResponseEntity<EventoEscolha> salvarEscolha(@RequestBody EventoEscolha escolha) {
+        if (escolha == null
+                || escolha.getEvento() == null || escolha.getEvento().getId() == null
+                || escolha.getPessoa() == null || escolha.getPessoa().getId() == null
+                || escolha.getProduto() == null || escolha.getProduto().getId() == null
+                || escolha.getTamanho() == null || escolha.getTamanho().getId() == null
+                || escolha.getCor() == null || escolha.getCor().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados incompletos para a escolha");
+        }
+
+        // Carrega entidades gerenciadas
+        Evento evento = eventoRepository.findByIdExpandedAll(escolha.getEvento().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento inexistente"));
+
+        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId())
+                .flatMap(id -> Optional.ofNullable(evento.getPessoas()).orElseGet(java.util.List::of)
+                        .stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
+
+        Produto produto = produtoRepository.findById(escolha.getProduto().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
+        Tamanho tamanho = tamanhoRepository.findById(escolha.getTamanho().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inexistente"));
+        Cor cor = corRepository.findById(escolha.getCor().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
+
+        // Regras
+        if (evento.getFimPrevisto() != null && LocalDateTime.now().isAfter(evento.getFimPrevisto())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O tempo para escolha expirou");
+        }
+        boolean produtoPermitido = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
+                .filter(Objects::nonNull)
+                .anyMatch(evProd -> evProd.getProduto() != null && Objects.equals(evProd.getProduto().getId(), produto.getId()));
+        if (!produtoPermitido) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto não vinculado ao evento");
+        }
+        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
+        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
+        if (!tamanhoOk || !corOk) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
+        }
+
+        EventoEscolha nova = EventoEscolha.builder()
+                .evento(evento)
+                .pessoa(pessoa)
+                .produto(produto)
+                .tamanho(tamanho)
+                .cor(cor)
+                .dataEscolha(LocalDateTime.now())
+                .build();
+
+        EventoEscolha salva = eventoEscolhaRepository.save(nova);
         return ResponseEntity.ok(salva);
     }
 

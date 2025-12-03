@@ -4,10 +4,11 @@ import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.EventoPessoa;
 import br.eng.eliseu.presente.model.EventoProduto;
 import br.eng.eliseu.presente.model.StatusEnum;
-import br.eng.eliseu.presente.model.filter.EventoFilter;
-import br.eng.eliseu.presente.service.EventoService;
 import br.eng.eliseu.presente.model.EventoEscolha;
+import br.eng.eliseu.presente.model.dto.EventoDTO;
+import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
+import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
@@ -27,32 +28,34 @@ public class EventoController {
     private final EventoEscolhaRepository eventoEscolhaRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or (#filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
-    public ResponseEntity<Page<Evento>> listar(EventoFilter filtro) {
-
-        return ResponseEntity.ok(eventoService.listar(filtro));
+    @PreAuthorize("hasRole('ADMIN') or (#filtro != null and #filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
+    public ResponseEntity<Page<EventoDTO>> listar(@ModelAttribute EventoFilter filtro) {
+        // Garante instância não nula para evitar 500 por causa de SpEL/binding
+        if (filtro == null) {
+            filtro = new EventoFilter();
+        }
+        return ResponseEntity.ok(eventoService.listarDTO(filtro));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Evento> buscarPorId(@PathVariable Long id, @RequestParam(value = "expand", required = false) String expand) {
-        return eventoService.buscarPorIdComExpand(id, expand)
+    public ResponseEntity<EventoDTO> buscarPorId(@PathVariable Long id, @RequestParam(value = "expand", required = false) String expand) {
+        return eventoService.buscarPorIdDTO(id, expand)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or ( #evento != null and #evento.cliente != null and @authService.isLinkedToClient(#evento.cliente.id) )")
-    public ResponseEntity<Evento> criar(@RequestBody Evento evento) {
-
-        return ResponseEntity.ok(eventoService.criar(evento));
+    public ResponseEntity<EventoDTO> criar(@RequestBody EventoDTO evento) {
+        return ResponseEntity.ok(eventoService.criarDTO(evento));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Evento> atualizar(@PathVariable Long id, @RequestBody Evento evento) {
+    public ResponseEntity<EventoDTO> atualizar(@PathVariable Long id, @RequestBody EventoDTO evento) {
         try {
-            Evento atualizado = eventoService.atualizar(id, evento);
+            EventoDTO atualizado = eventoService.atualizarDTO(id, evento);
             return ResponseEntity.ok(atualizado);
         } catch (RuntimeException e) {
             // Não fazer upsert aqui: comportamento correto é retornar 404 quando não encontrado

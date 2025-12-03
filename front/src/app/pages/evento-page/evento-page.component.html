@@ -70,8 +70,8 @@
                                 icon="pi pi-pause"
                                 class="p-button-warning"
                                 (click)="onPararEvento()"></button>
-                        <span class="text-sm opacity-70" *ngIf="vm.model?.inicio">Iniciado: {{ vm.model?.inicio | date:'short' }}</span>
-                        <span class="text-sm opacity-70" *ngIf="vm.model?.fim">• Fim: {{ vm.model?.fim | date:'short' }}</span>
+                        <span class="text-sm opacity-70" *ngIf="vm.model?.inicio">Iniciado: {{ vm.model.inicio | date:'short' }}</span>
+                        <span class="text-sm opacity-70" *ngIf="vm.model?.fim">• Fim: {{ vm.model.fim | date:'short' }}</span>
                     </div>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="flex flex-col gap-2 w-full md:w-3/4">
@@ -169,14 +169,113 @@
                             [allowDeleting]="true"
                             [confirmDelete]="true">
 
-                            <erm-popup title="Pessoa do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
+                            <erm-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></erm-popup>
 
-                            <erm-form [colCount]="2">
-                                <erm-item dataField="pessoa" label="Pessoa" editorType="template">
-                                    <erm-validation-rule type="required" message="Pessoa é obrigatória"></erm-validation-rule>
-                                </erm-item>
-                                <erm-item dataField="status" label="Status" editorType="template">
-                                    <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
+                            <!-- Para garantir renderização dentro do popup, encapsulamos as abas em um erm-item template -->
+                            <erm-form [colCount]="1">
+                                <erm-item dataField="_tabs" editorType="template">
+                                    <ng-template let-row>
+                                        <div class="headless-tabs">
+                                            <div class="tablist flex gap-3 mb-3">
+                                                <button pButton type="button" label="Geral" [severity]="row._tab === 'geral' ? 'primary' : 'secondary'" (click)="row._tab='geral'"></button>
+                                                <button pButton type="button" label="Opção escolhida" [severity]="row._tab === 'ultima' ? 'primary' : 'secondary'" (click)="row._tab='ultima'"></button>
+                                                <button pButton type="button" label="Histórico de escolha" [severity]="row._tab === 'historico' ? 'primary' : 'secondary'" (click)="row._tab='historico'"></button>
+                                            </div>
+
+                                            <div class="tabpanel" *ngIf="row._tab === 'geral'">
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block mb-1">Pessoa</label>
+                                                        <p-autoComplete class="w-full"
+                                                                        [(ngModel)]="row._pessoaObj"
+                                                                        [ngModelOptions]="{standalone:true}"
+                                                                        [suggestions]="pessoasSugestoes"
+                                                                        (completeMethod)="searchPessoas($event)"
+                                                                        (onSelect)="onPessoaSelecionada(row, $event)"
+                                                                        (onClear)="onPessoaLimpar(row)"
+                                                                        (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
+                                                                        optionLabel="nome"
+                                                                        [dropdown]="true"
+                                                                        [forceSelection]="true"
+                                                                        placeholder="Buscar pessoa por nome">
+                                                            <ng-template pTemplate="item" let-item>
+                                                                {{ item?.nome }}
+                                                            </ng-template>
+                                                            <ng-template pTemplate="selectedItem" let-item>
+                                                                {{ item?.nome }}
+                                                            </ng-template>
+                                                        </p-autoComplete>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block mb-1">Status</label>
+                                                        <enum-select class="w-full"
+                                                                     [enumObject]="statusEnumType"
+                                                                     [(ngModel)]="row.status"
+                                                                     [ngModelOptions]="{standalone:true}">
+                                                        </enum-select>
+                                                    </div>
+                                                    <div class="col-span-2">
+                                                        <label class="block mb-1">Link mágico</label>
+                                                        <div class="flex items-center gap-2">
+                                                            <ng-container *ngIf="row?.nomeMagicNumber; else noToken">
+                                                                <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">{{ row?.nomeMagicNumber }}</a>
+                                                                <button pButton type="button" icon="pi pi-copy" class="p-button-text p-button-sm"
+                                                                        (click)="copiarLink(row?.nomeMagicNumber)"
+                                                                        pTooltip="Copiar link"></button>
+                                                            </ng-container>
+                                                            <ng-template #noToken>
+                                                                <span class="text-xs opacity-60">Token ainda não gerado (Iniciar evento)</span>
+                                                            </ng-template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="tabpanel" *ngIf="row._tab === 'ultima'">
+                                                <div class="p-3" *ngIf="pessoaEscolhaLoading">Carregando…</div>
+                                                <div class="p-3" *ngIf="!pessoaEscolhaLoading">
+                                                    <ng-container *ngIf="pessoaUltimaEscolha; else nenhumaEscolha">
+                                                        <div class="grid gap-2">
+                                                            <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}</div>
+                                                            <div><b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</div>
+                                                            <div><b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}</div>
+                                                            <div><b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}</div>
+                                                        </div>
+                                                    </ng-container>
+                                                    <ng-template #nenhumaEscolha>
+                                                        <div class="p-2 text-sm opacity-80">O presente ainda não foi escolhido.</div>
+                                                    </ng-template>
+                                                </div>
+                                            </div>
+
+                                            <div class="tabpanel" *ngIf="row._tab === 'historico'">
+                                                <div class="p-3" *ngIf="pessoaEscolhaLoading">Carregando…</div>
+                                                <div class="p-3" *ngIf="!pessoaEscolhaLoading">
+                                                    <table class="w-full text-sm" *ngIf="pessoaHistorico?.length; else semHistorico">
+                                                        <thead>
+                                                        <tr>
+                                                            <th class="text-left">Data</th>
+                                                            <th class="text-left">Produto</th>
+                                                            <th class="text-left">Tam.</th>
+                                                            <th class="text-left">Cor</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr *ngFor="let e of pessoaHistorico">
+                                                            <td>{{ e?.dataEscolha | date:'short' }}</td>
+                                                            <td>{{ e?.produto?.nome || e?.produto?.id }}</td>
+                                                            <td>{{ e?.tamanho?.descricao || e?.tamanho?.id }}</td>
+                                                            <td>{{ e?.cor?.descricao || e?.cor?.id }}</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <ng-template #semHistorico>
+                                                        <div class="p-2 text-sm opacity-80">Sem registros anteriores.</div>
+                                                    </ng-template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </ng-template>
                                 </erm-item>
                             </erm-form>
                         </erm-editing>

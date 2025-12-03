@@ -1,4 +1,4 @@
-<p-card class="produto-card" [class.disabled]="disabled">
+<p-card class="produto-card" [class.disabled]="disabled" [class.compact]="compact">
     <ng-template pTemplate="header">
         <div class="card-header">
             <h3 class="titulo">{{ produto.nome }}</h3>
@@ -37,6 +37,16 @@
                     ></p-selectButton>
                 </div>
 
+                <div class="cor" *ngIf="corOptions?.length">
+                    <span [attr.id]="'lbl-cor-' + produto.id">Cor:</span>
+                    <p-selectButton
+                        [attr.aria-labelledby]="'lbl-cor-' + produto.id"
+                        [options]="corOptions"
+                        [(ngModel)]="produto.corSelecionada"
+                        [disabled]="disabled"
+                    ></p-selectButton>
+                </div>
+
                 <button
                     pButton
                     type="button"
@@ -45,9 +55,16 @@
                     [icon]="selected ? 'pi pi-check' : 'pi pi-gift'"
                     [severity]="selected ? 'success' : 'primary'"
                     (click)="onToggleClick()"
-                    [disabled]="!selected && disabled"
+                    [disabled]="false"
                     [attr.aria-pressed]="selected ? 'true' : 'false'"
                 ></button>
+            </div>
+
+            <!-- Mensagens de erro inline (ex.: tamanho/cor não selecionados) -->
+            <div class="inline-errors" *ngIf="errors?.length">
+                <ul>
+                    <li *ngFor="let e of errors">{{ e }}</li>
+                </ul>
             </div>
         </div>
     </div>

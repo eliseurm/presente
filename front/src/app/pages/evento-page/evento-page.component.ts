@@ -115,7 +115,8 @@ export class EventoPageComponent implements OnInit {
 
     ngOnInit(): void {
         this.vm.init();
-        this.vm.enableExpand(['cliente', 'pessoas', 'produtos']);
+        // Hotfix: não usar expand no carregamento do evento para evitar 500 no backend.
+        // O backend já inicializa pessoas/produtos em buscarPorId() dentro da transação.
         // Quando o modelo é recarregado (abrir edição, salvar, etc.), atualiza labels auxiliares
         this.vm.refreshModel.subscribe(() => this.preencherCamposDeExibicao());
         this.carregarOpcoes();
@@ -172,7 +173,9 @@ export class EventoPageComponent implements OnInit {
     onPage(event: any) {
         this.vm.filter.page = event.page;
         this.vm.filter.size = event.rows;
-        this.vm.doFilter().subscribe();
+        this.vm.doFilter().subscribe({
+            error: (err) => this.handleListError(err)
+        });
     }
 
     onClearFilters() {
@@ -182,11 +185,34 @@ export class EventoPageComponent implements OnInit {
             const unico = this.clientesOptions[0];
             if (unico?.id) (this.vm.filter as any).clienteId = unico.id;
         }
-        this.vm.doFilter().subscribe();
+        this.vm.doFilter().subscribe({
+            error: (err) => this.handleListError(err)
+        });
     }
 
     onCloseCrud() {
         this.router.navigate(['/']);
+    }
+
+    onSearchClick() {
+        // Dispara a busca com tratamento de erro (evita erro silencioso/console apenas)
+        this.vm.doFilter().subscribe({
+            error: (err) => this.handleListError(err)
+        });
+    }
+
+    private handleListError(err: any) {
+        const status = err?.status;
+        if (status === 401 || status === 403) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Acesso restrito',
+                detail: 'Selecione um cliente para buscar os eventos ou verifique suas permissões.'
+            });
+            return;
+        }
+        const msg = err?.error?.message || 'Não foi possível carregar a lista de eventos.';
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
     }
 
     getStatusDescricao(status: any): string {
@@ -293,6 +319,8 @@ export class EventoPageComponent implements OnInit {
         // Campo persistido (ID): manteremos apenas o ID ao salvar
         event.data.pessoa = null;
         event.data.status = null;
+        // Garante a aba inicial no popup
+        event.data._tab = 'geral';
     }
 
     // Busca remota de pessoas (lookup escopado)
@@ -413,6 +441,28 @@ export class EventoPageComponent implements OnInit {
         const row: any = event?.data || {};
         // Garante que o Status apareça selecionado no enum-select do popup
         row.status = this.getStatusOption(row.status);
+        // Define a aba inicial do popup como 'geral' (tabs headless)
+        row._tab = 'geral';
+
+        // Carrega última escolha e histórico da pessoa nesta aba
+        try {
+            const eventoId = this.vm.model?.id;
+            const pessoaId = typeof row?.pessoa === 'object' ? row.pessoa?.id : row?.pessoa;
+            if (!eventoId || !pessoaId) return;
+            this.pessoaEscolhaLoading = true;
+            this.pessoaUltimaEscolha = null as any;
+            this.pessoaHistorico = [] as any[];
+            this.eventoService.getUltimaEscolha(eventoId as number, pessoaId as number).subscribe({
+                next: (e) => this.pessoaUltimaEscolha = e,
+                error: () => this.pessoaUltimaEscolha = null
+            });
+            this.eventoService.getHistoricoEscolhas(eventoId as number, pessoaId as number).subscribe({
+                next: (list) => this.pessoaHistorico = list || [],
+                error: () => this.pessoaHistorico = []
+            });
+        } finally {
+            setTimeout(() => this.pessoaEscolhaLoading = false, 300);
+        }
     }
 
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)
@@ -532,6 +582,11 @@ export class EventoPageComponent implements OnInit {
         if (!this.vm?.model) return;
         (this.vm.model as any)[field] = null;
     }
+
+    // ======= Estado do popup: escolha/histórico =======
+    pessoaEscolhaLoading = false;
+    pessoaUltimaEscolha: any = null;
+    pessoaHistorico: any[] = [];
 }
 
 // Helpers de exibição (espaço reservado)

@@ -10,12 +10,8 @@ import java.util.Optional;
 
 public interface EventoRepository extends JpaRepository<Evento, Long>, JpaSpecificationExecutor<Evento> {
 
-    @Query("select distinct e from Evento e " +
-           "left join fetch e.cliente c " +
-           "left join fetch e.pessoas ep " +
-           "left join fetch ep.pessoa p " +
-           "left join fetch e.produtos epr " +
-           "left join fetch epr.produto pr " +
-           "where e.id = :id")
+    // Evita fetch join de múltiplas coleções para não duplicar registros
+    // Carrega o cliente e deixa as coleções (pessoas, produtos) serem buscadas via SUBSELECT (configurado na entidade)
+    @Query("select e from Evento e left join fetch e.cliente c where e.id = :id")
     Optional<Evento> findByIdExpandedAll(@Param("id") Long id);
 }

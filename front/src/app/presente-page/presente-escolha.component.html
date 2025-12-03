@@ -1,4 +1,5 @@
 <div class="presente-page">
+    <p-toast position="top-center" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
     <app-presente-topbar [nome]="nomeExibicao"></app-presente-topbar>
 
     <main class="content">
@@ -26,17 +27,57 @@
                         <p class="sub">Você pode selecionar apenas 1 item. Link: /presente/{{ keyMagico }}</p>
                     </header>
 
-                    <div class="produtos-grid">
-                        @let produtosFatiados = produtos.slice(0, 10);
-                        @for (p of produtosFatiados; track p.id) {
+                    @if (!detailMode) {
+                        <div class="produtos-grid">
+                            @let produtosFatiados = produtos.slice(0, 10);
+                            @for (p of produtosFatiados; track p.id) {
+                                <app-produto
+                                    [produto]="p"
+                                    [selected]="isSelecionado(p)"
+                                    [disabled]="isDesabilitado(p)"
+                                    (toggle)="alternarSelecao(p)"
+                                ></app-produto>
+                            }
+                        </div>
+                    }
+
+                    @if (detailMode && selectedProduct) {
+                        <div class="detalhe-wrapper">
+                            <!-- Banner de destaque acima do produto selecionado -->
+                            <div class="banner-selecionado">
+                                <strong>Este é o seu presente selecionado.</strong>
+                                <span *ngIf="!expirado && resumo?.dataPrevista"> - Você pode alterar até o dia {{ resumo?.dataPrevista | date:'longDate' }}</span>
+                            </div>
+                            <div class="pessoa-info" style="margin-bottom: 1rem;">
+                                <h3>Seus dados</h3>
+                                <div class="grid gap-1 text-sm">
+                                    <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
+                                    <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
+                                    <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
+                                    <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+                                </div>
+                            </div>
+
                             <app-produto
-                                [produto]="p"
-                                [selected]="isSelecionado(p)"
-                                [disabled]="isDesabilitado(p)"
-                                (toggle)="alternarSelecao(p)"
+                                [produto]="selectedProduct!"
+                                [selected]="true"
+                                [disabled]="true"
+                                [compact]="true"
+                                (toggle)="voltarParaLista()"
                             ></app-produto>
-                        }
-                    </div>
+
+                            <div class="detalhe-acoes">
+<!--                                <button pButton type="button" label="Confirmar escolha" icon="pi pi-check" (click)="confirmarEscolha()" [disabled]="false"></button>-->
+                                <!-- Desmarcar disponível apenas quando podeRefazer=true -->
+<!--                                <button pButton type="button" label="Desmarcar" icon="pi pi-undo" class="p-button-text" (click)="voltarParaLista()" *ngIf="podeRefazer" [disabled]="false"></button>-->
+                                <div class="msg-inline error" *ngIf="confirmError">{{ confirmError }}</div>
+                                <div class="msg-inline success" *ngIf="confirmSuccess">{{ confirmSuccess }}</div>
+                                <div class="msg-expirado" *ngIf="expirado">
+                                    {{ resumo?.mensagem || 'O tempo para escolha expirou.' }}
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </section>
             }
 

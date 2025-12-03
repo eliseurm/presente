@@ -28,7 +28,8 @@ export const appRoutes: Routes = [
 
     { path: 'login-form', redirectTo: '/auth/login', pathMatch: 'full' },
 
-    { path: 'presente/:keyMagico', loadComponent: () => import('@/presente-page/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
+    // Rota pública do presente por token (link estável sem parâmetros adicionais)
+    { path: 'presente/:token', loadComponent: () => import('@/presente-page/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
     { path: 'presente/erro', loadComponent: () => import('@/presente-page/presente-erro.component').then(m => m.PresenteErroComponent) },
 
     { path: 'auth', canActivate: [AuthGuardService], loadChildren: () => import('./app/pages/auth/auth.routes') },

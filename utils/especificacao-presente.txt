@@ -1,0 +1,27 @@
+Proximo passo
+
+Na tela de Eventos
+Na tela de eventos, na aba geral, quando um evento for editado, deve aparecer um botao iniciar/parar eventos.
+Se clicar para iniciar, os numeros magicos devem ser gerado para todas as pessoas que estiverem ATIVAS. Deve gerar o numero magico de cada EventoPessoa.
+Se clicar para parar, o status de todas as pessoas com numeros magicos definidos devem se PAUSADO
+
+Uma vez que o numero magico for definido para a pessoa, na grid de pessoa, duas novas colunas dem ser criadas, uma coluna com o link do numero magico e outra com dois botoes, um que abre uma pagina que leva para a pagina de presente daquela pessoa e para aquele evento, e outro que apenas copia o link e coloca na memoria.
+O numero magico, deve ser gerado a partir do primeiro nome da pessoa+_+numero_magido de 8 caracteres.
+
+No popup de edicao de pessoa, deve ter tres abas ['geral', 'opcao escolhida', 'historico de escolha']
+
+geral: Informacao da pessoa, status e link magico
+opcao escolhida: a ultima escolha, qual produto foi escolhido, horario, se ainda nao escolheu, deve aparecer um aviso falando que o presente ainda nao foi escolhido.
+historico: uma grid com as escolhas feitas antes da ultima escolha.
+
+
+Na tela de Presente.
+
+Esta tela so vai ser aberta por quem tiver o numero magico.
+Cada produto com suas varias fotos devem ser apresentados de acordo com o layout atual da tela presente-escolha.componente.html
+Esta tela de presente que hoje esta fixa deve ser refeita para mostrar dinamicamente as informacoes para a pessoa indicada no numero magico.
+Para esta pessoa a pagina de presente deve apresentar apenas os produtos cadastrados no evento que gerou o numero magico.
+Uma vez que o usuario selecione o tamanho, cor e o presente, uma pagina de resumo com a escolha deve aparecer sempre que ele usar o link com o numero magico.
+O resultado da escolha deve ser salvo na entidade EventoEscolha
+Na pagina de resumo deve ter um botao que permite refazer a escolha quantas vezes o usuario quiser, enquanto a data prevista nao seja ultrapassada. Uma vez que a data prevista do evento for ultrapassada nao é mais permitido a troca do presente, entao o presente que foi anteriormente escolhido é o que esta valendo, se nao foi feito uma escolha a pagina deve avisar que o tempo expirou e que nao é mais permitido fazer escolhas.
+Na tela de presente, cada alteracao de escolha deve ser registrada, com data e horario da alteracao

@@ -9,6 +9,7 @@ import br.eng.eliseu.presente.repository.ProdutoRepository;
 import br.eng.eliseu.presente.repository.EventoPessoaRepository;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.service.api.AbstractCrudService;
+import br.eng.eliseu.presente.model.dto.*;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -336,10 +337,31 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         page.getContent().forEach(e -> {
             if (e.getPessoas() != null) {
                 e.getPessoas().size();
+                // Inicializa referências aninhadas necessárias para a serialização
+                for (EventoPessoa ep : e.getPessoas()) {
+                    try {
+                        if (ep != null && ep.getPessoa() != null) {
+                            ep.getPessoa().getId(); // toca o proxy para inicializar
+                        }
+                    } catch (Exception ignore) {}
+                }
             }
             if (e.getProdutos() != null) {
                 e.getProdutos().size();
+                // Inicializa referências aninhadas necessárias para a serialização
+                for (EventoProduto epr : e.getProdutos()) {
+                    try {
+                        if (epr != null && epr.getProduto() != null) {
+                            epr.getProduto().getId(); // toca o proxy para inicializar
+                        }
+                    } catch (Exception ignore) {}
+                }
             }
+            if (e.getEscolhas() != null) {
+                e.getEscolhas().size();
+            }
+            // Inicializa cliente (caso esteja lazy)
+            try { if (e.getCliente() != null) e.getCliente().getId(); } catch (Exception ignore) {}
         });
         return page;
     }
@@ -351,10 +373,17 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         opt.ifPresent(e -> {
             if (e.getPessoas() != null) {
                 e.getPessoas().size();
+                for (EventoPessoa ep : e.getPessoas()) {
+                    try { if (ep != null && ep.getPessoa() != null) { ep.getPessoa().getId(); } } catch (Exception ignore) {}
+                }
             }
             if (e.getProdutos() != null) {
                 e.getProdutos().size();
+                for (EventoProduto epr : e.getProdutos()) {
+                    try { if (epr != null && epr.getProduto() != null) { epr.getProduto().getId(); } } catch (Exception ignore) {}
+                }
             }
+            try { if (e.getCliente() != null) e.getCliente().getId(); } catch (Exception ignore) {}
         });
         return opt;
     }
@@ -367,8 +396,30 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         if (!hasExpand) {
             return buscarPorId(id);
         }
-        // Para simplificar inicialmente, quando houver qualquer expand pedimos o objeto todo expandido.
-        return eventoRepository.findByIdExpandedAll(id);
+        // Carrega a entidade base e inicializa coleções solicitadas evitando fetch join múltiplo
+        Optional<Evento> opt = eventoRepository.findById(id);
+        opt.ifPresent(e -> {
+            String csv = expand.toLowerCase();
+            if (csv.contains("pessoas") && e.getPessoas() != null) {
+                // Inicializa a coleção e suas dependências necessárias para serialização
+                e.getPessoas().size();
+                for (EventoPessoa ep : e.getPessoas()) {
+                    try { if (ep != null && ep.getPessoa() != null) { ep.getPessoa().getId(); } } catch (Exception ignore) {}
+                }
+            }
+            if (csv.contains("produtos") && e.getProdutos() != null) {
+                // Inicializa a coleção e suas dependências necessárias para serialização
+                e.getProdutos().size();
+                for (EventoProduto epr : e.getProdutos()) {
+                    try { if (epr != null && epr.getProduto() != null) { epr.getProduto().getId(); } } catch (Exception ignore) {}
+                }
+            }
+            if (csv.contains("cliente") && e.getCliente() != null) {
+                // nada a fazer – já carregado por proxy ao acessar algum campo, mas garantimos acesso
+                e.getCliente().getId();
+            }
+        });
+        return opt;
     }
 
     private void normalizarAssociacoes(Evento entidade) {
@@ -408,6 +459,133 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             entidade.setProdutos(normalizadas);
             // back-reference será ajustada no prepararParaAtualizacao para a entidadeExistente
         }
+    }
+
+    // ===================== MAPEAMENTO DTO =====================
+
+    private EventoDTO toDTO(Evento e) {
+        if (e == null) return null;
+        IdNomeDTO clienteDTO = null;
+        if (e.getCliente() != null) {
+            clienteDTO = new IdNomeDTO(e.getCliente().getId(), e.getCliente().getNome());
+        }
+
+        List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getPessoas()).orElseGet(List::of).stream()
+                .filter(Objects::nonNull)
+                .map(ep -> EventoPessoaDTO.builder()
+                        .pessoa(ep.getPessoa() != null ? new IdNomeDTO(ep.getPessoa().getId(), ep.getPessoa().getNome()) : null)
+                        .status(ep.getStatus())
+                        .nomeMagicNumber(ep.getNomeMagicNumber())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getProdutos()).orElseGet(Set::of).stream()
+                .filter(Objects::nonNull)
+                .map(evPr -> EventoProdutoDTO.builder()
+                        .produto(evPr.getProduto() != null ? new IdNomeDTO(evPr.getProduto().getId(), evPr.getProduto().getNome()) : null)
+                        .status(evPr.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return EventoDTO.builder()
+                .id(e.getId())
+                .nome(e.getNome())
+                .descricao(e.getDescricao())
+                .cliente(clienteDTO)
+                .status(e.getStatus())
+                .anotacoes(e.getAnotacoes())
+                .inicio(e.getInicio())
+                .fimPrevisto(e.getFimPrevisto())
+                .fim(e.getFim())
+                .pessoas(pessoasDTO)
+                .produtos(produtosDTO)
+                .version(e.getVersion())
+                .build();
+    }
+
+    private Evento fromDTO(EventoDTO dto) {
+        if (dto == null) return null;
+        Evento.EventoBuilder builder = Evento.builder()
+                .id(dto.getId())
+                .nome(dto.getNome())
+                .descricao(dto.getDescricao())
+                .status(dto.getStatus())
+                .anotacoes(dto.getAnotacoes())
+                .inicio(dto.getInicio())
+                .fimPrevisto(dto.getFimPrevisto())
+                .fim(dto.getFim())
+                .version(dto.getVersion());
+
+        // Cliente
+        if (dto.getCliente() != null && dto.getCliente().getId() != null) {
+            clienteRepository.findById(dto.getCliente().getId()).ifPresent(builder::cliente);
+        } else {
+            builder.cliente(null);
+        }
+
+        Evento entidade = builder.build();
+
+        // Pessoas
+        if (dto.getPessoas() != null) {
+            List<EventoPessoa> pessoas = new ArrayList<>();
+            for (EventoPessoaDTO pDto : dto.getPessoas()) {
+                if (pDto == null || pDto.getPessoa() == null || pDto.getPessoa().getId() == null) continue;
+                Pessoa pessoa = pessoaRepository.findById(pDto.getPessoa().getId()).orElse(null);
+                if (pessoa == null) continue;
+                EventoPessoa ep = EventoPessoa.builder()
+                        .evento(entidade)
+                        .pessoa(pessoa)
+                        .status(pDto.getStatus())
+                        .nomeMagicNumber(pDto.getNomeMagicNumber())
+                        .build();
+                pessoas.add(ep);
+            }
+            entidade.setPessoas(pessoas);
+        }
+
+        // Produtos
+        if (dto.getProdutos() != null) {
+            Set<EventoProduto> set = new HashSet<>();
+            for (EventoProdutoDTO prDto : dto.getProdutos()) {
+                if (prDto == null || prDto.getProduto() == null || prDto.getProduto().getId() == null) continue;
+                Produto pr = produtoRepository.findById(prDto.getProduto().getId()).orElse(null);
+                if (pr == null) continue;
+                EventoProduto evp = EventoProduto.builder()
+                        .evento(entidade)
+                        .produto(pr)
+                        .status(prDto.getStatus())
+                        .build();
+                set.add(evp);
+            }
+            entidade.setProdutos(set);
+        }
+
+        return entidade;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventoDTO> listarDTO(EventoFilter filtro) {
+        Page<Evento> page = listar(filtro);
+        return page.map(this::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<EventoDTO> buscarPorIdDTO(Long id, String expand) {
+        return buscarPorIdComExpand(id, expand).map(this::toDTO);
+    }
+
+    @Transactional
+    public EventoDTO criarDTO(EventoDTO dto) {
+        Evento e = fromDTO(dto);
+        Evento salvo = criar(e);
+        return toDTO(salvo);
+    }
+
+    @Transactional
+    public EventoDTO atualizarDTO(Long id, EventoDTO dto) {
+        Evento e = fromDTO(dto);
+        Evento atualizado = atualizar(id, e);
+        return toDTO(atualizado);
     }
 
     @Override
