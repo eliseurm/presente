@@ -1,10 +1,18 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.repository.*;
+import br.eng.eliseu.presente.service.ImagemService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +32,8 @@ public class PresenteController {
     private final ProdutoRepository produtoRepository;
     private final TamanhoRepository tamanhoRepository;
     private final CorRepository corRepository;
+    private final AuthorizationService authService;
+    private final ImagemService imagemService;
 
     public static record EscolherRequest(Long produtoId, Long tamanhoId, Long corId) {}
 
@@ -137,10 +147,8 @@ public class PresenteController {
     // POST /presente/{token}/escolher
     @PostMapping("/{token}/escolher")
     @Transactional
-    public ResponseEntity<EventoEscolha> escolher(
-            @PathVariable("token") String token,
-            @RequestBody EscolherRequest req
-    ) {
+    public ResponseEntity<EventoEscolha> escolher(@PathVariable("token") String token, @RequestBody EscolherRequest req) {
+
         if (req == null || req.produtoId() == null || req.tamanhoId() == null || req.corId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados incompletos para a escolha");
         }
@@ -194,7 +202,8 @@ public class PresenteController {
     // POST /presente/salvar (recebe um objeto EventoEscolha "carregado")
     @PostMapping("/salvar")
     @Transactional
-    public ResponseEntity<EventoEscolha> salvarEscolha(@RequestBody EventoEscolha escolha) {
+    public ResponseEntity<EventoEscolha> salvarEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
+
         if (escolha == null
                 || escolha.getEvento() == null || escolha.getEvento().getId() == null
                 || escolha.getPessoa() == null || escolha.getPessoa().getId() == null
@@ -204,21 +213,17 @@ public class PresenteController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados incompletos para a escolha");
         }
 
+        // Autorização programática: ADMIN ou usuário vinculado ao cliente do evento
+        if (!(authService.isAdmin() || authService.isEscolhaAtiva(escolha))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado");
+        }
+
         // Carrega entidades gerenciadas
-        Evento evento = eventoRepository.findByIdExpandedAll(escolha.getEvento().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento inexistente"));
-
-        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId())
-                .flatMap(id -> Optional.ofNullable(evento.getPessoas()).orElseGet(java.util.List::of)
-                        .stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
-
-        Produto produto = produtoRepository.findById(escolha.getProduto().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
-        Tamanho tamanho = tamanhoRepository.findById(escolha.getTamanho().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inexistente"));
-        Cor cor = corRepository.findById(escolha.getCor().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
+        Evento evento = eventoRepository.findByIdExpandedAll(escolha.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento inexistente"));
+        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId()).flatMap(id -> Optional.ofNullable(evento.getPessoas()).orElseGet(java.util.List::of).stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
+        Produto produto = produtoRepository.findById(escolha.getProduto().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
+        Tamanho tamanho = tamanhoRepository.findById(escolha.getTamanho().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inexistente"));
+        Cor cor = corRepository.findById(escolha.getCor().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
 
         // Regras
         if (evento.getFimPrevisto() != null && LocalDateTime.now().isAfter(evento.getFimPrevisto())) {
@@ -243,27 +248,80 @@ public class PresenteController {
                 .tamanho(tamanho)
                 .cor(cor)
                 .dataEscolha(LocalDateTime.now())
+                .alteradoEm(LocalDateTime.now())
+                .status(StatusEnum.ATIVO)
                 .build();
 
         EventoEscolha salva = eventoEscolhaRepository.save(nova);
-        return ResponseEntity.ok(salva);
+        return ResponseEntity.ok().build();
     }
 
-    // GET /presente/{token}/historico
+    @PostMapping("/limpar")
+    @Transactional
+    public ResponseEntity limparEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
+
+        EventoEscolha entidadeExistente ;
+        if (escolha!=null && escolha.getId()!=null) {
+            entidadeExistente = eventoEscolhaRepository.findById(escolha.getId()).orElseThrow(() -> new EntityNotFoundException("Escolha não encontrada com o ID: " + escolha.getId()));
+        }
+        else if(escolha!=null && escolha.getEvento()!=null && escolha.getEvento().getId()!=null && escolha.getPessoa()!=null && escolha.getPessoa().getId()!=null){
+            entidadeExistente = eventoEscolhaRepository.findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(escolha.getEvento().getId(), escolha.getPessoa().getId()).orElseThrow(() -> new EntityNotFoundException("Escolha não encontrada para: " + escolha.getPessoa().getNome()));
+        }
+        else {
+            return ResponseEntity.badRequest().body("ID da escolha não pode ser nulo para limpeza.");
+        }
+
+        // 3. Aplicar APENAS as alterações desejadas na entidade gerenciada
+        entidadeExistente.setStatus(StatusEnum.ENCERRADO);
+        entidadeExistente.setAlteradoEm(LocalDateTime.now());
+
+        // ATENCAO: O método save é desnecessário aqui
+
+        return ResponseEntity.ok().build();
+
+    }
+
+    // Retorna uma lista de historicos de escolhas, tira da lista a escolha ativa
     @GetMapping("/{token}/historico")
     @Transactional(readOnly = true)
-    public ResponseEntity<HistoricoResponse> historico(@PathVariable("token") String token) {
-        EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
+    public ResponseEntity<HistoricoResponse> historicoEscolha(@PathVariable("token") String token) {
 
-        List<EventoEscolha> todas = eventoEscolhaRepository
-                .findByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(ep.getEvento().getId(), ep.getPessoa().getId());
-        if (todas.isEmpty()) {
+        EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
+
+        List<EventoEscolha> escolhasEncerradas = eventoEscolhaRepository.findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(ep.getEvento().getId(), ep.getPessoa().getId(), StatusEnum.ENCERRADO);
+        if (escolhasEncerradas.isEmpty()) {
             return ResponseEntity.ok(new HistoricoResponse(List.of()));
         }
-        // Remover a última (mais recente), retornar anteriores
-        List<EventoEscolha> anteriores = new ArrayList<>(todas);
-        anteriores.remove(0);
-        return ResponseEntity.ok(new HistoricoResponse(anteriores));
+
+        return ResponseEntity.ok(new HistoricoResponse(escolhasEncerradas));
     }
+
+    @GetMapping("/imagem/{id}/arquivo")
+    public ResponseEntity<Resource> buscarPorId(@PathVariable Long id) {
+        return imagemService.buscarPorId(id)
+                .map(img -> {
+                    byte[] dados = img.getArquivo();
+                    if (dados == null) {
+                        return ResponseEntity.notFound().<Resource>build();
+                    }
+                    Resource resource = new ByteArrayResource(dados);
+                    String filename = img.getNome() != null ? img.getNome() : ("imagem-" + id);
+                    MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
+                    try {
+                        // Tenta inferir o content type pelo nome do arquivo
+                        String lowered = filename.toLowerCase();
+                        if (lowered.endsWith(".png")) contentType = MediaType.IMAGE_PNG;
+                        else if (lowered.endsWith(".jpg") || lowered.endsWith(".jpeg")) contentType = MediaType.IMAGE_JPEG;
+                        else if (lowered.endsWith(".gif")) contentType = MediaType.IMAGE_GIF;
+                    } catch (Exception ignored) {}
+
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                            .contentType(contentType)
+                            .body(resource);
+                })
+                .orElse(ResponseEntity.notFound().<Resource>build());
+    }
+
+
 }

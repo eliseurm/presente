@@ -13,7 +13,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const authService = inject(AuthService);
     const token = localStorage.getItem('auth.token') || sessionStorage.getItem('auth.token');
 
-    const authReq = token
+    // Não enviar Authorization para endpoints públicos de presente
+    const isPresentePublic = req.url.includes('/presente/');
+    // Não enviar Authorization para imagens públicas: GET /imagem/{id}/arquivo (também funciona com prefixo /api)
+    const isPublicImage = req.method === 'GET' && req.url.includes('/imagem/') && req.url.endsWith('/arquivo');
+
+    const authReq = token && !(isPresentePublic || isPublicImage)
         ? req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })
         : req;
 
@@ -23,8 +28,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             const isAuthRoute = router.url?.startsWith('/auth');
             const isAssets = (error.url || '').includes('/assets/');
 
+            // Não redirecionar para login se o 401 vier de rotas públicas
+            const isPublic401 = error.status === 401 && (
+                (error.url || '').includes('/presente/') ||
+                (((error.url || '').includes('/imagem/')) && ((error.url || '').endsWith('/arquivo')))
+            );
+
             // Em 401: sessão inválida/expirada → limpar credenciais e redirecionar para login
-            if (error.status === 401 && !isAuthRoute && !isAssets) {
+            if (error.status === 401 && !isAuthRoute && !isAssets && !isPublic401) {
                 if (!isRedirectingToLogin) {
                     isRedirectingToLogin = true;
 

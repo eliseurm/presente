@@ -1,6 +1,5 @@
 package br.eng.eliseu.presente.controller;
 
-import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.EventoPessoa;
 import br.eng.eliseu.presente.model.EventoProduto;
 import br.eng.eliseu.presente.model.StatusEnum;

@@ -1,4 +1,4 @@
-<p-card class="produto-card" [class.disabled]="disabled" [class.compact]="compact">
+<p-card class="produto-card" [class.compact]="compact">
     <ng-template pTemplate="header">
         <div class="card-header">
             <h3 class="titulo">{{ produto.nome }}</h3>
@@ -27,7 +27,7 @@
             <p class="descricao">{{ produto.descricao }}</p>
 
             <div class="acoes">
-                <div class="tamanho">
+                <div class="tamanho tamanho-selector">
                     <span [attr.id]="'lbl-tam-' + produto.id">Tamanho:</span>
                     <p-selectButton
                         [attr.aria-labelledby]="'lbl-tam-' + produto.id"
@@ -51,16 +51,22 @@
                     pButton
                     type="button"
                     class="p-button-rounded p-button-lg selecionar-btn"
-                    [label]="selected ? 'Desmarcar' : 'Selecionar'"
-                    [icon]="selected ? 'pi pi-check' : 'pi pi-gift'"
                     [severity]="selected ? 'success' : 'primary'"
                     (click)="onToggleClick()"
                     [disabled]="false"
                     [attr.aria-pressed]="selected ? 'true' : 'false'"
-                ></button>
+                >
+                    @if (selected) {
+                        <i class="pi pi-check p-button-icon p-button-icon-left"></i>
+                        Desmarcar
+                    }
+                    @else {
+                        <i class="pi pi-gift p-button-icon p-button-icon-left"></i>
+                        Selecionar
+                    }
+                </button>
             </div>
 
-            <!-- Mensagens de erro inline (ex.: tamanho/cor não selecionados) -->
             <div class="inline-errors" *ngIf="errors?.length">
                 <ul>
                     <li *ngFor="let e of errors">{{ e }}</li>
@@ -69,9 +75,4 @@
         </div>
     </div>
 
-    <ng-template pTemplate="footer">
-        @if (selected) {
-            <small class="nota">Este é o seu presente selecionado.</small>
-        }
-    </ng-template>
 </p-card>

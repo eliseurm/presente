@@ -33,6 +33,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
@@ -60,10 +62,18 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/pessoa/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/favicon.ico").permitAll()
+                        // Rotas públicas (considera execução direta e atrás de proxy com prefixo /api)
                         .requestMatchers("/presente/**").permitAll()
+                        .requestMatchers("/api/presente/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/imagem/*/arquivo").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/imagem/*/arquivo").permitAll()
+                        // Cobre proxies com prefixos adicionais (ex.: /v1/api/imagem/ID/arquivo, etc.)
+                        .requestMatchers(HttpMethod.GET, "/**/imagem/*/arquivo**").permitAll()
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(conf -> conf.jwt(jwt -> jwt
+                .oauth2ResourceServer(conf -> conf
+                        .bearerTokenResolver(bearerTokenResolver())
+                        .jwt(jwt -> jwt
                         .decoder(jwtDecoder())
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())
                 ));
@@ -104,6 +114,37 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(gac);
         return converter;
+    }
+
+    @Bean
+    BearerTokenResolver bearerTokenResolver() {
+        DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();
+        // Permitir também via query param se necessário (não afeta nossas rotas públicas)
+        delegate.setAllowUriQueryParameter(true);
+
+        return request -> {
+            String uri = request.getRequestURI();
+            String method = request.getMethod();
+            String contextPath = request.getContextPath();
+            String path = uri;
+            if (contextPath != null && !contextPath.isEmpty() && uri != null && uri.startsWith(contextPath)) {
+                path = uri.substring(contextPath.length());
+            }
+
+            // Não tentar resolver Bearer Token em rotas públicas — mesmo que venha Authorization no header
+            // Usa path normalizado e também tolera ambientes com prefixo adicional (ex.: /api)
+            boolean isPresentePublic = (path != null && path.startsWith("/presente/")) || (uri != null && uri.contains("/presente/"));
+            boolean isPublicImage = "GET".equalsIgnoreCase(method)
+                    && ((path != null && path.contains("/imagem/") && path.contains("/arquivo"))
+                        || (uri != null && uri.contains("/imagem/") && uri.contains("/arquivo")));
+            boolean isFavicon = "/favicon.ico".equals(uri);
+
+            if (isPresentePublic || isPublicImage || isFavicon) {
+                return null; // ignora qualquer Authorization e segue como anônimo
+            }
+
+            return delegate.resolve(request);
+        };
     }
 
 

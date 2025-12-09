@@ -2,6 +2,9 @@ package br.eng.eliseu.presente.security;
 
 import br.eng.eliseu.presente.model.Cliente;
 import br.eng.eliseu.presente.model.Evento;
+import br.eng.eliseu.presente.model.EventoEscolha;
+import br.eng.eliseu.presente.model.EventoPessoa;
+import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -11,6 +14,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service("authService")
@@ -43,6 +48,7 @@ public class AuthorizationService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
 
+        // ROLE_ANONYMOUS
         boolean isClienteRole = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_CLIENTE"::equals);
         if (!isClienteRole) return false;
 
@@ -61,6 +67,39 @@ public class AuthorizationService {
 
         Optional<Evento> evento = eventoRepository.findById(eventoId);
         return evento.map(ev -> ev.getCliente() != null && isLinkedToClient(ev.getCliente().getId())).orElse(false);
+    }
+
+    public boolean isEscolhaAtiva(EventoEscolha escolha) {
+        // Dados mínimos
+        if (escolha == null || escolha.getEvento() == null || escolha.getPessoa() == null) return false;
+        Long eventoId = escolha.getEvento().getId();
+        Long pessoaId = escolha.getPessoa().getId();
+        if (eventoId == null || pessoaId == null) return false;
+
+        // Carrega o evento
+        Optional<Evento> optEvento = eventoRepository.findById(eventoId);
+        if (optEvento.isEmpty()) return false;
+        Evento evento = optEvento.get();
+
+        // 1) Status do evento deve estar ATIVO (ou nulo tratado como ativo para compatibilidade)
+        StatusEnum statusEvento = evento.getStatus();
+        if (statusEvento != null && statusEvento != StatusEnum.ATIVO) return false;
+
+        // 2) Datas de fim (fim e fimPrevisto) devem ser nulas ou maiores que agora
+        LocalDateTime now = LocalDateTime.now();
+        if (evento.getFim() != null && !evento.getFim().isAfter(now)) return false;
+        if (evento.getFimPrevisto() != null && !evento.getFimPrevisto().isAfter(now)) return false;
+
+        // 3) Status do vínculo da pessoa no evento deve estar ATIVO (ou nulo tratado como ativo)
+        EventoPessoa vinculo = Optional.ofNullable(evento.getPessoas())
+                .orElseGet(java.util.List::of)
+                .stream()
+                .filter(ep -> ep != null && ep.getPessoa() != null && Objects.equals(ep.getPessoa().getId(), pessoaId))
+                .findFirst()
+                .orElse(null);
+        if (vinculo == null) return false;
+        StatusEnum statusVinculo = vinculo.getStatus();
+        return statusVinculo == null || statusVinculo == StatusEnum.ATIVO;
     }
 
     public boolean isOwnerPessoa(Long pessoaId) {

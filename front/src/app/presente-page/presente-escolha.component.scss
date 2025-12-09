@@ -67,3 +67,87 @@
         grid-template-columns: repeat(3, 1fr); /* desktop */
     }
 }
+
+/* NOVO: Layout de Detalhe com 3 Caixas (Responsivo) */
+.detalhe-wrapper {
+    /* Adiciona padding se necessário, mas o container já tem 1rem */
+}
+
+.banner-selecionado {
+    padding: 1rem;
+    border-radius: var(--content-border-radius);
+    background-color: var(--surface-hover); /* Fundo suave */
+    border-left: 5px solid var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.detalhe-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem; /* Espaçamento abaixo do grid */
+
+    /* Mobile: uma coluna */
+    grid-template-columns: 1fr;
+
+    /* Tablet: duas colunas */
+    @media (min-width: 640px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Desktop: três colunas iguais */
+    @media (min-width: 992px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.info-box {
+    padding: 1.5rem;
+    background: var(--surface-card); /* Fundo branco/claro */
+    border-radius: var(--border-radius); /* Arredondamento */
+    box-shadow: var(--shadow-2); /* Sombra suave para destacar */
+    display: flex;
+    flex-direction: column;
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        color: var(--text-color);
+        border-bottom: 1px solid var(--surface-border);
+        padding-bottom: 0.5rem;
+    }
+
+    /* Estilo para a box de produto, garantindo que ocupe todo o espaço necessário */
+    &.produto-box {
+        /* A regra 'grid-column: 1 / -1;' foi removida */
+    }
+}
+
+.detalhe-acoes {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap; /* Responsividade para botões */
+
+    .msg-inline {
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        flex-grow: 1;
+        &.error {
+            background-color: #ffe0b2; /* Laranja suave */
+            color: #e65100;
+        }
+        &.success {
+            background-color: #c8e6c9; /* Verde suave */
+            color: #2e7d32;
+        }
+    }
+    .msg-expirado {
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        background-color: #ffcdd2; /* Vermelho suave */
+        color: #c62828;
+        font-weight: 600;
+    }
+}

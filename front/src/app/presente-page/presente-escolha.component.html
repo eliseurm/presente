@@ -22,11 +22,6 @@
 
             @if (!carregando && valido) {
                 <section>
-                    <header class="page-header">
-                        <h1>Escolha seu presente</h1>
-                        <p class="sub">Você pode selecionar apenas 1 item. Link: /presente/{{ keyMagico }}</p>
-                    </header>
-
                     @if (!detailMode) {
                         <div class="produtos-grid">
                             @let produtosFatiados = produtos.slice(0, 10);
@@ -35,41 +30,55 @@
                                     [produto]="p"
                                     [selected]="isSelecionado(p)"
                                     [disabled]="isDesabilitado(p)"
-                                    (toggle)="alternarSelecao(p)"
+                                    (onClickSelecionaProduto)="alternarSelecao(p)"
                                 ></app-produto>
                             }
                         </div>
                     }
 
                     @if (detailMode && selectedProduct) {
+
                         <div class="detalhe-wrapper">
-                            <!-- Banner de destaque acima do produto selecionado -->
-                            <div class="banner-selecionado">
-                                <strong>Este é o seu presente selecionado.</strong>
-                                <span *ngIf="!expirado && resumo?.dataPrevista"> - Você pode alterar até o dia {{ resumo?.dataPrevista | date:'longDate' }}</span>
-                            </div>
-                            <div class="pessoa-info" style="margin-bottom: 1rem;">
-                                <h3>Seus dados</h3>
-                                <div class="grid gap-1 text-sm">
-                                    <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
-                                    <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
-                                    <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
-                                    <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+
+                            <div class="detalhe-grid">
+
+                                <div class="info-box evento-box">
+                                    <h3>Informações do Evento</h3>
+                                    <div class="text-sm">
+                                        <div><b>Link de Acesso:</b> <code>/presente/{{ keyMagico }}</code></div>
+                                        <div><b>Prazo para Escolha:</b>
+                                            @if (resumo?.dataPrevista) {
+                                                {{ resumo?.dataPrevista | date:'longDate' }}
+                                            } @else {
+                                                Não Definido
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-box pessoa-box">
+                                    <h3>Seus Dados Cadastrais</h3>
+                                    <div class="grid gap-1 text-sm">
+                                        <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
+                                        <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
+                                        <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
+                                        <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="info-box produto-box">
+                                    <h3>Produto Escolhido</h3>
+                                    <app-produto
+                                        [produto]="selectedProduct!"
+                                        [selected]="true"
+                                        [disabled]="true"
+                                        [compact]="true"
+                                        (onClickSelecionaProduto)="voltarParaLista()"
+                                    ></app-produto>
                                 </div>
                             </div>
 
-                            <app-produto
-                                [produto]="selectedProduct!"
-                                [selected]="true"
-                                [disabled]="true"
-                                [compact]="true"
-                                (toggle)="voltarParaLista()"
-                            ></app-produto>
-
                             <div class="detalhe-acoes">
-<!--                                <button pButton type="button" label="Confirmar escolha" icon="pi pi-check" (click)="confirmarEscolha()" [disabled]="false"></button>-->
-                                <!-- Desmarcar disponível apenas quando podeRefazer=true -->
-<!--                                <button pButton type="button" label="Desmarcar" icon="pi pi-undo" class="p-button-text" (click)="voltarParaLista()" *ngIf="podeRefazer" [disabled]="false"></button>-->
                                 <div class="msg-inline error" *ngIf="confirmError">{{ confirmError }}</div>
                                 <div class="msg-inline success" *ngIf="confirmSuccess">{{ confirmSuccess }}</div>
                                 <div class="msg-expirado" *ngIf="expirado">
@@ -77,6 +86,7 @@
                                 </div>
                             </div>
                         </div>
+
                     }
                 </section>
             }

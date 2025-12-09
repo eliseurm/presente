@@ -1,4 +1,4 @@
-<crud #crudRef [parent]="vm" [listToolbarTitle]="'Eventos'" [editToolbarTitle]="'Editar Evento'"
+<crud #crudRef [parent]="vm" listToolbarTitle="Eventos" editToolbarTitle="Editar Evento"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
     <!-- Filtros da lista -->
@@ -51,15 +51,15 @@
 
     <!-- Formulário de edição com abas -->
     <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-        <p-tabs [value]="'0'" class="w-full">
+        <p-tabs value="0" class="w-full">
             <p-tablist>
-                <p-tab [value]="'0'">Geral</p-tab>
-                <p-tab [value]="'1'">Pessoas</p-tab>
-                <p-tab [value]="'2'">Produtos</p-tab>
+                <p-tab value="0">Geral</p-tab>
+                <p-tab value="1">Pessoas</p-tab>
+                <p-tab value="2">Produtos</p-tab>
             </p-tablist>
             <p-tabpanels>
 
-                <p-tabpanel [value]="'0'">
+                <p-tabpanel value="0">
                     <!-- Ações de controle do evento: Iniciar / Parar -->
                     <div class="flex gap-2 items-center mb-2" *ngIf="vm.model?.id">
                         <button pButton type="button" label="Iniciar"
@@ -153,7 +153,7 @@
                     </div>
                 </p-tabpanel>
 
-                <p-tabpanel [value]="'1'">
+                <p-tabpanel value="1">
                     <erm-data-grid
                         [dataSource]="vm.model.pessoas || []"
                         [loading]="false"
@@ -175,106 +175,6 @@
                             <erm-form [colCount]="1">
                                 <erm-item dataField="_tabs" editorType="template">
                                     <ng-template let-row>
-                                        <div class="headless-tabs">
-                                            <div class="tablist flex gap-3 mb-3">
-                                                <button pButton type="button" label="Geral" [severity]="row._tab === 'geral' ? 'primary' : 'secondary'" (click)="row._tab='geral'"></button>
-                                                <button pButton type="button" label="Opção escolhida" [severity]="row._tab === 'ultima' ? 'primary' : 'secondary'" (click)="row._tab='ultima'"></button>
-                                                <button pButton type="button" label="Histórico de escolha" [severity]="row._tab === 'historico' ? 'primary' : 'secondary'" (click)="row._tab='historico'"></button>
-                                            </div>
-
-                                            <div class="tabpanel" *ngIf="row._tab === 'geral'">
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label class="block mb-1">Pessoa</label>
-                                                        <p-autoComplete class="w-full"
-                                                                        [(ngModel)]="row._pessoaObj"
-                                                                        [ngModelOptions]="{standalone:true}"
-                                                                        [suggestions]="pessoasSugestoes"
-                                                                        (completeMethod)="searchPessoas($event)"
-                                                                        (onSelect)="onPessoaSelecionada(row, $event)"
-                                                                        (onClear)="onPessoaLimpar(row)"
-                                                                        (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
-                                                                        optionLabel="nome"
-                                                                        [dropdown]="true"
-                                                                        [forceSelection]="true"
-                                                                        placeholder="Buscar pessoa por nome">
-                                                            <ng-template pTemplate="item" let-item>
-                                                                {{ item?.nome }}
-                                                            </ng-template>
-                                                            <ng-template pTemplate="selectedItem" let-item>
-                                                                {{ item?.nome }}
-                                                            </ng-template>
-                                                        </p-autoComplete>
-                                                    </div>
-                                                    <div>
-                                                        <label class="block mb-1">Status</label>
-                                                        <enum-select class="w-full"
-                                                                     [enumObject]="statusEnumType"
-                                                                     [(ngModel)]="row.status"
-                                                                     [ngModelOptions]="{standalone:true}">
-                                                        </enum-select>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="block mb-1">Link mágico</label>
-                                                        <div class="flex items-center gap-2">
-                                                            <ng-container *ngIf="row?.nomeMagicNumber; else noToken">
-                                                                <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">{{ row?.nomeMagicNumber }}</a>
-                                                                <button pButton type="button" icon="pi pi-copy" class="p-button-text p-button-sm"
-                                                                        (click)="copiarLink(row?.nomeMagicNumber)"
-                                                                        pTooltip="Copiar link"></button>
-                                                            </ng-container>
-                                                            <ng-template #noToken>
-                                                                <span class="text-xs opacity-60">Token ainda não gerado (Iniciar evento)</span>
-                                                            </ng-template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="tabpanel" *ngIf="row._tab === 'ultima'">
-                                                <div class="p-3" *ngIf="pessoaEscolhaLoading">Carregando…</div>
-                                                <div class="p-3" *ngIf="!pessoaEscolhaLoading">
-                                                    <ng-container *ngIf="pessoaUltimaEscolha; else nenhumaEscolha">
-                                                        <div class="grid gap-2">
-                                                            <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}</div>
-                                                            <div><b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</div>
-                                                            <div><b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}</div>
-                                                            <div><b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}</div>
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-template #nenhumaEscolha>
-                                                        <div class="p-2 text-sm opacity-80">O presente ainda não foi escolhido.</div>
-                                                    </ng-template>
-                                                </div>
-                                            </div>
-
-                                            <div class="tabpanel" *ngIf="row._tab === 'historico'">
-                                                <div class="p-3" *ngIf="pessoaEscolhaLoading">Carregando…</div>
-                                                <div class="p-3" *ngIf="!pessoaEscolhaLoading">
-                                                    <table class="w-full text-sm" *ngIf="pessoaHistorico?.length; else semHistorico">
-                                                        <thead>
-                                                        <tr>
-                                                            <th class="text-left">Data</th>
-                                                            <th class="text-left">Produto</th>
-                                                            <th class="text-left">Tam.</th>
-                                                            <th class="text-left">Cor</th>
-                                                        </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        <tr *ngFor="let e of pessoaHistorico">
-                                                            <td>{{ e?.dataEscolha | date:'short' }}</td>
-                                                            <td>{{ e?.produto?.nome || e?.produto?.id }}</td>
-                                                            <td>{{ e?.tamanho?.descricao || e?.tamanho?.id }}</td>
-                                                            <td>{{ e?.cor?.descricao || e?.cor?.id }}</td>
-                                                        </tr>
-                                                        </tbody>
-                                                    </table>
-                                                    <ng-template #semHistorico>
-                                                        <div class="p-2 text-sm opacity-80">Sem registros anteriores.</div>
-                                                    </ng-template>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </ng-template>
                                 </erm-item>
                             </erm-form>
@@ -286,14 +186,11 @@
                         <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
                         <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
-                        <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCell"></erm-column>
+                        <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
+                        <erm-column dataField="_tab" editCellTemplate="acoesCellTemplate"></erm-column>
 
-                        <ng-template ermTemplate="pessoaCellTemplate" let-row>
-                            {{ getPessoaRotulo(row) }}
-                        </ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-row>
-                            {{ getStatusDescricao(row?.status) }}
-                        </ng-template>
+                        <ng-template ermTemplate="pessoaCellTemplate" let-row>{{ getPessoaRotulo(row) }}</ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-row>{{ getStatusDescricao(row?.status) }}</ng-template>
 
                         <ng-template ermTemplate="pessoaEditCellTemplate" let-row>
                             <p-autoComplete class="w-full"
@@ -336,21 +233,30 @@
                             </ng-template>
                         </ng-template>
 
-                        <ng-template ermTemplate="acoesCell" let-row>
-                            <button pButton type="button" icon="pi pi-external-link" class="p-button-text p-button-sm"
+                        <ng-template ermTemplate="acoesCellTemplate" let-row>
+                            <button pButton type="button"
+                                    icon="pi pi-external-link"
+                                    class="p-button-text p-button-sm"
+                                    pTooltip="Abrir Presente"
+                                    tooltipPosition="top"
                                     [disabled]="!row?.nomeMagicNumber"
-                                    pTooltip="Abrir Presente" tooltipPosition="top"
-                                    (click)="abrirPresente(row?.nomeMagicNumber)"></button>
-                            <button pButton type="button" icon="pi pi-copy" class="p-button-text p-button-sm"
+                                    (click)="abrirPresente(row?.nomeMagicNumber)"
+                            ></button>
+                            <button pButton type="button"
+                                    icon="pi pi-copy"
+                                    class="p-button-text p-button-sm"
+                                    pTooltip="Copiar Link"
+                                    tooltipPosition="top"
                                     [disabled]="!row?.nomeMagicNumber"
-                                    pTooltip="Copiar Link" tooltipPosition="top"
-                                    (click)="copiarLink(row?.nomeMagicNumber)"></button>
+                                    (click)="copiarLink(row?.nomeMagicNumber)"
+                            ></button>
                         </ng-template>
 
                     </erm-data-grid>
+
                 </p-tabpanel>
 
-                <p-tabpanel [value]="'2'">
+                <p-tabpanel value="2">
                     <erm-data-grid
                         [dataSource]="vm.model.produtos || []"
                         [loading]="false"

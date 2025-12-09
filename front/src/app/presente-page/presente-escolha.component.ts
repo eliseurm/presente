@@ -40,8 +40,8 @@ type Produto = {
     providers: [MessageService]
 })
 export class PresenteEscolhaComponent {
+
     private route = inject(ActivatedRoute);
-    private router = inject(Router);
     private service = inject(PresenteService);
     private messageService = inject(MessageService);
 
@@ -74,8 +74,7 @@ export class PresenteEscolhaComponent {
         this.selectedProductId = produtoIdParam ? Number(produtoIdParam) : null;
         this.nomeExibicao = this.route.snapshot.queryParamMap.get('nome');
 
-        this.service
-            .getResumo(this.keyMagico)
+        this.service.getResumo(this.keyMagico)
             .then((res) => {
                 this.resumo = res;
                 this.valido = true;
@@ -180,6 +179,15 @@ export class PresenteEscolhaComponent {
     }
 
     voltarParaLista() {
+        const escolha = {
+            id: this.resumo?.id,
+            evento: { id: this.resumo?.eventoId },
+            pessoa: { id: this.resumo?.pessoaId }
+        };
+
+        this.service.limparEscolha(escolha).subscribe(() => {
+            console.log("Limpesa feita!");
+        });
         this.detailMode = false;
         this.selectedProductId = null;
     }
@@ -217,10 +225,34 @@ export class PresenteEscolhaComponent {
     private getImagemUrl(img: any): string {
         // Backend costuma expor imagens como objetos {id, nome,...}; arquivo disponível em /api/imagem/{id}/arquivo
         if (img && typeof img === 'object' && img.id) {
-            return `/api/imagem/${img.id}/arquivo`;
+            // Usar o endpoint público sob /presente para evitar 401 por filtros de autenticação
+            return `/api/presente/imagem/${img.id}/arquivo`;
         }
         // Fallback para campos diretos
-        return img?.url || img?.link || img?.src || '';
+        const raw: string = img?.url || img?.link || img?.src || '';
+        if (!raw) return '';
+        // Reescrever URLs antigas do backend no formato /imagem/{id}/arquivo para o endpoint público sob /presente
+        // Mantém prefixos como /api ou domínio absoluto.
+        try {
+            // Ex.: https://host/api/imagem/4/arquivo  -> https://host/api/presente/imagem/4/arquivo
+            //      /imagem/6/arquivo                 -> /presente/imagem/6/arquivo
+            const re = /(.*?)(\/)?imagem\/(\d+)\/arquivo(.*)?$/; // captura prefixo + optional slash, id e sufixo de query
+            const m = raw.match(re);
+            if (m) {
+                const prefix = m[1] ?? '';
+                const slash = m[2] ?? '/';
+                const id = m[3];
+                const tail = m[4] ?? '';
+                // Detecta se já existe /presente no prefixo
+                if (!raw.includes('/presente/imagem/')) {
+                    // Insere "/presente" após o prefixo/base
+                    // Se prefixo termina com /api, preserva.
+                    const newBase = prefix.endsWith('/api') ? `${prefix}` : `${prefix}`;
+                    return `${newBase}/presente/imagem/${id}/arquivo${tail}`;
+                }
+            }
+        } catch {}
+        return raw;
     }
 
     get selectedProduct(): Produto | null {

@@ -33,9 +33,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @RequestBody LoginRequest loginRequest,
-            @RequestParam(name = "remember", defaultValue = "false") boolean remember) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, @RequestParam(name = "remember", defaultValue = "false") boolean remember) {
+
         try {
             // Autentica o usuário
             Authentication authentication = authenticationManager.authenticate(

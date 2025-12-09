@@ -5,6 +5,15 @@
     width: 100%;
 }
 
+// Adiciona um container se o host tiver a classe 'genero-masculino' ou 'genero-feminino'
+:host(.genero-feminino) .layout-topbar-logo {
+    color: var(--color-theme-female, #ff80a5); /* Rosa Suave */
+}
+
+:host(.genero-masculino) .layout-topbar-logo {
+    color: var(--color-theme-male, #42a5f5); /* Azul Suave */
+}
+
 /* Layout padrão (desktop/tablet): esquerda e direita em linha */
 .presente-topbar {
     position: sticky;

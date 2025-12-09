@@ -33,16 +33,17 @@ export type Produto = {
     providers: [CurrencyPipe]
 })
 export class ProdutoComponent {
+
     @Input() produto!: Produto;
     @Input() selected = false;
     @Input() disabled = false;
     @Input() compact = false;
     @Input() errors: string[] = [];
 
-    @Output() toggle = new EventEmitter<void>();
+    @Output() onClickSelecionaProduto = new EventEmitter<void>();
 
     get tamanhoOptions() {
-        return (this.produto?.tamanhos ?? []).map((t) => ({ label: t.label ?? String(t), value: t }));
+        return (this.produto?.tamanhos ?? []).map((t) => ({ label: t.label ?? String(t), value: t}));
     }
 
     get corOptions() {
@@ -50,6 +51,6 @@ export class ProdutoComponent {
     }
 
     onToggleClick() {
-        this.toggle.emit();
+        this.onClickSelecionaProduto.emit();
     }
 }

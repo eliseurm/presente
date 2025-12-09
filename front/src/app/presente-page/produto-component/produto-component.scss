@@ -15,6 +15,17 @@
     box-sizing: border-box;
 }
 
+
+:host ::ng-deep .p-selectbutton .p-togglebutton-checked .p-togglebutton-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--primary-color);
+    color: var(--primary-color-text, #ffffff);
+}
+
+
 .produto-card {
     width: 100%;
     max-width: 100%;
@@ -130,6 +141,7 @@
         flex-wrap: wrap;
         gap: 0.5rem;
     }
+
     :host ::ng-deep .p-selectbutton .p-button {
         flex: 1 1 90px;
         min-width: 90px;
@@ -151,7 +163,7 @@
 .produto-card.compact {
     .media {
         /* Em telas grandes, limita o bloco de mídia para reduzir a imagem no resumo */
-        max-width: 600px; /* ~metade de cards comuns em layouts amplos */
+        max-width: 300px; /* ~metade de cards comuns em layouts amplos */
         width: 100%;
         margin-left: auto;
         margin-right: auto;
