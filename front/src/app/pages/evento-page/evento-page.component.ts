@@ -42,6 +42,7 @@ import {
     ErmTemplateDirective,
     ErmValidationRuleComponent
 } from '@/shared/components/erm-data-grid';
+import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
 
 @Component({
     selector: 'evento-page',
@@ -586,7 +587,7 @@ export class EventoPageComponent implements OnInit {
     // ======= Estado do popup: escolha/histórico =======
     pessoaEscolhaLoading = false;
     pessoaUltimaEscolha: any = null;
-    pessoaHistorico: any[] = [];
+    pessoaHistorico: EventoEscolhaDTO[] = [];
 }
 
 // Helpers de exibição (espaço reservado)

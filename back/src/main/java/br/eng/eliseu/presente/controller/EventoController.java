@@ -5,6 +5,7 @@ import br.eng.eliseu.presente.model.EventoProduto;
 import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.model.EventoEscolha;
 import br.eng.eliseu.presente.model.dto.EventoDTO;
+import br.eng.eliseu.presente.model.dto.EventoEscolhaDTO;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.service.EventoService;
@@ -15,8 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/evento")
@@ -97,10 +101,7 @@ public class EventoController {
 
     @PostMapping("/{id}/pessoas")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoPessoa> adicionarOuAtualizarPessoa(
-            @PathVariable("id") Long eventoId,
-            @RequestBody AddPessoaRequest req
-    ) {
+    public ResponseEntity<EventoPessoa> adicionarOuAtualizarPessoa(@PathVariable("id") Long eventoId,@RequestBody AddPessoaRequest req) {
         if (req == null || req.pessoaId() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -109,21 +110,14 @@ public class EventoController {
 
     @PutMapping("/{id}/pessoas/{eventoPessoaId}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoPessoa> atualizarStatusPessoa(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long eventoPessoaId,
-            @RequestBody UpdateStatusRequest req
-    ) {
+    public ResponseEntity<EventoPessoa> atualizarStatusPessoa(@PathVariable("id") Long eventoId, @PathVariable Long eventoPessoaId, @RequestBody UpdateStatusRequest req) {
         if (req == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(eventoService.updatePessoaVinculo(eventoId, eventoPessoaId, req.status()));
     }
 
     @DeleteMapping("/{id}/pessoas/{eventoPessoaId}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<Void> removerPessoa(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long eventoPessoaId
-    ) {
+    public ResponseEntity<Void> removerPessoa(@PathVariable("id") Long eventoId, @PathVariable Long eventoPessoaId) {
         eventoService.removePessoaVinculo(eventoId, eventoPessoaId);
         return ResponseEntity.noContent().build();
     }
@@ -134,10 +128,7 @@ public class EventoController {
 
     @PostMapping("/{id}/produtos")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoProduto> adicionarOuAtualizarProduto(
-            @PathVariable("id") Long eventoId,
-            @RequestBody AddProdutoRequest req
-    ) {
+    public ResponseEntity<EventoProduto> adicionarOuAtualizarProduto(@PathVariable("id") Long eventoId, @RequestBody AddProdutoRequest req) {
         if (req == null || req.produtoId() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -146,21 +137,14 @@ public class EventoController {
 
     @PutMapping("/{id}/produtos/{eventoProdutoId}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoProduto> atualizarStatusProduto(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long eventoProdutoId,
-            @RequestBody UpdateStatusRequest req
-    ) {
+    public ResponseEntity<EventoProduto> atualizarStatusProduto(@PathVariable("id") Long eventoId, @PathVariable Long eventoProdutoId, @RequestBody UpdateStatusRequest req) {
         if (req == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(eventoService.updateProdutoVinculo(eventoId, eventoProdutoId, req.status()));
     }
 
     @DeleteMapping("/{id}/produtos/{eventoProdutoId}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<Void> removerProduto(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long eventoProdutoId
-    ) {
+    public ResponseEntity<Void> removerProduto(@PathVariable("id") Long eventoId, @PathVariable Long eventoProdutoId) {
         eventoService.removeProdutoVinculo(eventoId, eventoProdutoId);
         return ResponseEntity.noContent().build();
     }
@@ -171,10 +155,7 @@ public class EventoController {
 
     @PostMapping("/{id}/iniciar")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Map<String, Object>> iniciar(
-            @PathVariable("id") Long id,
-            @RequestBody(required = false) IniciarRequest req
-    ) {
+    public ResponseEntity<Map<String, Object>> iniciar(@PathVariable("id") Long id, @RequestBody(required = false) IniciarRequest req) {
         String baseUrl = req != null ? req.baseUrl() : null;
         return ResponseEntity.ok(eventoService.iniciarEvento(id, baseUrl));
     }
@@ -189,10 +170,7 @@ public class EventoController {
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/ultima")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<EventoEscolha> obterUltimaEscolha(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long pessoaId
-    ) {
+    public ResponseEntity<EventoEscolha> obterUltimaEscolha(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
         return eventoEscolhaRepository
                 .findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId)
                 .map(ResponseEntity::ok)
@@ -201,18 +179,18 @@ public class EventoController {
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/historico")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<List<EventoEscolha>> obterHistoricoAnterior(
-            @PathVariable("id") Long eventoId,
-            @PathVariable Long pessoaId
-    ) {
-        List<EventoEscolha> todas = eventoEscolhaRepository
-                .findByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId);
-        if (todas.isEmpty()) {
-            return ResponseEntity.ok(List.of());
-        }
-        // Remove a última (mais recente) para retornar somente anteriores
-        List<EventoEscolha> anteriores = new java.util.ArrayList<>(todas);
-        anteriores.remove(0);
+    public ResponseEntity<List<EventoEscolhaDTO>> obterHistoricoAnterior(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
+
+        List<EventoEscolha> encerradas = eventoEscolhaRepository.findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(eventoId, pessoaId, StatusEnum.PAUSADO);
+
+        List<EventoEscolhaDTO> anteriores = Optional.ofNullable(encerradas)
+                // Se 'encerradas' não for nula, cria um Stream a partir dela.
+                .orElseGet(Collections::emptyList) // Se 'escolhas' for nula, retorna uma lista vazia imutável.
+                .stream()
+                .map(EventoEscolhaDTO::fromEntity)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(anteriores);
     }
+
 }

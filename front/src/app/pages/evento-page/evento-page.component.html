@@ -172,12 +172,51 @@
                             <erm-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></erm-popup>
 
                             <!-- Para garantir renderização dentro do popup, encapsulamos as abas em um erm-item template -->
-                            <erm-form [colCount]="1">
-                                <erm-item dataField="_tabs" editorType="template">
-                                    <ng-template let-row>
-                                    </ng-template>
-                                </erm-item>
+                            <erm-form [colCount]="1" [useContentProjection]="true">
+
+                                <p-tabs value="0" class="w-full">
+                                    <p-tablist>
+                                        <p-tab value="0">Geral</p-tab>
+                                        <p-tab value="1">Escolha atual</p-tab>
+                                        <p-tab value="2">Historico</p-tab>
+                                    </p-tablist>
+                                    <p-tabpanels>
+
+                                        <p-tabpanel value="0">
+                                            <erm-item dataField="pessoa" label="Pessoa" editorType="template"></erm-item>
+                                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
+                                        </p-tabpanel>
+
+                                        <p-tabpanel value="1">
+                                            <div class="grid gap-2">
+                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}</div>
+                                                <div><b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</div>
+                                                <div><b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}</div>
+                                                <div><b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}</div>
+                                            </div>
+                                        </p-tabpanel>
+
+                                        <p-tabpanel value="2">
+                                            <erm-data-grid [dataSource]="pessoaHistorico" [scrollable]="true" scrollHeight="400px">
+
+                                                <erm-column dataField="dataEscolha" caption="Escolha" cellTemplate="dataTemplate"></erm-column>
+                                                <erm-column dataField="alteradoEm" caption="Alterado em" cellTemplate="dataTemplate"></erm-column>
+                                                <erm-column dataField="eventoNome" caption="Evento"></erm-column>
+                                                <erm-column dataField="produtoNome" caption="Produto"></erm-column>
+                                                <erm-column dataField="corNome" caption="Cor"></erm-column>
+                                                <erm-column dataField="tamanhoDescricao" caption="Tamanho"></erm-column>
+
+                                                <ng-template ermTemplate="dataTemplate" let-row>{{ row?.dataEscolha | date:'dd/MM/yyyy HH:mm' }}</ng-template>
+
+
+                                            </erm-data-grid>
+                                        </p-tabpanel>
+
+                                    </p-tabpanels>
+                                </p-tabs>
+
                             </erm-form>
+
                         </erm-editing>
 
                         <!-- Colunas -->
@@ -187,7 +226,6 @@
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
                         <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
                         <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
-                        <erm-column dataField="_tab" editCellTemplate="acoesCellTemplate"></erm-column>
 
                         <ng-template ermTemplate="pessoaCellTemplate" let-row>{{ getPessoaRotulo(row) }}</ng-template>
                         <ng-template ermTemplate="statusCellTemplate" let-row>{{ getStatusDescricao(row?.status) }}</ng-template>

@@ -4,6 +4,7 @@ import {BaseCrudService} from '@/shared/services/base-crud.service';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {Observable} from 'rxjs';
+import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
 
 @Injectable({providedIn: 'root'})
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -33,7 +34,7 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`);
     }
 
-    getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
+    getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<EventoEscolhaDTO[]> {
+        return this.http.get<EventoEscolhaDTO[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
     }
 }

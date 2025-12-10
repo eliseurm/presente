@@ -105,3 +105,5 @@ select a from Evento a ;
 select * from evento_pessoa ;
 select * from evento_produto ;
 select * from evento_escolha ;
+
+update evento_escolha set status = 'PAUSADO' where status = 'ENCERRADO' ;

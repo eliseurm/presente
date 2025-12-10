@@ -272,7 +272,7 @@ public class PresenteController {
         }
 
         // 3. Aplicar APENAS as alterações desejadas na entidade gerenciada
-        entidadeExistente.setStatus(StatusEnum.ENCERRADO);
+        entidadeExistente.setStatus(StatusEnum.PAUSADO);
         entidadeExistente.setAlteradoEm(LocalDateTime.now());
 
         // ATENCAO: O método save é desnecessário aqui
@@ -288,7 +288,7 @@ public class PresenteController {
 
         EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
 
-        List<EventoEscolha> escolhasEncerradas = eventoEscolhaRepository.findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(ep.getEvento().getId(), ep.getPessoa().getId(), StatusEnum.ENCERRADO);
+        List<EventoEscolha> escolhasEncerradas = eventoEscolhaRepository.findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(ep.getEvento().getId(), ep.getPessoa().getId(), StatusEnum.PAUSADO);
         if (escolhasEncerradas.isEmpty()) {
             return ResponseEntity.ok(new HistoricoResponse(List.of()));
         }

@@ -1,6 +1,7 @@
 
-import { Component, ContentChildren, Input, QueryList, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ContentChildren, Input, Optional, QueryList, TemplateRef, ViewChild } from '@angular/core';
 import { ErmItemComponent } from './erm-item.component';
+import { ErmFormContextService } from './erm-form-context.service';
 
 @Component({
     selector: 'erm-form',
@@ -17,10 +18,16 @@ export class ErmFormComponent {
     // Quando false (padrão), o grid renderiza automaticamente os <erm-item> (autoForm).
     @Input() useContentProjection: boolean = false;
 
-    @ContentChildren(ErmItemComponent) items!: QueryList<ErmItemComponent>;
+    // Usa descendants: true para capturar <erm-item> aninhados dentro de wrappers (div, p-tab, etc.)
+    @ContentChildren(ErmItemComponent, { descendants: true }) items!: QueryList<ErmItemComponent>;
 
     // Template do conteúdo projetado, para ser renderizado pelo grid
     // no diálogo de edição.
     //@ts-ignore
     @ViewChild('content', { static: true }) contentTemplate!: TemplateRef<any>;
+
+    // O contexto é fornecido pelo ErmFormContextComponent quando o template projetado
+    // é instanciado dentro do diálogo. Tornamos a injeção opcional para evitar NG0201
+    // quando <erm-form> está fora desse contexto.
+    constructor(@Optional() public ctx?: ErmFormContextService) {}
 }

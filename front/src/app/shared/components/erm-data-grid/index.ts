@@ -8,3 +8,5 @@ export * from './erm-lookup.component';
 export * from './erm-validation-rule.component';
 export * from './erm-template.directive';
 export * from './erm-data-grid.types';
+export * from './erm-form-context.component';
+export * from './erm-form-context.service';

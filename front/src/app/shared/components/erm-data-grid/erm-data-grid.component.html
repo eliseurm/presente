@@ -37,6 +37,8 @@
             [loading]="loading"
             responsiveLayout="stack"
             breakpoint="768px"
+            [scrollable]="scrollable"
+            [scrollHeight]="scrollHeight"
             styleClass="p-datatable-striped">
 
             <ng-template pTemplate="header">
@@ -128,16 +130,28 @@
         </style>
 
         <!-- Renderização do conteúdo personalizado do formulário, permitindo HTML arbitrário (ex.: p-tabs) -->
-        <ng-container *ngIf="editingRow && editing?.form?.useContentProjection && editing?.form?.contentTemplate; else autoForm">
-            <ng-container *ngTemplateOutlet="editing?.form?.contentTemplate; context: { $implicit: editingRow, data: editingRow }"></ng-container>
+        <ng-container *ngIf="editingRow && editing.form?.useContentProjection && editing.form?.contentTemplate">
+            <!-- Fornece contexto e renderiza o template DENTRO do componente para garantir DI correto -->
+            <erm-form-context
+                [row]="editingRow"
+                [isNewRow]="isNewRow"
+                [columns]="visibleColumns"
+                [templatesMap]="templatesMap"
+                [getTemplate]="getTemplate.bind(this)"
+                [setFormItemValue]="setFormItemValue.bind(this)"
+                [getColumnByDataField]="getColumnByDataField.bind(this)"
+                [hasError]="hasError.bind(this)"
+                [getErrors]="getErrors.bind(this)"
+                [isFieldRequired]="isFieldRequired.bind(this)"
+                [template]="editing.form?.contentTemplate"
+                [templateContext]="{ $implicit: editingRow, data: editingRow }">
+            </erm-form-context>
         </ng-container>
 
-        <!-- Fallback: renderização automática baseada em <erm-item> -->
-        <ng-template #autoForm>
-            <div class="erm-form" *ngIf="editingRow && formItems">
+        <!-- Renderização automática baseada em <erm-item> (desativada quando o conteúdo projetado está ativo) -->
+        <div class="erm-form" *ngIf="editingRow && formItems && !(editing.form?.useContentProjection && editing.form?.contentTemplate)">
                 <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
-                    <div
-                        *ngFor="let item of formItems"
+                    <div *ngFor="let item of formItems"
                         class="erm-form-item"
                         [class.has-error]="hasError(item.dataField)"
                         [style.grid-column]="item.colSpan ? 'span ' + item.colSpan : 'span 1'">
@@ -218,8 +232,7 @@
                         </small>
                     </div>
                 </div>
-            </div>
-        </ng-template>
+        </div>
 
         <ng-template pTemplate="footer">
             <!-- Mensagem de validação animada -->

@@ -20,6 +20,7 @@ import { ErmEditingComponent } from './erm-editing.component';
 import { ErmTemplateDirective } from './erm-template.directive';
 import { ErmDataGridEvent } from './erm-data-grid.types';
 import { ErmItemComponent } from './erm-item.component';
+import { ErmFormContextComponent } from './erm-form-context.component';
 
 @Component({
     selector: 'erm-data-grid',
@@ -36,7 +37,8 @@ import { ErmItemComponent } from './erm-item.component';
         SelectModule,
         ConfirmDialogModule,
         ToastModule,
-        MessageModule
+        MessageModule,
+        ErmFormContextComponent
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './erm-data-grid.component.html',
@@ -65,6 +67,9 @@ import { ErmItemComponent } from './erm-item.component';
 export class ErmDataGridComponent implements AfterContentInit {
     @Input() dataSource: any[] = [];
     @Input() loading: boolean = false;
+    // Scroll configuration passthrough to PrimeNG p-table
+    @Input() scrollable: boolean = false;
+    @Input() scrollHeight?: string;
     @Output() onInitNewRow = new EventEmitter<ErmDataGridEvent>();
     @Output() onSaving = new EventEmitter<ErmDataGridEvent>();
     @Output() onSaved = new EventEmitter<ErmDataGridEvent>();
