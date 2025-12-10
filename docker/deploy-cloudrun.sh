@@ -89,17 +89,19 @@ gcloud artifacts repositories create presente --repository-format=docker --locat
 echo "[cloudrun] Configurando autenticação do Docker para o Artifact Registry..."
 gcloud auth configure-docker southamerica-east1-docker.pkg.dev -q
 
+
+# Descomente estas linhas para atualizar a imagem a partir do repositorio local
 # Backend
 # Using explicit Dockerfile for backend
 echo "[cloudrun] Buildando backend localmente (docker/Dockerfile.back) e publicando..."
-#docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
-#docker push "${IMAGE_BACK}"
+docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
+docker push "${IMAGE_BACK}"
 
 # Frontend
 # Using explicit Dockerfile for frontend
 echo "[cloudrun] Buildando frontend localmente (docker/Dockerfile.front) e publicando..."
-#docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
-#docker push "${IMAGE_FRONT}"
+docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
+docker push "${IMAGE_FRONT}"
 
 
 # Deploy backend

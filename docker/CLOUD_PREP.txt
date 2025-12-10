@@ -1,8 +1,8 @@
-Cloud Run + Cloud SQL (PostgreSQL) — Preparação do Projeto (clube-project)
+Cloud Run + Cloud SQL (PostgreSQL) — Preparação do Projeto (presente-project)
 
 1) Autenticação e seleção de projeto
 - Instale e autentique o SDK: gcloud auth login
-- Selecione o projeto: gcloud config set project clube-project
+- Selecione o projeto: gcloud config set project presente-project
 
 2) APIs necessárias (habilitar uma vez)
 - Cloud Run API:            gcloud services enable run.googleapis.com
@@ -19,7 +19,7 @@ Cloud Run + Cloud SQL (PostgreSQL) — Preparação do Projeto (clube-project)
 - Email da SA do Cloud Build: PROJECT_NUMBER@cloudbuild.gserviceaccount.com
 - Nao encontrei esta conta, parece que a conta atual e PROJECT_NUMBER-compute@developer.gserviceaccount.com
 - menu: IAM e admin -> IAM, aqui dei os papeis
-- Conceder papéis (no projeto clube-project):
+- Conceder papéis (no projeto presente-project):
   • Cloud Run Admin                   roles/run.admin
   • Service Account User              roles/iam.serviceAccountUser
   • Cloud SQL Client                  roles/cloudsql.client
@@ -34,7 +34,7 @@ Cloud Run + Cloud SQL (PostgreSQL) — Preparação do Projeto (clube-project)
 
 # 3.1 e 3.2 usando o terminal
 
-BUCKET="gs://clube-project_cloudbuild"
+BUCKET="gs://presente-project_cloudbuild"
 BUCKET=$(gcloud builds describe 1 --project "$PROJECT_ID" 2>/dev/null | grep -oP 'gs://[^"]+_cloudbuild' || echo "gs://${PROJECT_ID}_cloudbuild")
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 
@@ -69,12 +69,12 @@ coloquei estes na mao
 
 
 
-Observação: Você pode criar uma SA específica para o runtime (ex.: run-presente-sa@clube-project.iam.gserviceaccount.com) e conceder os mesmos papéis acima, depois passar --service-account no deploy.
+Observação: Você pode criar uma SA específica para o runtime (ex.: run-presente-sa@presente-project.iam.gserviceaccount.com) e conceder os mesmos papéis acima, depois passar --service-account no deploy.
 
 4) Banco de Dados (Cloud SQL — Postgres)
-- Instância existente: clube-project:southamerica-east1:clube-sql
+- Instância existente: presente-project:southamerica-east1:presente-sql
 - Verificar DB, usuário e senha (se ainda não existirem, criar):
-  . Instancia: clube-sql
+  . Instancia: presente-sql
   . Senha: Clube_pwd#123
   • Database: presente_db
   • Usuário:  presente_user
@@ -91,9 +91,9 @@ Observação: Você pode criar uma SA específica para o runtime (ex.: run-prese
 
 6) Conexão ao Cloud SQL (Connector)
 - O serviço do Backend será implantado com:
-  • --add-cloudsql-instances clube-project:southamerica-east1:clube-sql
+  • --add-cloudsql-instances presente-project:southamerica-east1:presente-sql
   • SPRING_DATASOURCE_URL usando o Socket Factory para Postgres:
-    jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=clube-project:southamerica-east1:clube-sql
+    jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=presente-project:southamerica-east1:presente-sql
 - Requisito do app Java: dependência do Cloud SQL Socket Factory no pom.xml
   <dependency>
     <groupId>com.google.cloud.sql</groupId>

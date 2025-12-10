@@ -12,7 +12,8 @@ spring:
     name: presente-back
   datasource:
     # Compatível com ambos: nossos envs (DB_URL/DB_USER/DB_PASS) e nomes padrão do Spring (SPRING_DATASOURCE_URL/SPRING_DATASOURCE_USERNAME/SPRING_DATASOURCE_PASSWORD)
-    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/presente_db?currentSchema=presente_sh}}
+#    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/presente_db?currentSchema=presente_sh}}
+    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://34.151.212.25:5432/presente_db?currentSchema=presente_sh}}
     username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:presente_user}}
     password: ${DB_PASS:${SPRING_DATASOURCE_PASSWORD:Presente_pwd#123}}
   jpa:
