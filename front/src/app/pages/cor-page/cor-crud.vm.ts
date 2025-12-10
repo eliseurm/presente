@@ -28,7 +28,7 @@ export class CorCrudVM extends AbstractCrud<Cor, CorFilter> {
   }
 
   protected newFilter(): CorFilter {
-    return new CorFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' } as any);
+    return new CorFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
   }
 
   override canDoSave(): boolean {

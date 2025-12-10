@@ -30,8 +30,8 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
     }
 
     protected newFilter(): PessoaFilter {
-        return new PessoaFilter({page: 0, size: 10, sort: 'id', direction: 'ASC'} as any);
-    }
+    return new PessoaFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
+  }
 
     override canDoSave(): boolean {
         const errors: string[] = [];

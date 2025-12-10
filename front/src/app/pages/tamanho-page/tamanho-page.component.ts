@@ -88,11 +88,14 @@ export class TamanhoPageComponent implements OnInit {
         this.vm.filter.size = size;
 
         // Se o componente suporta sort no evento, aplique aqui
-        if (event.sortField) {
-            this.vm.filter.sort = event.sortField;
-        }
-        if (typeof event.sortOrder === 'number') {
-            this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
+        // Ordenação múltipla (quando habilitado no p-table) ou simples
+        if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
+            this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({
+                field: m.field,
+                direction: m.order === 1 ? 'ASC' : 'DESC'
+            }));
+        } else if (event.sortField) {
+            this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
         }
 
         this.vm.doFilter().subscribe();

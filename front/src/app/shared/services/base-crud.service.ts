@@ -64,12 +64,24 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
         // Adiciona parâmetros de paginação e ordenação
         if (filtro.page !== undefined) params['page'] = filtro.page.toString();
         if (filtro.size !== undefined) params['size'] = filtro.size.toString();
-        if (filtro.sort) params['sort'] = filtro.sort;
-        if (filtro.direction) params['direction'] = filtro.direction;
+        // Nova estratégia: múltiplas ordenações via filtro.sorts → vários parâmetros sort=field,dir
+        const anyFiltro: any = filtro as any;
+        if (Array.isArray((filtro as any).sorts) && (filtro as any).sorts.length > 0) {
+            const sorts = (filtro as any).sorts as { field: string; direction?: 'ASC' | 'DESC' }[];
+            // Angular HttpClient aceita params repetidos se usarmos HttpParams; aqui devolvemos objeto simples.
+            // Consumidor (listar) usa HttpClient com { params } e o Angular serializa arrays como sort= & sort=
+            params['sort'] = sorts.map(s => `${s.field},${(s.direction || 'ASC').toLowerCase()}`);
+        } else {
+            // Compatibilidade retroativa: ainda aceitar sort/direction simples se enviados
+            if (anyFiltro.sort) {
+                const dir = (anyFiltro.direction || 'ASC').toLowerCase();
+                params['sort'] = [`${anyFiltro.sort},${dir}`];
+            }
+        }
 
         // Adiciona outros filtros
         Object.keys(filtro).forEach(key => {
-            if (!['page', 'size', 'sort', 'direction'].includes(key)) {
+            if (!['page', 'size', 'sort', 'direction', 'sorts'].includes(key)) {
                 const value = (filtro as any)[key];
                 if (value !== undefined && value !== null && value !== '') {
                     if (key === 'expand') {

@@ -1,6 +1,7 @@
 Cloud Run + Cloud SQL (PostgreSQL) — Preparação do Projeto (presente-project)
 
 1) Autenticação e seleção de projeto
+- Lista projeto atual: gcloud config list
 - Instale e autentique o SDK: gcloud auth login
 - Selecione o projeto: gcloud config set project presente-project
 

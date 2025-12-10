@@ -51,7 +51,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
   }
 
   protected newFilter(): EventoFilter {
-    return new EventoFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' } as any);
+    return new EventoFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
   }
 
   override canDoSave(): boolean {

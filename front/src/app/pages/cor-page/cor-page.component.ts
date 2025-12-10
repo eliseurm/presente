@@ -20,6 +20,7 @@ import { CrudComponent } from '@/shared/crud/crud.component';
 import { TableModule } from 'primeng/table';
 import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
 import { CorCrudVM } from './cor-crud.vm';
+import { EyeDropper } from 'typescript';
 
 @Component({
     selector: 'cor-page',
@@ -59,6 +60,9 @@ export class CorPageComponent  {
         }
     ];
 
+    // Suporte ao API EyeDropper (conta-gotas do sistema)
+    supportsEyeDropper: boolean = typeof (window as any).EyeDropper === 'function';
+
     constructor(
         public vm: CorCrudVM,
         private corService: CorService,
@@ -70,15 +74,43 @@ export class CorPageComponent  {
         this.vm.init();
     }
 
-    onLazyLoad(event: any) {
-        const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
-        const size = event.rows || this.vm.filter.size || 10;
-        this.vm.filter.page = page;
-        this.vm.filter.size = size;
-        if (event.sortField) this.vm.filter.sort = event.sortField;
-        if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
-        this.vm.doFilter().subscribe();
+    /**
+     * Abre o conta-gotas nativo do sistema (quando suportado) para escolher uma cor de qualquer ponto da tela.
+     */
+    pickColorFromScreen() {
+        try {
+            const EyeDropperCtor = (window as any).EyeDropper;
+            if (typeof EyeDropperCtor !== 'function') {
+                this.supportsEyeDropper = false;
+                return;
+            }
+            const eyeDropper = new EyeDropperCtor();
+            eyeDropper.open().then((result: any) => {
+                const sRGBHex = result?.sRGBHex as string | undefined; // e.g. #RRGGBB
+                if (!sRGBHex) return;
+                // Atualiza HEX e RGBA derivados
+                (this.vm.model as any).corHex = sRGBHex;
+                (this.vm.model as any).corRgbA = this.hexToRgba(sRGBHex);
+            }).catch(() => {
+                // Usuário cancelou ou navegador bloqueou; não faz nada
+            });
+        } catch {
+            this.supportsEyeDropper = false;
+        }
     }
+
+    onLazyLoad(event: any) {
+    const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+    const size = event.rows || this.vm.filter.size || 10;
+    this.vm.filter.page = page;
+    this.vm.filter.size = size;
+    if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
+      this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({ field: m.field, direction: m.order === 1 ? 'ASC' : 'DESC' }));
+    } else if (event.sortField) {
+      this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
+    }
+    this.vm.doFilter().subscribe();
+  }
 
     onColorChange(cor: any, event: any) {
         const color = typeof event === 'string' ? event : event?.value || event;

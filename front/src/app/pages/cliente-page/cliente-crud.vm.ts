@@ -34,7 +34,7 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
   }
 
   protected newFilter(): ClienteFilter {
-    return new ClienteFilter({ page: 0, size: 10, sort: 'id', direction: 'ASC' } as any);
+    return new ClienteFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
   }
 
   override canDoSave(): boolean {

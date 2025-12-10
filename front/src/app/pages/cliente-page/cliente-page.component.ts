@@ -73,7 +73,7 @@ export class ClientePageComponent  {
   ngOnInit(): void {
     this.vm.init();
     // Carrega usuários para o select-box
-    const filtroUsuarios = new UsuarioFilter({ page: 0, size: 1000, sort: 'id', direction: 'ASC', papel: 'CLIENTE' });
+    const filtroUsuarios = new UsuarioFilter({ page: 0, size: 1000, sorts: [{ field: 'id', direction: 'ASC' }], papel: 'CLIENTE' } as any);
     this.usuarioService.listar(filtroUsuarios).subscribe({
       next: (resp: any) => {
         const content = resp?.content || [];
@@ -91,8 +91,11 @@ export class ClientePageComponent  {
     const size = event.rows || this.vm.filter.size || 10;
     this.vm.filter.page = page;
     this.vm.filter.size = size;
-    if (event.sortField) this.vm.filter.sort = event.sortField;
-    if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
+    if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
+      this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({ field: m.field, direction: m.order === 1 ? 'ASC' : 'DESC' }));
+    } else if (event.sortField) {
+      this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
+    }
     this.vm.doFilter().subscribe();
   }
 

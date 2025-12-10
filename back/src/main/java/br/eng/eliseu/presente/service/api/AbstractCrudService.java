@@ -29,14 +29,31 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     @Override
     public Page<T> listar(F filtro) {
 
-        Sort.Direction sortDirection = filtro.getDirection().equalsIgnoreCase("ASC")
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
+        // Constrói Sort a partir de múltiplos parâmetros sort=campo,dir
+        Sort sort = Sort.unsorted();
+        if (filtro.getSort() != null && !filtro.getSort().isEmpty()) {
+            for (String clause : filtro.getSort()) {
+                if (clause == null) continue;
+                String c = clause.trim();
+                if (c.isEmpty()) continue;
+                String[] parts = c.split(",");
+                String field = parts[0].trim();
+                Sort.Direction dir = Sort.Direction.ASC;
+                if (parts.length > 1) {
+                    String d = parts[1].trim();
+                    dir = "desc".equalsIgnoreCase(d) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                }
+                sort = sort.and(Sort.by(dir, field));
+            }
+        } else {
+            // Default: id desc
+            sort = Sort.by(Sort.Direction.DESC, "id");
+        }
 
         Pageable pageable = PageRequest.of(
                 filtro.getPage(),
                 filtro.getSize(),
-                Sort.by(sortDirection, filtro.getSort())
+                sort
         );
 
         Specification<T> spec = buildSpecification(filtro);
