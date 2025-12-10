@@ -171,9 +171,13 @@ export class EventoPageComponent implements OnInit {
         });
     }
 
-    onPage(event: any) {
-        this.vm.filter.page = event.page;
-        this.vm.filter.size = event.rows;
+    onLazyLoad(event: any) {
+        const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+        const size = event.rows || this.vm.filter.size || 10;
+        this.vm.filter.page = page;
+        this.vm.filter.size = size;
+        if (event.sortField) this.vm.filter.sort = event.sortField;
+        if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
         this.vm.doFilter().subscribe({
             error: (err) => this.handleListError(err)
         });

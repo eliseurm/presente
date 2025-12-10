@@ -19,6 +19,7 @@ import { UsuarioFilter } from '@/shared/model/filter/usuario-filter';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { TableModule } from 'primeng/table';
+import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
 import { ClienteCrudVM } from './cliente-crud.vm';
 import { AuthService } from '@/pages/auth/auth-service';
 
@@ -34,7 +35,10 @@ import { AuthService } from '@/pages/auth/auth-service';
     CrudFilterComponent,
     CrudComponent,
     TableModule,
-    SelectModule
+    SelectModule,
+    ErmDataGridComponent,
+    ErmColumnComponent,
+    ErmTemplateDirective
   ],
   templateUrl: './cliente-page.component.html',
   styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],
@@ -82,9 +86,13 @@ export class ClientePageComponent  {
     });
   }
 
-  onPage(event: any) {
-    this.vm.filter.page = event.page;
-    this.vm.filter.size = event.rows;
+  onLazyLoad(event: any) {
+    const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+    const size = event.rows || this.vm.filter.size || 10;
+    this.vm.filter.page = page;
+    this.vm.filter.size = size;
+    if (event.sortField) this.vm.filter.sort = event.sortField;
+    if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
     this.vm.doFilter().subscribe();
   }
 

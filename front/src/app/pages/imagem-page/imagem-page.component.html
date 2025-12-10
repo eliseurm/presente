@@ -16,33 +16,30 @@
 
   <!-- Grid de listagem -->
   <div crud-list-grid class="w-full">
-    <p-table [value]="vm.dataSource"
-             [paginator]="true"
-             [rows]="vm.filter.size || 10"
-             [totalRecords]="vm.totalRecords"
-             [lazy]="false"
-             responsiveLayout="scroll"
-             (onPage)="onPage($event)">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Nome</th>
-          <th>Imagem</th>
-          <th style="width:1%">Ações</th>
-        </tr>
+    <erm-data-grid
+      [dataSource]="vm.dataSource"
+      [paginator]="true"
+      [rows]="vm.filter.size || 10"
+      [rowsPerPageOptions]="[10,20,50,100]"
+      [totalRecords]="vm.totalRecords"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      (rowDblClick)="crudRef.onRowDblClick($event)">
+
+      <erm-column dataField="nome" caption="Nome"></erm-column>
+      <erm-column dataField="imagem" caption="Imagem" cellTemplate="imgTpl"></erm-column>
+      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+
+      <ng-template ermTemplate="imgTpl" let-row>
+        <img *ngIf="getThumbUrl(row) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
       </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr (dblclick)="crudRef.onRowDblClick(row)">
-          <td>{{ row?.nome }}</td>
-          <td>
-            <img *ngIf="getThumbUrl(row) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
-          </td>
-          <td>
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                    (click)="crudRef.onRowDblClick(row)"></button>
-          </td>
-        </tr>
+
+      <ng-template ermTemplate="acoesTpl" let-row>
+        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
-    </p-table>
+
+    </erm-data-grid>
   </div>
 
   <!-- Formulário de edição -->

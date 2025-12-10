@@ -10,6 +10,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TableModule } from 'primeng/table';
+import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
 
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { ProdutoService } from '@/services/produto.service';
@@ -42,6 +43,9 @@ import { ProdutoCrudVM } from './produto-crud.vm';
     ToastModule,
     MultiSelectModule,
     TableModule,
+    ErmDataGridComponent,
+    ErmColumnComponent,
+    ErmTemplateDirective,
     CrudComponent,
     CrudFilterComponent,
   ],
@@ -98,9 +102,13 @@ export class ProdutoPageComponent  {
   isFormularioValido(): boolean { return !!(this.vm?.model?.nome?.trim()); }
 
   // Integração com o contêiner <crud>
-  onPage(event: any) {
-    this.vm.filter.page = event.page;
-    this.vm.filter.size = event.rows;
+  onLazyLoad(event: any) {
+    const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+    const size = event.rows || this.vm.filter.size || 10;
+    this.vm.filter.page = page;
+    this.vm.filter.size = size;
+    if (event.sortField) this.vm.filter.sort = event.sortField;
+    if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
     this.vm.doFilter().subscribe();
   }
 

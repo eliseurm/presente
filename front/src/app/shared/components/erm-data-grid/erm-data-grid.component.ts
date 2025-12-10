@@ -70,6 +70,15 @@ export class ErmDataGridComponent implements AfterContentInit {
     // Scroll configuration passthrough to PrimeNG p-table
     @Input() scrollable: boolean = false;
     @Input() scrollHeight?: string;
+    // Pagination passthrough
+    @Input() paginator: boolean = false;
+    @Input() rows: number = 10;
+    @Input() rowsPerPageOptions: number[] = [];
+    @Input() totalRecords: number = 0;
+    @Input() lazy: boolean = false;
+    @Output() onLazyLoad = new EventEmitter<any>();
+    // Row double click
+    @Output() rowDblClick = new EventEmitter<any>();
     @Output() onInitNewRow = new EventEmitter<ErmDataGridEvent>();
     @Output() onSaving = new EventEmitter<ErmDataGridEvent>();
     @Output() onSaved = new EventEmitter<ErmDataGridEvent>();
@@ -100,6 +109,16 @@ export class ErmDataGridComponent implements AfterContentInit {
         this.templates.forEach(template => {
             this.templatesMap.set(template.name, template.template);
         });
+    }
+
+    // Emit PrimeNG lazy load events to consumer
+    handleLazyLoad(event: any) {
+        this.onLazyLoad.emit(event);
+    }
+
+    // Emit row double-click events to consumer
+    onRowDoubleClick(rowData: any) {
+        this.rowDblClick.emit(rowData);
     }
 
     get visibleColumns() {

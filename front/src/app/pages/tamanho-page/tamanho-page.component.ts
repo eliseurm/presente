@@ -17,6 +17,7 @@ import {ProdutoTipoEnum} from '../../shared/model/enum/produto-tipo.enum';
 import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { TamanhoCrudVM } from './tamanho-crud.vm';
+import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
 
 @Component({
     selector: 'app-tamanho-page',
@@ -30,7 +31,10 @@ import { TamanhoCrudVM } from './tamanho-crud.vm';
         ButtonModule,
         CrudFilterComponent,
         EnumSelectComponent,
-        CrudComponent
+        CrudComponent,
+        ErmDataGridComponent,
+        ErmColumnComponent,
+        ErmTemplateDirective
     ],
     providers: [MessageService, ConfirmationService, TamanhoCrudVM],
     templateUrl: './tamanho-page.component.html',
@@ -73,10 +77,24 @@ export class TamanhoPageComponent implements OnInit {
         this.vm.init();
     }
 
-    onPage(event: any) {
-        // Atualiza filtro e refaz busca
-        this.vm.filter.page = event.page;
-        this.vm.filter.size = event.rows;
+    // Modo lazy do PrimeNG: toda mudança de página/tamanho dispara este evento
+    onLazyLoad(event: any) {
+        // event.first = índice do primeiro registro da página atual
+        // event.rows  = tamanho da página
+        const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+        const size = event.rows || this.vm.filter.size || 10;
+
+        this.vm.filter.page = page;
+        this.vm.filter.size = size;
+
+        // Se o componente suporta sort no evento, aplique aqui
+        if (event.sortField) {
+            this.vm.filter.sort = event.sortField;
+        }
+        if (typeof event.sortOrder === 'number') {
+            this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
+        }
+
         this.vm.doFilter().subscribe();
     }
 

@@ -14,39 +14,39 @@
 
     <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
-        <p-table [value]="vm.dataSource"
-                 [paginator]="true"
-                 [rows]="vm.filter.size || 10"
-                 [totalRecords]="vm.totalRecords"
-                 [lazy]="false"
-                 responsiveLayout="scroll"
-                 (onPage)="onPage($event)">
-            <ng-template pTemplate="header">
-                <tr>
-                    <th>Cliente</th>
-                    <th>Nome</th>
-                    <th>Status</th>
-                    <th>Previsto</th>
-                    <th>Início</th>
-                    <th>Fim</th>
-                    <th style="width:1%">Ações</th>
-                </tr>
+        <erm-data-grid
+            [dataSource]="vm.dataSource"
+            [paginator]="true"
+            [rows]="vm.filter.size || 10"
+            [rowsPerPageOptions]="[10,20,50,100]"
+            [totalRecords]="vm.totalRecords"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            (rowDblClick)="crudRef.onRowDblClick($event)">
+
+            <erm-column dataField="cliente.nome" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
+            <erm-column dataField="nome" caption="Nome"></erm-column>
+            <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
+            <erm-column dataField="fimPrevisto" caption="Previsto" cellTemplate="dataTpl"></erm-column>
+            <erm-column dataField="inicio" caption="Início" cellTemplate="dataTpl"></erm-column>
+            <erm-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></erm-column>
+            <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+
+            <ng-template ermTemplate="clienteTpl" let-row>
+                {{ row?.cliente?.nome }}
             </ng-template>
-            <ng-template pTemplate="body" let-row>
-                <tr (dblclick)="crudRef.onRowDblClick(row)">
-                    <td>{{ row?.cliente?.nome }}</td>
-                    <td>{{ row?.nome }}</td>
-                    <td>{{ getStatusDescricao(row?.status) }}</td>
-                    <td>{{ row?.fimPrevisto | date:'short' }}</td>
-                    <td>{{ row?.inicio | date:'short' }}</td>
-                    <td>{{ row?.fim | date:'short' }}</td>
-                    <td>
-                        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                                (click)="crudRef.onRowDblClick(row)"></button>
-                    </td>
-                </tr>
+            <ng-template ermTemplate="statusTpl" let-row>
+                {{ getStatusDescricao(row?.status) }}
             </ng-template>
-        </p-table>
+            <ng-template ermTemplate="dataTpl" let-row let-data="data">
+                {{ data | date:'short' }}
+            </ng-template>
+            <ng-template ermTemplate="acoesTpl" let-row>
+                <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                        (click)="crudRef.onRowDblClick(row)"></button>
+            </ng-template>
+
+        </erm-data-grid>
     </div>
 
     <!-- Formulário de edição com abas -->

@@ -14,35 +14,35 @@
 
   <!-- Grid de listagem -->
   <div crud-list-grid class="w-full">
-    <p-table [value]="vm.dataSource"
-             [paginator]="true"
-             [rows]="vm.filter.size || 10"
-             [totalRecords]="vm.totalRecords"
-             [lazy]="false"
-             responsiveLayout="scroll"
-             (onPage)="onPage($event)">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Usuário</th>
-          <th>Papel</th>
-          <th>Status</th>
-          <th style="width:1%">Ações</th>
-        </tr>
+    <erm-data-grid
+      [dataSource]="vm.dataSource"
+      [paginator]="true"
+      [rows]="vm.filter.size || 10"
+      [rowsPerPageOptions]="[10,20,50,100]"
+      [totalRecords]="vm.totalRecords"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      (rowDblClick)="crudRef.onRowDblClick($event)">
+
+      <erm-column dataField="username" caption="Usuário"></erm-column>
+      <erm-column dataField="papel" caption="Papel" cellTemplate="papelTpl"></erm-column>
+      <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
+      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+
+      <ng-template ermTemplate="papelTpl" let-row>
+        {{ row?.papel?.descricao || row?.papel }}
       </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr (dblclick)="crudRef.onRowDblClick(row)">
-          <td>{{ row?.username }}</td>
-          <td>{{ row?.papel?.descricao || row?.papel }}</td>
-          <td>{{ row?.status?.descricao || row?.status }}</td>
-          <td>
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                    (click)="crudRef.onRowDblClick(row)"></button>
-            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
-                    (click)="onDeleteRow(row)"></button>
-          </td>
-        </tr>
+      <ng-template ermTemplate="statusTpl" let-row>
+        {{ row?.status?.descricao || row?.status }}
       </ng-template>
-    </p-table>
+      <ng-template ermTemplate="acoesTpl" let-row>
+        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                (click)="crudRef.onRowDblClick(row)"></button>
+        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
+                (click)="onDeleteRow(row)"></button>
+      </ng-template>
+
+    </erm-data-grid>
   </div>
 
   <!-- Formulário de edição -->

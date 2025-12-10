@@ -39,6 +39,12 @@
             breakpoint="768px"
             [scrollable]="scrollable"
             [scrollHeight]="scrollHeight"
+            [paginator]="paginator"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [totalRecords]="totalRecords"
+            [lazy]="lazy"
+            (onLazyLoad)="handleLazyLoad($event)"
             styleClass="p-datatable-striped">
 
             <ng-template pTemplate="header">
@@ -53,7 +59,7 @@
             </ng-template>
 
             <ng-template pTemplate="body" let-rowData>
-                <tr>
+                <tr (dblclick)="onRowDoubleClick(rowData)">
                     <td *ngFor="let col of visibleColumns">
                         <span class="p-column-title">{{ col.caption || col.dataField }}</span>
                         <ng-container *ngIf="!col.cellTemplate; else customCell">

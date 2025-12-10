@@ -18,6 +18,7 @@ import { StatusEnum } from '@/shared/model/enum/status.enum';
 import { CrudMetadata } from '@/shared/core/crud.metadata.decorator';
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { TableModule } from 'primeng/table';
+import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
 import { UsuarioCrudVM } from './usuario-crud.vm';
 
 @Component({
@@ -32,7 +33,10 @@ import { UsuarioCrudVM } from './usuario-crud.vm';
     CrudFilterComponent,
     CrudComponent,
     TableModule,
-    EnumSelectComponent
+    EnumSelectComponent,
+    ErmDataGridComponent,
+    ErmColumnComponent,
+    ErmTemplateDirective
   ],
   templateUrl: './usuario-page.component.html',
   styleUrls: [
@@ -62,9 +66,13 @@ export class UsuarioPageComponent {
 
   ngOnInit(): void { this.vm.init(); }
 
-  onPage(event: any) {
-    this.vm.filter.page = event.page;
-    this.vm.filter.size = event.rows;
+  onLazyLoad(event: any) {
+    const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+    const size = event.rows || this.vm.filter.size || 10;
+    this.vm.filter.page = page;
+    this.vm.filter.size = size;
+    if (event.sortField) this.vm.filter.sort = event.sortField;
+    if (typeof event.sortOrder === 'number') this.vm.filter.direction = event.sortOrder === 1 ? 'ASC' : 'DESC' as any;
     this.vm.doFilter().subscribe();
   }
 
