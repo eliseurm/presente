@@ -70,12 +70,12 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
             const sorts = (filtro as any).sorts as { field: string; direction?: 'ASC' | 'DESC' }[];
             // Angular HttpClient aceita params repetidos se usarmos HttpParams; aqui devolvemos objeto simples.
             // Consumidor (listar) usa HttpClient com { params } e o Angular serializa arrays como sort= & sort=
-            params['sort'] = sorts.map(s => `${s.field},${(s.direction || 'ASC').toLowerCase()}`);
+            params['sorts'] = sorts.map(s => `${s.field},${(s.direction || 'ASC').toLowerCase()}`);
         } else {
             // Compatibilidade retroativa: ainda aceitar sort/direction simples se enviados
             if (anyFiltro.sort) {
                 const dir = (anyFiltro.direction || 'ASC').toLowerCase();
-                params['sort'] = [`${anyFiltro.sort},${dir}`];
+                params['sorts'] = [`${anyFiltro.sort},${dir}`];
             }
         }
 

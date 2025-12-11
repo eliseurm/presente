@@ -1,26 +1,24 @@
+import {Component, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 
-import { Component, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {ButtonModule} from 'primeng/button';
+import {ColorPickerModule} from 'primeng/colorpicker';
+import {InputTextModule} from 'primeng/inputtext';
+import {ToastModule} from 'primeng/toast';
+import {MessageService} from 'primeng/api';
 
-import { ButtonModule } from 'primeng/button';
-import { ColorPickerModule } from 'primeng/colorpicker';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
-
-import { CrudFilterComponent } from '../../shared/components/crud-filter/crud-filter.component';
-import { CorService } from '../../services/cor.service';
-import { FilterField } from '../../shared/components/crud-filter/filter-field';
+import {CrudFilterComponent} from '../../shared/components/crud-filter/crud-filter.component';
+import {CorService} from '../../services/cor.service';
+import {FilterField} from '../../shared/components/crud-filter/filter-field';
 import {Cor} from "@/shared/model/cor";
 import {CorFilter} from "@/shared/model/filter/cor-filter";
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import { CrudComponent } from '@/shared/crud/crud.component';
-import { TableModule } from 'primeng/table';
-import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
-import { CorCrudVM } from './cor-crud.vm';
-import { EyeDropper } from 'typescript';
+import {CrudComponent} from '@/shared/crud/crud.component';
+import {TableModule} from 'primeng/table';
+import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {CorCrudVM} from './cor-crud.vm';
 
 @Component({
     selector: 'cor-page',
@@ -47,7 +45,7 @@ import { EyeDropper } from 'typescript';
     providers: [MessageService, CorCrudVM]
 })
 @CrudMetadata("EventoPageComponent", [Cor, CorFilter])
-export class CorPageComponent  {
+export class CorPageComponent {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<Cor, CorFilter>;
 
@@ -68,7 +66,8 @@ export class CorPageComponent  {
         private corService: CorService,
         private messageService: MessageService,
         private router: Router
-    ) {}
+    ) {
+    }
 
     ngOnInit(): void {
         this.vm.init();
@@ -86,11 +85,11 @@ export class CorPageComponent  {
             }
             const eyeDropper = new EyeDropperCtor();
             eyeDropper.open().then((result: any) => {
-                const sRGBHex = result?.sRGBHex as string | undefined; // e.g. #RRGGBB
-                if (!sRGBHex) return;
+                const sCorRGB = result?.sRGBHex as string | undefined; // e.g. #RRGGBB
+                if (!sCorRGB) return;
                 // Atualiza HEX e RGBA derivados
-                (this.vm.model as any).corHex = sRGBHex;
-                (this.vm.model as any).corRgbA = this.hexToRgba(sRGBHex);
+                (this.vm.model as any).corHex = this.rgbToHex(sCorRGB);
+                (this.vm.model as any).corRgbA = sCorRGB;
             }).catch(() => {
                 // Usuário cancelou ou navegador bloqueou; não faz nada
             });
@@ -99,18 +98,20 @@ export class CorPageComponent  {
         }
     }
 
+    // -- onLazyLoad, dispara ao ser criada e sempre que a grid precisa ser atualizada porque mudou, por exemplo, a quantidade de linhas
     onLazyLoad(event: any) {
-    const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
-    const size = event.rows || this.vm.filter.size || 10;
-    this.vm.filter.page = page;
-    this.vm.filter.size = size;
-    if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
-      this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({ field: m.field, direction: m.order === 1 ? 'ASC' : 'DESC' }));
-    } else if (event.sortField) {
-      this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
+        const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
+        const size = event.rows || this.vm.filter.size || 10;
+        this.vm.filter.page = page;
+        this.vm.filter.size = size;
+        if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
+            this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({field: m.field, direction: m.order === 1 ? 'ASC' : 'DESC'}));
+        }
+        else if (event.sortField) {
+            this.vm.filter.sorts = [{field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC')}];
+        }
+        this.vm.doFilter().subscribe();
     }
-    this.vm.doFilter().subscribe();
-  }
 
     onColorChange(cor: any, event: any) {
         const color = typeof event === 'string' ? event : event?.value || event;
@@ -149,10 +150,23 @@ export class CorPageComponent  {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
+    rgbToHex(rgb: string): string {
+        const result = rgb.match(/\d+/g);
+        if (!result) return "";
+
+        const [r, g, b] = result.map(Number);
+
+        const toHex = (n: number) => n.toString(16).padStart(2, "0");
+
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
     onClearFilters() {
         this.vm.filter = this.vm['newFilter']();
         this.vm.doFilter().subscribe();
     }
 
-    onCloseCrud() { this.router.navigate(['/']); }
+    onCloseCrud() {
+        this.router.navigate(['/']);
+    }
 }

@@ -31,8 +31,8 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
 
         // Constrói Sort a partir de múltiplos parâmetros sort=campo,dir
         Sort sort = Sort.unsorted();
-        if (filtro.getSort() != null && !filtro.getSort().isEmpty()) {
-            for (String clause : filtro.getSort()) {
+        if (filtro.getSorts() != null && !filtro.getSorts().isEmpty()) {
+            for (String clause : filtro.getSorts()) {
                 if (clause == null) continue;
                 String c = clause.trim();
                 if (c.isEmpty()) continue;

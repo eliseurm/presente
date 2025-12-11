@@ -49,11 +49,16 @@
       </div>
       <div class="flex flex-col gap-2 w-full md:col-span-2">
         <label class="flex items-center gap-2">Cor *
-          <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-eyedropper"
-                  label="Conta-gotas" (click)="pickColorFromScreen()"></button>
+          <button pButton
+                  type="button"
+                  class="p-button-text p-button-sm"
+                  icon="pi pi-eyedropper"
+                  label="Conta-gotas"
+                  (click)="pickColorFromScreen()"
+          ></button>
         </label>
         <div class="flex items-start gap-4">
-          <p-colorPicker [inline]="true" [(ngModel)]="vm.model.corHex" (onChange)="onColorChange(vm.model, $event)"></p-colorPicker>
+          <p-colorPicker [inline]="true" [format]="'hex'" [(ngModel)]="vm.model.corHex" (onChange)="onColorChange(vm.model, $event)"></p-colorPicker>
           <div class="flex flex-col gap-2">
             <div class="color-preview-large" [style.background-color]="vm.model.corHex"></div>
             <div class="flex gap-2 items-center">

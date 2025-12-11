@@ -47,8 +47,8 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
       this.onIdParam(id);
     }
     else {
-      // Carrega listagem inicial
-      this.doFilter().subscribe();
+      // Nao vou carregar o filtro ao iniciar, porque a erm-data-grid ja faz isso no evento onLazyLoad
+      // this.doFilter().subscribe();
     }
   }
 
