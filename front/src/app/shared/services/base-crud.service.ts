@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BaseFilter } from '@/shared/model/filter/base-filter';
+import {BaseFilter, SortSpec} from '@/shared/model/filter/base-filter';
 import { PageResponse } from '@/shared/model/page-response';
 import { CrudPort } from '@/shared/services/crud-port';
 
@@ -58,47 +58,77 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
         return this.deletar(id);
     }
 
-    protected buildParams(filtro: F): any {
-        const params: any = {};
+    protected buildParams(filtro: F): HttpParams {
+        const anyFiltro: any = filtro || {};
 
-        // Adiciona parâmetros de paginação e ordenação
-        if (filtro.page !== undefined) params['page'] = filtro.page.toString();
-        if (filtro.size !== undefined) params['size'] = filtro.size.toString();
-        // Nova estratégia: múltiplas ordenações via filtro.sorts → vários parâmetros sort=field,dir
-        const anyFiltro: any = filtro as any;
-        if (Array.isArray((filtro as any).sorts) && (filtro as any).sorts.length > 0) {
-            const sorts = (filtro as any).sorts as { field: string; direction?: 'ASC' | 'DESC' }[];
-            // Angular HttpClient aceita params repetidos se usarmos HttpParams; aqui devolvemos objeto simples.
-            // Consumidor (listar) usa HttpClient com { params } e o Angular serializa arrays como sort= & sort=
-            params['sorts'] = sorts.map(s => `${s.field},${(s.direction || 'ASC').toLowerCase()}`);
+        // cria payload limpo
+        const payload: any = {};
+
+        // ----------------------------
+        // 1) PAGE (converter 1-based → 0-based)
+        // ----------------------------
+        if (anyFiltro.page != null) {
+            const p = Number(anyFiltro.page);
+            payload.page = isNaN(p) ? 0 : Math.max(0, p - 1);
         } else {
-            // Compatibilidade retroativa: ainda aceitar sort/direction simples se enviados
-            if (anyFiltro.sort) {
-                const dir = (anyFiltro.direction || 'ASC').toLowerCase();
-                params['sorts'] = [`${anyFiltro.sort},${dir}`];
+            payload.page = 0;
+        }
+
+        // ----------------------------
+        // 2) SIZE
+        // ----------------------------
+        if (anyFiltro.size != null) {
+            const s = Number(anyFiltro.size);
+            payload.size = isNaN(s) ? 10 : s;
+        } else {
+            payload.size = 10;
+        }
+
+        // ----------------------------
+        // 3) ORDER — já vem como array de strings
+        //    ['id,desc', 'nome,asc']
+        //    Apenas normalizamos para lowercase em direção (opcional)
+        // ----------------------------
+        if (Array.isArray(anyFiltro.order) && anyFiltro.order.length > 0) {
+            payload.order = (anyFiltro.order as string[])
+                .filter((s: string) => typeof s === "string" && s.trim() !== "")
+                .map((s: string) => {
+                    const [campo, direcao] = s.split(",");
+                    if (!campo) return null;
+                    const d = (direcao || "asc").toLowerCase();
+                    return `${campo};${d}`;
+                })
+                .filter((x: string | null) => x != null) as string[];
+        }
+
+        // ----------------------------
+        // 4) EXPAND — array → CSV
+        // ----------------------------
+        if (anyFiltro.expand) {
+            if (Array.isArray(anyFiltro.expand)) {
+                payload.expand = anyFiltro.expand.join(",");
+            } else {
+                payload.expand = anyFiltro.expand;
             }
         }
 
-        // Adiciona outros filtros
-        Object.keys(filtro).forEach(key => {
-            if (!['page', 'size', 'sort', 'direction', 'sorts'].includes(key)) {
-                const value = (filtro as any)[key];
-                if (value !== undefined && value !== null && value !== '') {
-                    if (key === 'expand') {
-                        // Serializa expand como CSV
-                        params[key] = Array.isArray(value) ? value.join(',') : value;
-                        return;
-                    }
-                    // Se for um objeto enum, pega a propriedade 'key'
-                    if (typeof value === 'object' && value.key) {
-                        params[key] = value.key;
-                    } else {
-                        params[key] = value;
-                    }
-                }
+        // ----------------------------
+        // 5) Remover valores vazios/undefined
+        // ----------------------------
+        Object.keys(payload).forEach(key => {
+            const v = payload[key];
+            if (
+                v === undefined ||
+                v === null ||
+                v === "" ||
+                (Array.isArray(v) && v.length === 0)
+            ) {
+                delete payload[key];
             }
         });
 
-        return params;
+        return payload;
     }
+
+
 }

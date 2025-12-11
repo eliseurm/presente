@@ -31,7 +31,7 @@ export class UsuarioCrudVM extends AbstractCrud<Usuario, UsuarioFilter> {
   }
 
   protected newFilter(): UsuarioFilter {
-    return new UsuarioFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
+    return new UsuarioFilter();
   }
 
   override canDoSave(): boolean {

@@ -124,7 +124,7 @@ export class EventoPageComponent implements OnInit {
     }
 
     private carregarOpcoes(): void {
-        const base: any = { page: 0, size: 9999, sorts: [{ field: 'id', direction: 'ASC' }] };
+        const base: any = new EventoFilter();
         // Carrega somente os clientes vinculados ao usuário (evita 403 para CLIENTE)
         this.clienteService.getMe().subscribe({
             next: (clientes) => {
@@ -176,11 +176,7 @@ export class EventoPageComponent implements OnInit {
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
         this.vm.filter.size = size;
-        if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
-            this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({ field: m.field, direction: m.order === 1 ? 'ASC' : 'DESC' }));
-        } else if (event.sortField) {
-            this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
-        }
+        this.vm.filter.order = ['id,asc'];
         this.vm.doFilter().subscribe({
             error: (err) => this.handleListError(err)
         });
@@ -398,12 +394,7 @@ export class EventoPageComponent implements OnInit {
     // Busca remota de produtos para o Autocomplete
     searchProdutos(event: any) {
         const query = (event?.query || '').trim();
-        const filtro: any = {
-            nome: query || undefined,
-            page: 0,
-            size: 10,
-            sorts: [{ field: 'nome', direction: 'ASC' }]
-        };
+        const filtro: EventoFilter = new EventoFilter();
         this.carregandoProdutos = true;
         this.produtoService.listar(filtro).subscribe({
             next: page => {

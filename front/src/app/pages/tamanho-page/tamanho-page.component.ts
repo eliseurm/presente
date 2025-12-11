@@ -89,14 +89,7 @@ export class TamanhoPageComponent implements OnInit {
 
         // Se o componente suporta sort no evento, aplique aqui
         // Ordenação múltipla (quando habilitado no p-table) ou simples
-        if (Array.isArray(event.multiSortMeta) && event.multiSortMeta.length) {
-            this.vm.filter.sorts = event.multiSortMeta.map((m: any) => ({
-                field: m.field,
-                direction: m.order === 1 ? 'ASC' : 'DESC'
-            }));
-        } else if (event.sortField) {
-            this.vm.filter.sorts = [{ field: event.sortField, direction: (event.sortOrder === 1 ? 'ASC' : 'DESC') }];
-        }
+        this.vm.filter.order = ['tipo,asc','tamanho,asc'];
 
         this.vm.doFilter().subscribe();
     }

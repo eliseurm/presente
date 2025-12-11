@@ -1,7 +1,7 @@
 package br.eng.eliseu.presente.service.api;
 
-import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.filter.BaseFilter;
+import br.eng.eliseu.presente.model.filter.SortSpec;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,24 +29,40 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     @Override
     public Page<T> listar(F filtro) {
 
-        // Constrói Sort a partir de múltiplos parâmetros sort=campo,dir
         Sort sort = Sort.unsorted();
-        if (filtro.getSorts() != null && !filtro.getSorts().isEmpty()) {
-            for (String clause : filtro.getSorts()) {
-                if (clause == null) continue;
-                String c = clause.trim();
-                if (c.isEmpty()) continue;
-                String[] parts = c.split(",");
+
+        List<String> orderList = filtro.getOrder();
+
+        if (orderList != null && !orderList.isEmpty()) {
+
+            for (String token : orderList) {
+                if (token == null) continue;
+
+                String trimmed = token.trim();
+                if (trimmed.isEmpty()) continue;
+
+                String[] parts = trimmed.split(";");
+                if (parts.length == 0) continue;
+
+                // Campo (obrigatório)
                 String field = parts[0].trim();
-                Sort.Direction dir = Sort.Direction.ASC;
-                if (parts.length > 1) {
-                    String d = parts[1].trim();
-                    dir = "desc".equalsIgnoreCase(d) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                if (field.isEmpty()) continue;
+
+                // Direção (opcional)
+                String dirStr = (parts.length > 1 ? parts[1] : "ASC").trim().toUpperCase();
+
+                Sort.Direction direction;
+                try {
+                    direction = Sort.Direction.valueOf(dirStr);
+                } catch (Exception e) {
+                    direction = Sort.Direction.ASC; // fallback seguro
                 }
-                sort = sort.and(Sort.by(dir, field));
+
+                sort = sort.and(Sort.by(direction, field));
             }
+
         } else {
-            // Default: id desc
+            // Default caso nenhum sort seja enviado
             sort = Sort.by(Sort.Direction.DESC, "id");
         }
 
@@ -59,7 +75,6 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
         Specification<T> spec = buildSpecification(filtro);
 
         return getSpecificationExecutor().findAll(spec, pageable);
-
     }
 
     @Override

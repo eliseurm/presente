@@ -33,7 +33,7 @@ export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
   }
 
   protected newFilter(): ProdutoFilter {
-    return new ProdutoFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
+    return new ProdutoFilter();
   }
 
   override canDoSave(): boolean {

@@ -39,10 +39,7 @@ export class TamanhoCrudVM extends AbstractCrud<Tamanho, TamanhoFilter> {
 
     protected newFilter(): TamanhoFilter {
         let filter = new TamanhoFilter();
-        filter.sorts = [
-            { field: 'tipo', direction: 'ASC' },
-            { field: 'tamanho', direction: 'ASC' }
-        ];
+        filter.order = ['tipo,asc','tamanho,asc'];
         return filter;
     }
 

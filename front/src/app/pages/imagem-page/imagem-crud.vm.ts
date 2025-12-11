@@ -27,7 +27,7 @@ export class ImagemCrudVM extends AbstractCrud<Imagem, ImagemFilter> {
   }
 
   protected newFilter(): ImagemFilter {
-    return new ImagemFilter({ page: 0, size: 10, sorts: [{ field: 'id', direction: 'ASC' }] } as any);
+    return new ImagemFilter();
   }
 
   override canDoSave(): boolean {

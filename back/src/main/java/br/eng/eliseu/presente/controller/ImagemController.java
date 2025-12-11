@@ -38,6 +38,7 @@ public class ImagemController {
 
     @PostMapping
     public ResponseEntity<Imagem> criar(@RequestBody Imagem imagem) {
+
         return ResponseEntity.ok(imagemService.criar(imagem));
     }
 

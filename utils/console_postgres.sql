@@ -84,6 +84,8 @@ select * from usuario ;
 
 select * from tamanho ;
 
+select * from imagem ;
+
 select * from usuario ;
 
 select * from pessoa ;
