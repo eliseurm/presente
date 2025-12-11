@@ -1,6 +1,6 @@
 <crud #crudRef [parent]="vm" listToolbarTitle="Imagens" editToolbarTitle="Editar Imagem"
       [collapsibleFilters]="true" [showListCloseButton]="true"
-      (saveButtonAction)="onBeforeSaveHandleUpload()"
+      (saveButtonAction)="onBeforeSaveHandleUpload($event)"
       (closeButtonAction)="onCloseCrud()">
 
   <!-- Filtros -->

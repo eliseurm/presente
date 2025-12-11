@@ -70,7 +70,8 @@ export class ImagemPageComponent {
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
         this.vm.filter.size = size;
-        this.vm.filter.order = ['id,asc'];
+        // Ordenação padrão por ID asc, usando novo modelo de multi-sort
+        (this.vm.filter as any).sorts = [{ field: 'id', direction: 'ASC' }];
         this.vm.doFilter().subscribe();
     }
 
@@ -85,11 +86,11 @@ export class ImagemPageComponent {
         }
     }
 
-    // Salvamento será feito pelo CrudComponent via vm.doSave(). Aqui só cuidamos do upload se necessário.
-    onBeforeSaveHandleUpload(): boolean {
+    // Salvamento: intercepta o botão Gravar quando houver upload pendente para evitar duplicidade
+    onBeforeSaveHandleUpload(ev?: { preventDefault: () => void }): void {
         const data: any = this.vm.model as any;
         const id = data?.id as number | undefined;
-        if (!this.tempFile) return false; // nada para fazer, segue fluxo normal do Crud
+        if (!this.tempFile) return; // nada para fazer, segue fluxo normal do Crud (CrudComponent chamará doSave)
 
         const afterPersist = (createdOrUpdated?: Imagem) => {
             this.messageService.add({severity: 'success', summary: 'Sucesso', detail: `Upload realizado com sucesso`});
@@ -97,6 +98,9 @@ export class ImagemPageComponent {
             this.previewUrl = null;
             this.vm.doFilter().subscribe();
         };
+
+        // Evita que o CrudComponent faça o doSave padrão e duplique o registro
+        try { ev?.preventDefault(); } catch {}
 
         if (id) {
             this.imagemService.uploadForId(id, this.tempFile!, data?.nome || this.tempFile!.name).subscribe({
@@ -106,8 +110,7 @@ export class ImagemPageComponent {
                     this.messageService.add({severity: 'error', summary: 'Erro', detail});
                 }
             });
-        }
-        else {
+        } else {
             this.imagemService.upload(this.tempFile!, data?.nome || this.tempFile!.name).subscribe({
                 next: (resp) => afterPersist(resp),
                 error: (error) => {
@@ -116,7 +119,6 @@ export class ImagemPageComponent {
                 }
             });
         }
-        return true; // interceptou salvamento por upload
     }
 
     onDeletingRow(row: any) {

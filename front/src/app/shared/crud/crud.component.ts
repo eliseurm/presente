@@ -43,7 +43,9 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
   @Input() wrapEditTemplateInCard = true; // envolve a área de edição em uma "caixa" branca (card)
 
   @Output() filterButtonAction = new EventEmitter<void>();
-  @Output() saveButtonAction = new EventEmitter<void>();
+  // Evento de salvar com possibilidade de cancelar o salvamento padrão
+  // Consumidor pode chamar event.preventDefault() para impedir parent.doSave()
+  @Output() saveButtonAction = new EventEmitter<{ preventDefault: () => void }>();
   @Output() deleteButtonAction = new EventEmitter<void>();
   @Output() closeButtonAction = new EventEmitter<void>();
 
@@ -97,7 +99,10 @@ export class CrudComponent<T extends { id?: any; version?: number }, F extends B
   onEditToolbarSaveButtonAction() {
     if (!this.parent) return;
     if (this.parent.canDoSave()) {
-      this.saveButtonAction.emit();
+      let prevented = false;
+      const ev = { preventDefault: () => { prevented = true; } };
+      this.saveButtonAction.emit(ev);
+      if (prevented) return;
       this.parent.doSave().subscribe();
     }
   }
