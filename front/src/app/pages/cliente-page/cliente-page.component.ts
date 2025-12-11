@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -45,7 +45,7 @@ import {AuthService} from '@/pages/auth/auth-service';
     providers: [MessageService, ClienteCrudVM]
 })
 @CrudMetadata("ClientePageComponent", [Cliente, ClienteFilter])
-export class ClientePageComponent {
+export class ClientePageComponent implements OnInit {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<Cliente, ClienteFilter>;
 
@@ -101,6 +101,7 @@ export class ClientePageComponent {
         this.vm.doFilter().subscribe();
     }
 
+/*
     onDeleteRow(row: any) {
         if (this.isCliente()) {
             this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Ação não permitida para seu perfil (CLIENTE).'});
@@ -116,6 +117,7 @@ export class ClientePageComponent {
             error: () => this.messageService.add({severity: 'error', summary: 'Erro', detail: 'Erro ao excluir cliente'})
         });
     }
+*/
 
     // Evita erro de template TS2339 ao acessar .id quando o modelo pode ser number | object
     getUsuarioIdFromModel(): number | null {

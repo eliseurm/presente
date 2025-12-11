@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -20,6 +20,7 @@ import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
 import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
 import {UsuarioCrudVM} from './usuario-crud.vm';
+import { AuthService } from '@/pages/auth/auth-service';
 
 @Component({
     selector: 'usuario-page',
@@ -39,13 +40,12 @@ import {UsuarioCrudVM} from './usuario-crud.vm';
         ErmTemplateDirective
     ],
     templateUrl: './usuario-page.component.html',
-    styleUrls: [
-        '../../shared/components/crud-base/crud-base.component.scss'
-    ],
+    styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],
     providers: [MessageService, UsuarioCrudVM]
 })
 @CrudMetadata('UsuarioPageComponent', [Usuario, UsuarioFilter])
-export class UsuarioPageComponent {
+export class UsuarioPageComponent implements OnInit{
+
     @ViewChild('crudRef') crudRef?: CrudComponent<Usuario, UsuarioFilter>;
 
     papelEnumType: any = PapelEnum;
@@ -61,7 +61,8 @@ export class UsuarioPageComponent {
         public vm: UsuarioCrudVM,
         private usuarioService: UsuarioService,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        private auth: AuthService
     ) {
     }
 
@@ -74,7 +75,11 @@ export class UsuarioPageComponent {
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
         this.vm.filter.size = size;
-        this.vm.filter.order = ['papel,asc', 'username,asc'];
+        // Ordenação padrão: papel ASC, username ASC (usando novo modelo de multi-sort)
+        (this.vm.filter as any).sorts = [
+            { field: 'papel', direction: 'ASC' },
+            { field: 'username', direction: 'ASC' }
+        ];
         this.vm.doFilter().subscribe();
     }
 
@@ -83,6 +88,7 @@ export class UsuarioPageComponent {
         this.vm.doFilter().subscribe();
     }
 
+/*
     onDeleteRow(row: any) {
         const id = row?.id;
         if (!id) return;
@@ -94,8 +100,24 @@ export class UsuarioPageComponent {
             error: () => this.messageService.add({severity: 'error', summary: 'Erro', detail: 'Erro ao excluir usuário'})
         });
     }
+*/
 
     onCloseCrud() {
         this.router.navigate(['/']);
+    }
+
+    // Impede excluir o próprio usuário logado
+    onBeforeDeleteUsuario(ev: { preventDefault: () => void }) {
+        try {
+            const logged = this.auth.user;
+            const editing: any = this.vm?.model as any;
+            if (!logged || !editing) return;
+            const sameById = logged.id != null && editing?.id != null && Number(logged.id) === Number(editing.id);
+            const sameByUsername = !!logged.username && !!editing?.username && String(logged.username).toLowerCase() === String(editing.username).toLowerCase();
+            if (sameById || sameByUsername) {
+                ev?.preventDefault?.();
+                this.messageService.add({ severity: 'warn', summary: 'Ação não permitida', detail: 'Você não pode excluir o próprio usuário que está logado.' });
+            }
+        } catch {}
     }
 }

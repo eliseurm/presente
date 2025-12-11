@@ -1,71 +1,76 @@
-<crud #crudRef [parent]="vm" listToolbarTitle="Usuários" editToolbarTitle="Editar Usuário"
-      [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
+<crud #crudRef
+      [parent]="vm"
+      listToolbarTitle="Usuários"
+      editToolbarTitle="Editar Usuário"
+      [collapsibleFilters]="true"
+      [showListCloseButton]="true"
+      (deleteButtonAction)="onBeforeDeleteUsuario($event)"
+      (closeButtonAction)="onCloseCrud()">
 
-  <!-- Filtros -->
-  <div crud-list-filter-fields class="w-full text-left">
-    <crud-filter
-      [filter]="vm.filter"
-      [fields]="filterFields"
-      [loading]="false"
-      (onSearch)="vm.doFilter().subscribe()"
-      (onClear)="onClearFilters()"
-    ></crud-filter>
-  </div>
-
-  <!-- Grid de listagem -->
-  <div crud-list-grid class="w-full">
-    <erm-data-grid
-      [dataSource]="vm.dataSource"
-      [paginator]="true"
-      [rows]="vm.filter.size || 10"
-      [rowsPerPageOptions]="[10,20,50,100]"
-      [totalRecords]="vm.totalRecords"
-      [lazy]="true"
-      (onLazyLoad)="onLazyLoad($event)"
-      (rowDblClick)="crudRef.onRowDblClick($event)">
-
-      <erm-column dataField="username" caption="Usuário"></erm-column>
-      <erm-column dataField="papel" caption="Papel" cellTemplate="papelTpl"></erm-column>
-      <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
-
-      <ng-template ermTemplate="papelTpl" let-row>
-        {{ row?.papel?.descricao || row?.papel }}
-      </ng-template>
-      <ng-template ermTemplate="statusTpl" let-row>
-        {{ row?.status?.descricao || row?.status }}
-      </ng-template>
-      <ng-template ermTemplate="acoesTpl" let-row>
-        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                (click)="crudRef.onRowDblClick(row)"></button>
-        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
-                (click)="onDeleteRow(row)"></button>
-      </ng-template>
-
-    </erm-data-grid>
-  </div>
-
-  <!-- Formulário de edição -->
-  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Usuário *</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.username" name="username" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Senha</label>
-        <input class="w-full" pInputText type="password" [(ngModel)]="vm.model['senha']" name="senha" placeholder="(opcional)" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Papel *</label>
-        <enum-select class="w-full" [enumObject]="papelEnumType" [(ngModel)]="vm.model.papel" name="papel"></enum-select>
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Status *</label>
-        <enum-select class="w-full" [enumObject]="statusEnumType" [(ngModel)]="vm.model.status" name="status"></enum-select>
-      </div>
+    <!-- Filtros -->
+    <div crud-list-filter-fields class="w-full text-left">
+        <crud-filter
+            [filter]="vm.filter"
+            [fields]="filterFields"
+            [loading]="false"
+            (onSearch)="vm.doFilter().subscribe()"
+            (onClear)="onClearFilters()"
+        ></crud-filter>
     </div>
-  </div>
+
+    <!-- Grid de listagem -->
+    <div crud-list-grid class="w-full">
+        <erm-data-grid
+            [dataSource]="vm.dataSource"
+            [paginator]="true"
+            [rows]="vm.filter.size || 10"
+            [rowsPerPageOptions]="[10,20,50,100]"
+            [totalRecords]="vm.totalRecords"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            (rowDblClick)="crudRef.onRowDblClick($event)">
+
+            <erm-column dataField="username" caption="Usuário"></erm-column>
+            <erm-column dataField="papel" caption="Papel" cellTemplate="papelTpl"></erm-column>
+            <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
+            <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+
+            <ng-template ermTemplate="papelTpl" let-row>
+                {{ row?.papel?.descricao || row?.papel }}
+            </ng-template>
+            <ng-template ermTemplate="statusTpl" let-row>
+                {{ row?.status?.descricao || row?.status }}
+            </ng-template>
+            <ng-template ermTemplate="acoesTpl" let-row>
+                <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar" (click)="crudRef.onRowDblClick(row)"></button>
+<!--                <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"(click)="onDeleteRow(row)"></button>-->
+            </ng-template>
+
+        </erm-data-grid>
+    </div>
+
+    <!-- Formulário de edição -->
+    <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Usuário *</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.username" name="usuarioFormField" autocomplete="new-username"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Senha *</label>
+                <input class="w-full" pInputText type="password" [(ngModel)]="vm.model['senha']" name="senhaFormField" autocomplete="new-password"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Papel *</label>
+                <enum-select class="w-full" [enumObject]="papelEnumType" [(ngModel)]="vm.model.papel" name="papel"></enum-select>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Status *</label>
+                <enum-select class="w-full" [enumObject]="statusEnumType" [(ngModel)]="vm.model.status" name="status"></enum-select>
+            </div>
+        </div>
+    </div>
 
 </crud>
 

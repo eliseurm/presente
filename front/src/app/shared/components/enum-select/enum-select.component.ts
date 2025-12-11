@@ -54,7 +54,8 @@ export class EnumSelectComponent implements OnInit, ControlValueAccessor {
         const value = event?.value;
         this.selectedValue = value;
         // Emite a chave (string) do enum para o modelo do formulário
-        const emit = value?.key ?? value?.name ?? value ?? null;
+        // const emit = value?.key ?? value?.name ?? value ?? null;
+        const emit = value ?? value?.key ?? value?.name ?? null;
         this.onChange(emit);
         this.onTouch();
     }

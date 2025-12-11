@@ -1,8 +1,8 @@
 // TypeScript
-import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import {Injectable, inject} from '@angular/core';
+import {Router} from '@angular/router';
+import {HttpClient} from '@angular/common/http';
+import {firstValueFrom} from 'rxjs';
 
 export type Role = 'ADMIN' | 'ADMINISTRADOR' | 'CLIENTE' | 'USUARIO';
 
@@ -18,7 +18,7 @@ export interface IUser {
 const defaultAvatar = 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png';
 const API_BASE = '/api';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class AuthService {
     readonly defaultPath = '/home';
 
@@ -41,10 +41,21 @@ export class AuthService {
     }
 
     // Helpers de papel
-    isAdmin(): boolean { return (this.userRole as string)?.toUpperCase() === 'ADMIN'; }
-    isCliente(): boolean { return (this.userRole as string)?.toUpperCase() === 'CLIENTE'; }
-    isUsuario(): boolean { return (this.userRole as string)?.toUpperCase() === 'USUARIO'; }
-    getClienteIds(): number[] { return (this._user?.cliente_ids ?? []) as number[]; }
+    isAdmin(): boolean {
+        return (this.userRole as string)?.toUpperCase() === 'ADMIN';
+    }
+
+    isCliente(): boolean {
+        return (this.userRole as string)?.toUpperCase() === 'CLIENTE';
+    }
+
+    isUsuario(): boolean {
+        return (this.userRole as string)?.toUpperCase() === 'USUARIO';
+    }
+
+    getClienteIds(): number[] {
+        return (this._user?.cliente_ids ?? []) as number[];
+    }
 
     private _lastAuthenticatedPath = this.defaultPath;
     set lastAuthenticatedPath(value: string) {
@@ -94,7 +105,8 @@ export class AuthService {
         if (remember) {
             localStorage.setItem('auth.token', token);
             sessionStorage.removeItem('auth.token');
-        } else {
+        }
+        else {
             sessionStorage.setItem('auth.token', token);
             localStorage.removeItem('auth.token');
         }
@@ -157,10 +169,10 @@ export class AuthService {
     async logIn(email: string, password: string, remember = false) {
         try {
             if (!email || !password) {
-                return { isOk: false, message: 'Credenciais inválidas' };
+                return {isOk: false, message: 'Credenciais inválidas'};
             }
 
-            const body = { username: email, password };
+            const body = {username: email, password};
             const res = await firstValueFrom(
                 this.http.post<{
                     token: string;
@@ -201,18 +213,17 @@ export class AuthService {
             })();
             await this.router.navigate([saved || fallback]);
 
-            return { isOk: true, data: user };
-        }
-        catch (e: any) {
+            return {isOk: true, data: user};
+        } catch (e: any) {
             const msg = e?.error?.message || 'Falha de autenticação';
-            return { isOk: false, message: msg };
+            return {isOk: false, message: msg};
         }
     }
 
     async getUser() {
         try {
             if (this._user) {
-                return { isOk: true, data: this._user };
+                return {isOk: true, data: this._user};
             }
 
             const res = await firstValueFrom(
@@ -228,10 +239,10 @@ export class AuthService {
             };
 
             this.persist(user);
-            return { isOk: true, data: user };
+            return {isOk: true, data: user};
         } catch {
             this.persist(null);
-            return { isOk: false, data: null };
+            return {isOk: false, data: null};
         }
     }
 
@@ -253,12 +264,14 @@ export class AuthService {
         try {
             // limpa possíveis dados locais da sessão
             sessionStorage.clear();
-        } catch {}
+        } catch {
+        }
         try {
             // remove qualquer token ou cache relacionado (best-effort)
             localStorage.removeItem(this.storageKey);
             localStorage.removeItem('auth.token');
-        } catch {}
+        } catch {
+        }
         try {
             // tentativa best-effort de expirar cookie não httpOnly com o mesmo nome (se existir)
             const expire = 'Thu, 01 Jan 1970 00:00:00 GMT';
@@ -277,21 +290,21 @@ export class AuthService {
         }
     }
 
-        async changePassword(currentPassword: string, newPassword: string) {
-            try {
-                await firstValueFrom(
-                    this.http.put(
-                        `${API_BASE}/users/me/password`,
-                        { currentPassword, newPassword },
-                        { withCredentials: true }
-                    )
-                );
-                return { isOk: true };
-            } catch (e: any) {
-                const msg = e?.error?.message || 'Não foi possível alterar a senha.';
-                return { isOk: false, message: msg };
-            }
+    async changePassword(currentPassword: string, newPassword: string) {
+        try {
+            await firstValueFrom(
+                this.http.put(
+                    `${API_BASE}/users/me/password`,
+                    {currentPassword, newPassword},
+                    {withCredentials: true}
+                )
+            );
+            return {isOk: true};
+        } catch (e: any) {
+            const msg = e?.error?.message || 'Não foi possível alterar a senha.';
+            return {isOk: false, message: msg};
         }
+    }
 
 
 }

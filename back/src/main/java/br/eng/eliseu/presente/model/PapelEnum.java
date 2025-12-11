@@ -1,5 +1,7 @@
 package br.eng.eliseu.presente.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 public enum PapelEnum {
 
     ADMINISTRADOR("Administrador", "Dono do sistema, tem acesso a tudo"),
@@ -25,5 +27,15 @@ public enum PapelEnum {
     @Override
     public String toString() {
         return nome;
+    }
+
+    @JsonCreator
+    public static PapelEnum fromJson(String value) {
+        for (PapelEnum p : PapelEnum.values()) {
+            if (p.name().equalsIgnoreCase(value)) {
+                return p;
+            }
+        }
+        throw new IllegalArgumentException("Valor inválido para PapelEnum: " + value);
     }
 }

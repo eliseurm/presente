@@ -1,28 +1,10 @@
 export const ProdutoTipoEnum = {
-    ROUPA_ADULTO: {
-        key: 'ROUPA_ADULTO',
-        descricao: 'Roupa Adulto'
-    },
-    ROUPA_CRIANCA: {
-        key: 'ROUPA_CRIANCA',
-        descricao: 'Roupa Criança'
-    },
-    SAPATO: {
-        key: 'SAPATO',
-        descricao: 'Sapato'
-    },
-    SANDALIA: {
-        key: 'SANDALIA',
-        descricao: 'Sandalia'
-    },
-    TENIS: {
-        key: 'TENIS',
-        descricao: 'Tenis'
-    },
-    OBJETO: {
-        key: 'OBJETO',
-        descricao: 'Outros Objetos'
-    }
+    ROUPA_ADULTO: {key: 'ROUPA_ADULTO', descricao: 'Roupa Adulto'},
+    ROUPA_CRIANCA: {key: 'ROUPA_CRIANCA', descricao: 'Roupa Criança'},
+    SAPATO: {key: 'SAPATO', descricao: 'Sapato'},
+    SANDALIA: {key: 'SANDALIA', descricao: 'Sandalia'},
+    TENIS: {key: 'TENIS', descricao: 'Tenis'},
+    OBJETO: {key: 'OBJETO', descricao: 'Outros Objetos'}
 } as const; // O 'as const' é crucial aqui!
 
 // Crie um tipo a partir dos VALORES do objeto

@@ -2,7 +2,6 @@
       [collapsibleFilters]="true"
       [showListCloseButton]="true"
       [showListNewButton]="!isCliente()"
-      [showEditSaveButton]="!isCliente()"
       [showEditNewButton]="!isCliente()"
       [showEditDeleteButton]="!isCliente()"
       (closeButtonAction)="onCloseCrud()">
@@ -36,15 +35,11 @@
       <erm-column dataField="usuario.username" caption="Usuário" cellTemplate="usuarioTpl"></erm-column>
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-      <ng-template ermTemplate="usuarioTpl" let-row>
-        {{ row?.usuario?.username || '-' }}
-      </ng-template>
+      <ng-template ermTemplate="usuarioTpl" let-row>{{ row?.usuario?.username || '-' }}</ng-template>
 
       <ng-template ermTemplate="acoesTpl" let-row>
-        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                (click)="crudRef.onRowDblClick(row)"></button>
-        <button *ngIf="!isCliente()" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
-                (click)="onDeleteRow(row)"></button>
+        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar" (click)="crudRef.onRowDblClick(row)"></button>
+<!--        <button *ngIf="!isCliente()" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir" (click)="onDeleteRow(row)"></button>-->
       </ng-template>
 
     </erm-data-grid>
@@ -63,15 +58,18 @@
                   [options]="statusOptions"
                   optionLabel="label" optionValue="value"
                   [(ngModel)]="vm.model['status']" name="status"
-                  placeholder="Selecione"></p-select>
+                  placeholder="Selecione"
+                  appendTo="body"
+                  [disabled]="isCliente()"
+        ></p-select>
       </div>
       <div class="flex flex-col gap-2 w-full">
         <label class="block">E-mail</label>
-        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email" [disabled]="isCliente()" />
+        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email"/>
       </div>
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Telefone</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone" [disabled]="isCliente()" />
+        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone"/>
       </div>
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Usuário</label>
@@ -81,11 +79,12 @@
                   [ngModel]="getUsuarioIdFromModel()" name="usuario"
                   (ngModelChange)="vm.model['usuario'] = $event ? { id: $event } : null"
                   [disabled]="isCliente()"
-                  placeholder="Selecione"></p-select>
+                  placeholder="Selecione"
+                  appendTo="body"></p-select>
       </div>
       <div class="flex flex-col gap-2 w-full md:col-span-2">
         <label class="block">Anotações</label>
-        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.anotacoes" name="anotacoes" [disabled]="isCliente()"></textarea>
+        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
       </div>
     </div>
   </div>

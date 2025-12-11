@@ -61,21 +61,17 @@ public class ClienteService extends AbstractCrudService<Cliente, Long, ClienteFi
 
     @Override
     protected void prepararParaAtualizacao(Long id, Cliente entidade, Cliente entidadeExistente) {
-        // Se for ROLE_CLIENTE, só permitir alterar Nome e Status
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isCliente = auth != null && auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_CLIENTE"::equals);
-        if (isCliente) {
-            entidadeExistente.setNome(entidade.getNome());
-            entidadeExistente.setStatus(entidade.getStatus());
-            // Demais campos são ignorados para CLIENTE
-            return;
-        }
-        // ADMIN (ou demais papéis) podem atualizar todos os campos
+        boolean isAdmin = auth != null && auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
+
         entidadeExistente.setNome(entidade.getNome());
         entidadeExistente.setEmail(entidade.getEmail());
         entidadeExistente.setTelefone(entidade.getTelefone());
-        entidadeExistente.setUsuario(entidade.getUsuario());
         entidadeExistente.setAnotacoes(entidade.getAnotacoes());
-        entidadeExistente.setStatus(entidade.getStatus());
+        // Somente adminsistrador altera usuario e status
+        if (isAdmin) {
+            entidadeExistente.setUsuario(entidade.getUsuario());
+            entidadeExistente.setStatus(entidade.getStatus());
+        }
     }
 }

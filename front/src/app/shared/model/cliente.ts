@@ -1,4 +1,5 @@
 export class Cliente {
+
   id?: number;
   nome?: string;
   email?: string;
@@ -6,6 +7,7 @@ export class Cliente {
   usuario?: UsuarioRef | number | null;
   anotacoes?: string;
   status?: string;
+
 }
 
 export interface UsuarioRef {

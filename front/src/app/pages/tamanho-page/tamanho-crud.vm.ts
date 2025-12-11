@@ -15,6 +15,7 @@ export class TamanhoCrudVM extends AbstractCrud<Tamanho, TamanhoFilter> {
         route: ActivatedRoute,
         router: Router,
     ) {
+
         super(port, route, router);
         // Inicializa defaults imediatamente
         this.model = this.newModel();
