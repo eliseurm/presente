@@ -30,11 +30,11 @@
       <erm-column dataField="imagem" caption="Imagem" cellTemplate="imgTpl"></erm-column>
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-      <ng-template ermTemplate="imgTpl" let-row="row">
+      <ng-template ermTemplate="imgTpl" let-row>
         <img *ngIf="getThumbUrl(row) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row="row">
+      <ng-template ermTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>

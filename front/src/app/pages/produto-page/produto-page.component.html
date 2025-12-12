@@ -30,19 +30,19 @@
       <erm-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></erm-column>
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-      <ng-template ermTemplate="statusTpl" let-data>
-        {{ data ? 'Ativo' : 'Inativo' }}
+      <ng-template ermTemplate="statusTpl" let-row>
+        {{ row?.status ? 'Ativo' : 'Inativo' }}
       </ng-template>
 
-      <ng-template ermTemplate="imgsTpl" let-data>
+      <ng-template ermTemplate="imgsTpl" let-row>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <ng-container *ngFor="let img of (data || []); let i = index">
+          <ng-container *ngFor="let img of (row?.imagens || []); let i = index">
             <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
           </ng-container>
         </div>
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row="row">
+      <ng-template ermTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
