@@ -387,7 +387,8 @@ export class ErmDataGridComponent implements AfterContentInit {
     }
 
     getCellValue(rowData: any, column: ErmColumnComponent): any {
-        const value = rowData[column.dataField];
+        // const value = rowData[column.dataField];
+        const value = this.getByPath(rowData, column.dataField);
 
         if (column.lookup) {
             const lookupItem = column.lookup.dataSource.find(
@@ -419,6 +420,56 @@ export class ErmDataGridComponent implements AfterContentInit {
         }
 
         return value;
+    }
+
+    // Resolve valores por caminho aninhado, ex.: "cliente.endereco.rua" ou "itens[0].nome"
+    // Regras:
+    // - Se path for vazio/nulo/undefined, retorna undefined
+    // - Suporta índices numéricos em colchetes e propriedades com ponto
+    // - Suporta chaves entre aspas dentro de colchetes: ["prop.com.ponto"], ['outra']
+    public getByPath(obj: any, path?: string | null): any {
+        if (!obj || !path) return undefined;
+
+        // Tokeniza: propriedades por ponto e colchetes
+        const tokens = this.tokenizePath(path);
+        let current = obj;
+        for (const token of tokens) {
+            if (current == null) return undefined;
+            if (typeof token === 'number') {
+                // Índice de array
+                if (!Array.isArray(current)) return undefined;
+                current = current[token];
+            } else {
+                current = current[token as string];
+            }
+        }
+        return current;
+    }
+
+    private tokenizePath(path: string): Array<string | number> {
+        // Extrai partes como: foo, bar, 0, "a.b", 'c.d'
+        const re = /[^.\[\]]+|\[(?:-?\d+|\".*?\"|'.*?')\]/g;
+        const raw: string[] = path.match(re) || [];
+        const out: Array<string | number> = [];
+        for (let part of raw) {
+            // Remove colchetes quando presentes
+            if (part.startsWith('[') && part.endsWith(']')) {
+                part = part.slice(1, -1);
+                // Índice numérico simples
+                if (/^-?\d+$/.test(part)) {
+                    out.push(parseInt(part, 10));
+                    continue;
+                }
+                // Remover aspas envolvendo chaves com ponto
+                if ((part.startsWith('"') && part.endsWith('"')) || (part.startsWith("'") && part.endsWith("'"))) {
+                    part = part.slice(1, -1);
+                }
+                out.push(part);
+            } else {
+                out.push(part);
+            }
+        }
+        return out;
     }
 
     getFormItemValue(dataField: string): any {

@@ -67,7 +67,7 @@
                         </ng-container>
                         <ng-template #customCell>
                             <ng-container
-                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: rowData, data: rowData }">
+                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: rowData, data: getByPath(rowData, col.dataField) }">
                             </ng-container>
                         </ng-template>
                     </td>

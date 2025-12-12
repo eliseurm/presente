@@ -32,15 +32,10 @@
             <erm-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></erm-column>
             <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-            <ng-template ermTemplate="clienteTpl" let-row>
-                {{ row?.cliente?.nome }}
-            </ng-template>
-            <ng-template ermTemplate="statusTpl" let-row>
-                {{ getStatusDescricao(row?.status) }}
-            </ng-template>
-            <ng-template ermTemplate="dataTpl" let-row let-data="data">
-                {{ data | date:'short' }}
-            </ng-template>
+            <ng-template ermTemplate="clienteTpl" let-row>{{ row?.cliente?.nome }}</ng-template>
+            <ng-template ermTemplate="statusTpl" let-row>{{ getStatusDescricao(row?.status) }}</ng-template>
+            <ng-template ermTemplate="dataTpl" let-row let-data="data">{{ data | date:'short' }}</ng-template>
+
             <ng-template ermTemplate="acoesTpl" let-row>
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                         (click)="crudRef.onRowDblClick(row)"></button>
