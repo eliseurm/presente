@@ -10,3 +10,5 @@ export * from './erm-template.directive';
 export * from './erm-data-grid.types';
 export * from './erm-form-context.component';
 export * from './erm-form-context.service';
+export * from './eo-somatoria.component';
+export * from './ei-total-item.component';

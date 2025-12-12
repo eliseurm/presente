@@ -32,11 +32,12 @@
             <erm-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></erm-column>
             <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-            <ng-template ermTemplate="clienteTpl" let-row>{{ row?.cliente?.nome }}</ng-template>
-            <ng-template ermTemplate="statusTpl" let-row>{{ getStatusDescricao(row?.status) }}</ng-template>
-            <ng-template ermTemplate="dataTpl" let-row let-data="data">{{ data | date:'short' }}</ng-template>
+            <!-- Ajuste para novo contrato do erm-data-grid: $implicit = valor da célula, linha via alias -->
+            <ng-template ermTemplate="clienteTpl" let-data>{{ data || '-' }}</ng-template>
+            <ng-template ermTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
+            <ng-template ermTemplate="dataTpl" let-data let-row="row">{{ data | date:'short' }}</ng-template>
 
-            <ng-template ermTemplate="acoesTpl" let-row>
+            <ng-template ermTemplate="acoesTpl" let-row="row">
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                         (click)="crudRef.onRowDblClick(row)"></button>
             </ng-template>
@@ -149,8 +150,12 @@
                 </p-tabpanel>
 
                 <p-tabpanel value="1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshPessoas()"></button>
+                    </div>
                     <erm-data-grid
                         [dataSource]="vm.model.pessoas || []"
+                        [summaryDataSource]="vm.model.pessoas || []"
                         [loading]="false"
                         (onInitNewRow)="onInitNewPessoa($event)"
                         (onEditDialogOpen)="onEditingStartPessoa($event)"
@@ -219,13 +224,17 @@
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
                         <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
+                        <erm-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></erm-column>
                         <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
                         <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
 
-                        <ng-template ermTemplate="pessoaCellTemplate" let-row>{{ getPessoaRotulo(row) }}</ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-row>{{ getStatusDescricao(row?.status) }}</ng-template>
+                        <ng-template ermTemplate="pessoaCellTemplate" let-row="row">{{ getPessoaRotulo(row) }}</ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
+                        <ng-template ermTemplate="jaEscolheuTpl" let-data let-row="row">
+                            <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
+                        </ng-template>
 
-                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row>
+                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row="row">
                             <p-autoComplete class="w-full"
                                             [(ngModel)]="row.pessoa"
                                             [ngModelOptions]="{standalone:true}"
@@ -247,7 +256,7 @@
                             </p-autoComplete>
                         </ng-template>
 
-                        <ng-template ermTemplate="statusEditCellTemplate" let-row>
+                        <ng-template ermTemplate="statusEditCellTemplate" let-row="row">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
                                          [(ngModel)]="row.status"
@@ -255,7 +264,7 @@
                             ></enum-select>
                         </ng-template>
 
-                        <ng-template ermTemplate="magicLinkCell" let-row>
+                        <ng-template ermTemplate="magicLinkCell" let-row="row">
                             <ng-container *ngIf="row?.nomeMagicNumber; else semToken">
                                 <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">
                                     {{ row?.nomeMagicNumber }}
@@ -266,7 +275,7 @@
                             </ng-template>
                         </ng-template>
 
-                        <ng-template ermTemplate="acoesCellTemplate" let-row>
+                        <ng-template ermTemplate="acoesCellTemplate" let-row="row">
                             <button pButton type="button"
                                     icon="pi pi-external-link"
                                     class="p-button-text p-button-sm"
@@ -284,6 +293,12 @@
                                     (click)="copiarLink(row?.nomeMagicNumber)"
                             ></button>
                         </ng-template>
+
+                        <!-- Somatória (rodapé) -->
+                        <eo-somatoria>
+                            <ei-total-item summaryType="count" label="Total de pessoas"></ei-total-item>
+                            <ei-total-item column="jaEscolheu" summaryType="sum" label="Já escolheram"></ei-total-item>
+                        </eo-somatoria>
 
                     </erm-data-grid>
 

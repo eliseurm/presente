@@ -1,4 +1,4 @@
-import { Component, ContentChildren, QueryList, Input, Output, EventEmitter, TemplateRef, ContentChild, AfterContentInit } from '@angular/core';
+import { Component, ContentChildren, QueryList, Input, Output, EventEmitter, TemplateRef, ContentChild, AfterContentInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -21,6 +21,8 @@ import { ErmTemplateDirective } from './erm-template.directive';
 import { ErmDataGridEvent } from './erm-data-grid.types';
 import { ErmItemComponent } from './erm-item.component';
 import { ErmFormContextComponent } from './erm-form-context.component';
+import { EoSomatoriaComponent } from './eo-somatoria.component';
+import { EiTotalItemComponent, SummaryType } from './ei-total-item.component';
 
 @Component({
     selector: 'erm-data-grid',
@@ -64,9 +66,11 @@ import { ErmFormContextComponent } from './erm-form-context.component';
         ])
     ]
 })
-export class ErmDataGridComponent implements AfterContentInit {
+export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     @Input() dataSource: any[] = [];
     @Input() loading: boolean = false;
+    // Fonte alternativa para somatórios (ex.: total geral, ignorando paginação)
+    @Input() summaryDataSource?: any[];
     // Scroll configuration passthrough to PrimeNG p-table
     @Input() scrollable: boolean = false;
     @Input() scrollHeight?: string;
@@ -90,6 +94,9 @@ export class ErmDataGridComponent implements AfterContentInit {
     @ContentChildren(ErmColumnComponent) columns!: QueryList<ErmColumnComponent>;
     @ContentChild(ErmEditingComponent) editing!: ErmEditingComponent;
     @ContentChildren(ErmTemplateDirective) templates!: QueryList<ErmTemplateDirective>;
+    @ContentChild(EoSomatoriaComponent) summaryContainer?: EoSomatoriaComponent;
+    // Precisa capturar itens mesmo quando aninhados dentro de <eo-somatoria>
+    @ContentChildren(EiTotalItemComponent, { descendants: true }) summaryItems?: QueryList<EiTotalItemComponent>;
 
     displayDialog = false;
     editingRow: any = null;
@@ -109,6 +116,19 @@ export class ErmDataGridComponent implements AfterContentInit {
         this.templates.forEach(template => {
             this.templatesMap.set(template.name, template.template);
         });
+
+        // Reagir a mudanças nas definições de somatória e colunas
+        this.summaryItems?.changes.subscribe(() => this._invalidateTotalsCache());
+        this.columns?.changes.subscribe(() => this._invalidateTotalsCache());
+        // Invalida cache inicial
+        this._invalidateTotalsCache();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        // Quando dataSource muda externamente, recalcula rodapé (lazy)
+        if (changes['dataSource'] || changes['summaryDataSource']) {
+            this._invalidateTotalsCache();
+        }
     }
 
     // Emit PrimeNG lazy load events to consumer
@@ -470,6 +490,121 @@ export class ErmDataGridComponent implements AfterContentInit {
             }
         }
         return out;
+    }
+
+    // ===================== SOMATÓRIA (Resumo) =====================
+    private _totalsCache: Map<string, number> | null = null;
+
+    private _invalidateTotalsCache() {
+        this._totalsCache = null;
+    }
+
+    get summariesEnabled(): boolean {
+        return !!this.summaryContainer && !!this.summaryItems && (this.summaryItems?.length || 0) > 0;
+    }
+
+    private computeTotals(): Map<string, number> {
+        if (this._totalsCache) return this._totalsCache;
+        const map = new Map<string, number>();
+        const items = this.summaryItems?.toArray() || [];
+        const data = (this.summaryDataSource ?? this.dataSource) || [];
+
+        for (const item of items) {
+            const key = (item.column || '__general__') + '::' + item.summaryType;
+            let total = 0;
+            if (item.summaryType === 'count') {
+                if (item.column) {
+                    // conta valores não nulos da coluna
+                    for (const row of data) {
+                        const v = this.getByPath(row, item.column!);
+                        if (v !== undefined && v !== null) total += 1;
+                    }
+                } else {
+                    // count geral (todas as linhas)
+                    total = data.length || 0;
+                }
+            } else if (item.summaryType === 'sum') {
+                for (const row of data) {
+                    const v = this.getByPath(row, item.column!);
+                    if (typeof v === 'number') {
+                        total += v;
+                    } else if (typeof v === 'boolean') {
+                        total += v ? 1 : 0;
+                    }
+                }
+            } else if (item.summaryType === 'min') {
+                let currentMin: number | undefined = undefined;
+                for (const row of data) {
+                    const v = this.getByPath(row, item.column!);
+                    let num: number | undefined;
+                    if (typeof v === 'number') num = v;
+                    else if (typeof v === 'boolean') num = v ? 1 : 0;
+                    if (num !== undefined) {
+                        currentMin = currentMin === undefined ? num : Math.min(currentMin, num);
+                    }
+                }
+                if (currentMin !== undefined) total = currentMin; else total = NaN as any;
+            } else if (item.summaryType === 'max') {
+                let currentMax: number | undefined = undefined;
+                for (const row of data) {
+                    const v = this.getByPath(row, item.column!);
+                    let num: number | undefined;
+                    if (typeof v === 'number') num = v;
+                    else if (typeof v === 'boolean') num = v ? 1 : 0;
+                    if (num !== undefined) {
+                        currentMax = currentMax === undefined ? num : Math.max(currentMax, num);
+                    }
+                }
+                if (currentMax !== undefined) total = currentMax; else total = NaN as any;
+            }
+            map.set(key, total);
+        }
+
+        this._totalsCache = map;
+        return map;
+    }
+
+    getFooterTextForColumn(colDataField: string, isFirstColumn: boolean): string | null {
+        if (!this.summariesEnabled) return null;
+        const totals = this.computeTotals();
+
+        // Coleciona itens de somatória desta coluna
+        const items = (this.summaryItems?.toArray() || []).filter(i => i.column === colDataField);
+        const parts: string[] = [];
+        const formatLabel = (itemType: SummaryType, custom?: string, general?: boolean) => {
+            if (custom) return custom;
+            if (general && itemType === 'count') return 'Total';
+            switch (itemType) {
+                case 'count': return 'Qtde';
+                case 'sum': return 'Soma';
+                case 'min': return 'Mín';
+                case 'max': return 'Máx';
+                default: return '';
+            }
+        };
+
+        // Adiciona os itens desta coluna
+        for (const it of items) {
+            const key = (it.column || '__general__') + '::' + it.summaryType;
+            const val = totals.get(key as any);
+            if (val === undefined || Number.isNaN(val as any)) continue;
+            const label = formatLabel(it.summaryType, it.label);
+            parts.push(label ? `${label}: ${val}` : String(val));
+        }
+
+        // Count geral sem coluna específica -> primeira coluna
+        if (isFirstColumn) {
+            const general = (this.summaryItems?.toArray() || []).filter(i => !i.column && i.summaryType === 'count');
+            for (const it of general) {
+                const key = '__general__::count';
+                const val = totals.get(key);
+                if (val === undefined) continue;
+                const label = formatLabel('count', it.label, true);
+                parts.unshift(label ? `${label}: ${val}` : String(val));
+            }
+        }
+
+        return parts.length ? parts.join(' • ') : null;
     }
 
     getFormItemValue(dataField: string): any {

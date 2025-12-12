@@ -43,6 +43,7 @@ import {
     ErmValidationRuleComponent
 } from '@/shared/components/erm-data-grid';
 import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
+import { EoSomatoriaComponent, EiTotalItemComponent } from '@/shared/components/erm-data-grid';
 
 @Component({
     selector: 'evento-page',
@@ -74,7 +75,9 @@ import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
         ErmColumnComponent,
         ErmValidationRuleComponent,
         ErmTemplateDirective,
-        AutoCompleteModule
+        AutoCompleteModule,
+        EoSomatoriaComponent,
+        EiTotalItemComponent
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: [
@@ -121,6 +124,21 @@ export class EventoPageComponent implements OnInit {
         // Quando o modelo é recarregado (abrir edição, salvar, etc.), atualiza labels auxiliares
         this.vm.refreshModel.subscribe(() => this.preencherCamposDeExibicao());
         this.carregarOpcoes();
+    }
+
+    onRefreshPessoas(): void {
+        const id = this.vm?.model?.id;
+        if (!id) return;
+        this.eventoService.buscarPorId(id).subscribe({
+            next: (evento) => {
+                this.vm.model = evento as any;
+                this.preencherCamposDeExibicao();
+            },
+            error: (err) => {
+                const msg = err?.error?.message || 'Não foi possível atualizar a lista de pessoas.';
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
+            }
+        });
     }
 
     private carregarOpcoes(): void {

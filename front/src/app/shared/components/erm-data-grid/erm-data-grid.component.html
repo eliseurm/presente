@@ -67,7 +67,7 @@
                         </ng-container>
                         <ng-template #customCell>
                             <ng-container
-                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: rowData, data: getByPath(rowData, col.dataField) }">
+                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: getByPath(rowData, col.dataField), row: rowData, data: getByPath(rowData, col.dataField) }">
                             </ng-container>
                         </ng-template>
                     </td>
@@ -92,6 +92,15 @@
                             </p-button>
                         </div>
                     </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="footer">
+                <tr *ngIf="summariesEnabled">
+                    <td *ngFor="let col of visibleColumns; let i = index">
+                        {{ getFooterTextForColumn(col.dataField, i === 0) }}
+                    </td>
+                    <td *ngIf="editingConfig.allowUpdating || editingConfig.allowDeleting"></td>
                 </tr>
             </ng-template>
 

@@ -470,12 +470,22 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             clienteDTO = new IdNomeDTO(e.getCliente().getId(), e.getCliente().getNome());
         }
 
+        // Carrega em lote as escolhas ATIVAS para este evento, a fim de marcar quem "já escolheu"
+        Set<Long> pessoasQueJaEscolheram = Optional
+                .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(e.getId(), StatusEnum.ATIVO))
+                .orElseGet(List::of)
+                .stream()
+                .map(ev -> ev.getPessoa() != null ? ev.getPessoa().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
         List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getPessoas()).orElseGet(List::of).stream()
                 .filter(Objects::nonNull)
                 .map(ep -> EventoPessoaDTO.builder()
                         .pessoa(ep.getPessoa() != null ? new IdNomeDTO(ep.getPessoa().getId(), ep.getPessoa().getNome()) : null)
                         .status(ep.getStatus())
                         .nomeMagicNumber(ep.getNomeMagicNumber())
+                        .jaEscolheu(ep.getPessoa() != null && pessoasQueJaEscolheram.contains(ep.getPessoa().getId()))
                         .build())
                 .collect(Collectors.toList());
 

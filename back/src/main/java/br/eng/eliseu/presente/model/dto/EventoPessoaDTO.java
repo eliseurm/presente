@@ -14,4 +14,6 @@ public class EventoPessoaDTO {
     private IdNomeDTO pessoa; // Para leitura: {id, nome}. Para escrita: pode vir apenas {id}
     private StatusEnum status;
     private String nomeMagicNumber; // token
+    // Somente leitura: indica se a pessoa já possui uma escolha ATIVA neste evento
+    private Boolean jaEscolheu;
 }
