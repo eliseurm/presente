@@ -1,7 +1,10 @@
 package br.eng.eliseu.presente.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum StatusEnum {
 
     ATIVO("Ativo"),
@@ -16,6 +19,11 @@ public enum StatusEnum {
 
     public String getNome() {
         return nome;
+    }
+
+    @JsonValue
+    public String toJson() {
+        return this.name();
     }
 
     @JsonCreator

@@ -3,23 +3,27 @@ import {Injectable, inject} from '@angular/core';
 import {Router} from '@angular/router';
 import {HttpClient} from '@angular/common/http';
 import {firstValueFrom} from 'rxjs';
+import {StatusEnum} from "@/shared/model/enum/status.enum";
+import {PapelEnum} from "@/shared/model/enum/papel.enum";
 
-export type Role = 'ADMIN' | 'ADMINISTRADOR' | 'CLIENTE' | 'USUARIO';
+// export type Role = 'ADMIN' | 'ADMINISTRADOR' | 'CLIENTE' | 'USUARIO';
 
 export interface IUser {
     id?: number;
     username?: string;
     email: string;
-    role?: Role;
+    papel?: PapelEnum;
+    status?: StatusEnum
     cliente_ids?: number[];
     avatarUrl?: string;
 }
 
-const defaultAvatar = 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png';
+const defaultAvatar = 'images/avatar.png';
 const API_BASE = '/api';
 
 @Injectable({providedIn: 'root'})
 export class AuthService {
+
     readonly defaultPath = '/home';
 
     private http = inject(HttpClient);
@@ -27,6 +31,8 @@ export class AuthService {
 
     private storageKey = 'auth.user';
     private _user: IUser | null = this.restoreFromStorage();
+    papelEnumType: any = PapelEnum;
+
 
     get loggedIn(): boolean {
         return !!this._user;
@@ -37,20 +43,27 @@ export class AuthService {
     }
 
     get userRole() {
-        return this._user?.role;
+        return this._user?.papel;
     }
 
     // Helpers de papel
     isAdmin(): boolean {
-        return (this.userRole as string)?.toUpperCase() === 'ADMIN';
+        return this.userRole === this.papelEnumType.ADMIN.key;
     }
 
     isCliente(): boolean {
-        return (this.userRole as string)?.toUpperCase() === 'CLIENTE';
+        return this.userRole === this.papelEnumType.CLIENTE.key;
     }
 
     isUsuario(): boolean {
-        return (this.userRole as string)?.toUpperCase() === 'USUARIO';
+        return this.userRole === this.papelEnumType.USUARIO.key;
+    }
+
+    isClienteAtivo(): boolean {
+        if (!this.isCliente()) return false;
+
+        const u: IUser = this._user as IUser;
+        return u.status === StatusEnum.ATIVO;
     }
 
     getClienteIds(): number[] {
@@ -90,7 +103,7 @@ export class AuthService {
         }
     }
 
-    private persist(user: IUser | null) {
+    private persistStorage(user: IUser | null) {
         this._user = user;
         if (user) localStorage.setItem(this.storageKey, JSON.stringify(user));
         else localStorage.removeItem(this.storageKey);
@@ -137,7 +150,7 @@ export class AuthService {
     /**
      * Restaura usuário a partir do storage e do token (claims) ao iniciar o app.
      */
-    restore(): void {
+    restoreStorage(): void {
         // Se já houver usuário em memória, não faz nada
         if (this._user) return;
         // Tenta restaurar do storage
@@ -151,17 +164,18 @@ export class AuthService {
         if (claims) {
             // role vem em authorities (scope) no claim "scope" (string com espaços)
             const scope: string = (claims['scope'] || '') as string;
-            const firstRole = (scope.split(' ').find(r => r.startsWith('ROLE_')) || '').replace('ROLE_', '') as Role;
+            const firstRole = (scope.split(' ').find(r => r.startsWith('ROLE_')) || '').replace('ROLE_', '');
+            const papelEnumValue = Object.values(PapelEnum).find(p => p.key === firstRole);
             const clienteIds: number[] = (claims['cliente_ids'] || []) as number[];
             const username = (claims['sub'] || '') as string;
             const user: IUser = {
                 username,
                 email: username,
-                role: (firstRole as Role) || undefined,
+                papel: (papelEnumValue as PapelEnum) || undefined,
                 cliente_ids: clienteIds,
                 avatarUrl: defaultAvatar
             };
-            this.persist(user);
+            this.persistStorage(user);
         }
     }
 
@@ -178,7 +192,8 @@ export class AuthService {
                     token: string;
                     id: number;
                     username: string;
-                    role: string;
+                    papel: PapelEnum;
+                    status: StatusEnum;
                     remember: boolean;
                 }>(`${API_BASE}/auth/login?remember=${remember}`, body)
             );
@@ -190,7 +205,8 @@ export class AuthService {
                 id: res.id,
                 username: res.username,
                 email: res.username,
-                role: (res.role?.toUpperCase?.() as Role) || undefined,
+                papel: res.papel || undefined,
+                status: res.status,
                 avatarUrl: defaultAvatar
             };
 
@@ -200,14 +216,13 @@ export class AuthService {
                 user.cliente_ids = claims['cliente_ids'];
             }
 
-            this.persist(user);
+            this.persistStorage(user);
 
             // Redireciona para a URL salva ou rota padrão por papel
             const saved = this.getRedirectUrl();
             const fallback = ((): string => {
-                const role = (user.role || '').toUpperCase();
-                if (role === 'ADMIN' || role === 'ADMINISTRADOR') return '/home';
-                if (role === 'CLIENTE') return '/evento';
+                if (user.papel === this.papelEnumType.ADMIN.key) return '/home';
+                if (user.papel === this.papelEnumType.CLIENTE.key) return '/evento';
                 // USUARIO e demais
                 return '/home';
             })();
@@ -227,21 +242,22 @@ export class AuthService {
             }
 
             const res = await firstValueFrom(
-                this.http.get<{ id: number; username: string; role: Role }>(`${API_BASE}/auth/me`)
+                this.http.get<{ id: number; username: string; papel: PapelEnum, status: StatusEnum }>(`${API_BASE}/auth/me`)
             );
 
             const user: IUser = {
                 id: res.id,
                 username: res.username,
                 email: res.username,
-                role: res.role as Role,
+                papel: res.papel as PapelEnum,
+                status: res.status as StatusEnum,
                 avatarUrl: defaultAvatar
             };
 
-            this.persist(user);
+            this.persistStorage(user);
             return {isOk: true, data: user};
         } catch {
-            this.persist(null);
+            this.persistStorage(null);
             return {isOk: false, data: null};
         }
     }
@@ -255,7 +271,7 @@ export class AuthService {
             // ignora erro de rede/logout
         } finally {
             this.clearClientAuthArtifacts();
-            this.persist(null);
+            this.persistStorage(null);
             await this.router.navigate(['/auth/login']);
         }
     }

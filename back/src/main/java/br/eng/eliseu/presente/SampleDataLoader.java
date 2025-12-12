@@ -7,13 +7,9 @@ import br.eng.eliseu.presente.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Configuration
@@ -29,7 +25,7 @@ public class SampleDataLoader {
                 Usuario adm = Usuario.builder()
                         .username("admin")
                         .passwordHash(passwordEncoder.encode("1234"))
-                        .papel(PapelEnum.ADMINISTRADOR)
+                        .papel(PapelEnum.ADMIN)
                         .status(StatusEnum.ATIVO)
                         .build();
                 adminRepo.save(adm);

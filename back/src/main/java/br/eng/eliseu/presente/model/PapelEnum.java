@@ -1,10 +1,11 @@
 package br.eng.eliseu.presente.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum PapelEnum {
 
-    ADMINISTRADOR("Administrador", "Dono do sistema, tem acesso a tudo"),
+    ADMIN("Administrador", "Dono do sistema, tem acesso a tudo"),
     CLIENTE("Cliente", "Pode ver seus Eventos e cadastrar seus colaboradores"),
     USUARIO("Usuário", "Acesso básico do sistema");
 
@@ -38,4 +39,10 @@ public enum PapelEnum {
         }
         throw new IllegalArgumentException("Valor inválido para PapelEnum: " + value);
     }
+
+    @JsonValue
+    public String toJson() {
+        return this.name();
+    }
+
 }

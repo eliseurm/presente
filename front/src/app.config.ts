@@ -16,7 +16,7 @@ function initI18n() {
 
 function initAuth() {
     const auth = inject(AuthService);
-    return () => auth.restore();
+    return () => auth.restoreStorage();
 }
 
 export const appConfig: ApplicationConfig = {

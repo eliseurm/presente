@@ -48,15 +48,15 @@ import {filter} from 'rxjs/operators';
 
                     <div class="relative">
                         <button
-                            class="layout-topbar-action layout-topbar-action-highlight"
-                            pStyleClass="@next"
-                            enterFromClass="hidden"
-                            enterActiveClass="animate-scalein"
-                            leaveToClass="hidden"
-                            leaveActiveClass="animate-fadeout"
-                            [hideOnOutsideClick]="true"
-                            aria-label="Theme"
-                            title="Theme"
+                                class="layout-topbar-action layout-topbar-action-highlight"
+                                pStyleClass="@next"
+                                enterFromClass="hidden"
+                                enterActiveClass="animate-scalein"
+                                leaveToClass="hidden"
+                                leaveActiveClass="animate-fadeout"
+                                [hideOnOutsideClick]="true"
+                                aria-label="Theme"
+                                title="Theme"
                         >
                             <i class="pi pi-palette"></i>
                         </button>
@@ -86,12 +86,12 @@ import {filter} from 'rxjs/operators';
                         @if (auth.loggedIn) {
                             <div class="relative" (click)="$event.stopPropagation()">
                                 <button
-                                    type="button"
-                                    class="layout-topbar-action"
-                                    (click)="toggleProfileMenu($event)"
-                                    [attr.aria-expanded]="profileMenuOpen"
-                                    aria-haspopup="menu"
-                                    title="Perfil"
+                                        type="button"
+                                        class="layout-topbar-action"
+                                        (click)="toggleProfileMenu($event)"
+                                        [attr.aria-expanded]="profileMenuOpen"
+                                        aria-haspopup="menu"
+                                        title="Perfil"
                                 >
                                     <i class="pi pi-user"></i>
                                     <span>Profile</span>
@@ -99,24 +99,24 @@ import {filter} from 'rxjs/operators';
 
                                 <!-- Dropdown -->
                                 <div
-                                    class="absolute right-0 top-full mt-2 w-72 bg-surface-0 dark:bg-surface-900 shadow-2 border rounded"
-                                    [class.hidden]="!profileMenuOpen"
-                                    role="menu"
-                                    (click)="$event.stopPropagation()"
+                                        class="absolute right-0 top-full mt-2 w-72 bg-surface-0 dark:bg-surface-900 shadow-2 border rounded"
+                                        [class.hidden]="!profileMenuOpen"
+                                        role="menu"
+                                        (click)="$event.stopPropagation()"
                                 >
                                     <div class="p-4 border-bottom-1 surface-border">
                                         <div class="font-semibold text-surface-900 dark:text-surface-0">
                                             {{ auth.user?.username || auth.user?.email }}
                                         </div>
                                         <div class="text-muted-color text-sm">
-                                            {{ auth.user?.role }}
+                                            {{ auth.user?.papel }}
                                         </div>
                                     </div>
                                     <a
-                                        routerLink="/usuario/perfil"
-                                        class="flex items-center gap-2 p-3 hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer"
-                                        (click)="onProfileMenuItemClick($event)"
-                                        role="menuitem"
+                                            routerLink="/usuario/perfil"
+                                            class="flex items-center gap-2 p-3 hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer"
+                                            (click)="onProfileMenuItemClick($event)"
+                                            role="menuitem"
                                     >
                                         <i class="pi pi-id-card"></i>
                                         <span>Ver Perfil do Usuário</span>
@@ -125,10 +125,10 @@ import {filter} from 'rxjs/operators';
                                     <div class="border-top-1 surface-border"></div>
 
                                     <button
-                                        type="button"
-                                        class="w-full text-left flex items-center gap-2 p-3 hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer"
-                                        (click)="onLogoutClick($event)"
-                                        role="menuitem"
+                                            type="button"
+                                            class="w-full text-left flex items-center gap-2 p-3 hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer"
+                                            (click)="onLogoutClick($event)"
+                                            role="menuitem"
                                     >
                                         <i class="pi pi-sign-out"></i>
                                         <span>Sair</span>

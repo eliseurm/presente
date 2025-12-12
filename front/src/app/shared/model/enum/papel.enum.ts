@@ -1,5 +1,5 @@
 export const PapelEnum = {
-  ADMINISTRADOR: { key: 'ADMINISTRADOR', descricao: 'Administrador' },
+  ADMIN: { key: 'ADMIN', descricao: 'Administrador' },
   CLIENTE: { key: 'CLIENTE', descricao: 'Cliente' },
   USUARIO: { key: 'USUARIO', descricao: 'Usuário' }
 } as const;

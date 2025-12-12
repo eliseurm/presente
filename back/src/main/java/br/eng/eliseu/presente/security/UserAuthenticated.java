@@ -31,7 +31,7 @@ public class UserAuthenticated implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         PapelEnum papel = user.getPapel();
         String roleName = switch (papel) {
-            case ADMINISTRADOR -> "ROLE_ADMIN";
+            case ADMIN -> "ROLE_ADMIN";
             case CLIENTE -> "ROLE_CLIENTE";
             case USUARIO -> "ROLE_USUARIO";
         };

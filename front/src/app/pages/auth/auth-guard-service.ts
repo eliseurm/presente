@@ -1,7 +1,8 @@
 // TypeScript
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
-import { AuthService, Role } from './auth-service';
+import { AuthService } from './auth-service';
+import {PapelEnum} from "@/shared/model/enum/papel.enum";
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuardService implements CanActivate {
@@ -33,7 +34,7 @@ export class AuthGuardService implements CanActivate {
         }
 
         // Verificação opcional de papel por rota (use data: { roles: ['ADMINISTRADOR'] })
-        const requiredRoles = (route.data?.['roles'] as Role[] | undefined) || undefined;
+        const requiredRoles = (route.data?.['roles'] as PapelEnum[] | undefined) || undefined;
         if (isLoggedIn && requiredRoles?.length) {
             const userRole = this.auth.userRole;
             const allowed = userRole && requiredRoles.includes(userRole);
