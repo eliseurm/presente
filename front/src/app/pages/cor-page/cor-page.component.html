@@ -28,11 +28,11 @@
       <erm-column dataField="corHex" caption="Cor" cellTemplate="corTpl"></erm-column>
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-      <ng-template ermTemplate="corTpl" let-row>
-        <div class="color-preview" [style.background-color]="row?.corHex" [title]="row?.corHex"></div>
+      <ng-template ermTemplate="corTpl" let-data>
+        <div class="color-preview" [style.background-color]="data" [title]="data"></div>
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row>
+      <ng-template ermTemplate="acoesTpl" let-row="row">
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>

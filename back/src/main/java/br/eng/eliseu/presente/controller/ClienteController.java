@@ -95,9 +95,11 @@ public class ClienteController {
 
         List<Cliente> clientes = new ArrayList<>();
         if(auth.getAuthorities().stream().filter(a -> a.getAuthority().equals("ROLE_ADMIN")).findFirst().isPresent()) {
+            // se for um ADMIN
             clientes = clienteRepository.findAll();
         }
         else{
+            // se for um CLIENTE
             String username = auth.getName();
             var usuarioOpt = usuarioRepository.findByUsername(username);
             if (usuarioOpt.isEmpty()) {

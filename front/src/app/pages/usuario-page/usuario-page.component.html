@@ -35,13 +35,13 @@
             <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
             <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-            <ng-template ermTemplate="papelTpl" let-row>
+            <ng-template ermTemplate="papelTpl" let-row="row">
                 {{ row?.papel?.descricao || row?.papel }}
             </ng-template>
-            <ng-template ermTemplate="statusTpl" let-row>
+            <ng-template ermTemplate="statusTpl" let-row="row">
                 {{ row?.status?.descricao || row?.status }}
             </ng-template>
-            <ng-template ermTemplate="acoesTpl" let-row>
+            <ng-template ermTemplate="acoesTpl" let-row="row">
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar" (click)="crudRef.onRowDblClick(row)"></button>
 <!--                <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"(click)="onDeleteRow(row)"></button>-->
             </ng-template>
