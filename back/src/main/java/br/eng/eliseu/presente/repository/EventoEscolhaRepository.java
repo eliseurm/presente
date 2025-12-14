@@ -18,4 +18,7 @@ public interface EventoEscolhaRepository extends JpaRepository<EventoEscolha, Lo
 
     List<EventoEscolha> findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(Long eventoId, Long pessoaId, StatusEnum status);
 
+    // Busca todas as escolhas de um evento por status (para evitar N+1)
+    List<EventoEscolha> findByEvento_IdAndStatus(Long eventoId, StatusEnum status);
+
 }

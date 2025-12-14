@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import {Component, inject, output} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -119,7 +119,8 @@ export class PresenteEscolhaComponent {
                     }
                 }
             })
-            .catch(() => {
+            .catch((e) => {
+                console.log(e)
                 this.valido = false;
                 this.erroMsg = 'Este link não é válido ou não está mais ativo.';
             })
@@ -133,7 +134,7 @@ export class PresenteEscolhaComponent {
     isDesabilitado(p: Produto) {
         return this.selectedProductId !== null && this.selectedProductId !== p.id;
     }
-
+    message = "Http failure during parsing for http://localhost:8080/presente/eliseu_WPZ4FZQ5"
     async alternarSelecao(p: Produto) {
         // Exigir seleção explícita de tamanho/cor quando houver opções
         const precisaTam = Array.isArray(p.tamanhos) && p.tamanhos.length > 0;

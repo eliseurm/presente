@@ -35,9 +35,9 @@
       <erm-column dataField="usuario.username" caption="Usuário" cellTemplate="usuarioTpl"></erm-column>
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
-      <ng-template ermTemplate="usuarioTpl" let-data>{{ data || '-' }}</ng-template>
+      <ng-template ermTemplate="usuarioTpl" let-row>{{ row?.usuario?.username || '-' }}</ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row="row">
+      <ng-template ermTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar" (click)="crudRef.onRowDblClick(row)"></button>
 <!--        <button *ngIf="!isCliente()" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir" (click)="onDeleteRow(row)"></button>-->
       </ng-template>

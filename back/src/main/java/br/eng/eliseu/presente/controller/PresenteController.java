@@ -63,20 +63,7 @@ public class PresenteController {
 
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
-        // Produtos associados ao evento
-        List<Produto> produtos = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
-                .filter(Objects::nonNull)
-                .filter(evProd -> evProd.getStatus() == null || evProd.getStatus() == StatusEnum.ATIVO)
-                .map(EventoProduto::getProduto)
-                .filter(Objects::nonNull)
-                .distinct()
-                .peek(p -> {
-                    // Inicializa coleções necessárias para a tela (tamanhos, cores, imagens)
-                    if (p.getTamanhos() != null) p.getTamanhos().size();
-                    if (p.getCores() != null) p.getCores().size();
-                    if (p.getImagens() != null) p.getImagens().size();
-                })
-                .collect(Collectors.toList());
+        List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
 
         // Última escolha
         EventoEscolha ultima = eventoEscolhaRepository
@@ -123,24 +110,25 @@ public class PresenteController {
     @GetMapping(path = "/{token}", produces = "text/html")
     public ResponseEntity<String> carregarPagina(@PathVariable("token") String token) {
         String safeToken = org.springframework.web.util.HtmlUtils.htmlEscape(token);
-        String html = "" +
-                "<!doctype html>" +
-                "<html lang=\"pt-BR\">" +
-                "<head>" +
-                "  <meta charset=\"utf-8\">" +
-                "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
-                "  <title>Escolha do Presente</title>" +
-                "  <link rel=\"stylesheet\" href=\"/presente/styles.css\">" +
-                "</head>" +
-                "<body>" +
-                "  <main class=\"container\">" +
-                "    <h1>Escolha do Presente</h1>" +
-                "    <div id=\"app\">Carregando...</div>" +
-                "  </main>" +
-                "  <script>window.PRESENTE_TOKEN='" + safeToken + "';</script>" +
-                "  <script type=\"module\" src=\"/presente/app.js\"></script>" +
-                "</body>" +
-                "</html>";
+        String html = """
+            <!doctype html>
+            <html lang="pt-BR">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>Escolha do Presente</title>
+              <link rel="stylesheet" href="/presente/styles.css">
+            </head>
+            <body>
+              <main class="container">
+                <h1>Escolha do Presente</h1>
+                <div id="app">Carregando...</div>
+              </main>
+              <script>window.PRESENTE_TOKEN='%s';</script>
+              <script type="module" src="/presente/app.js"></script>
+            </body>
+            </html>
+            """.formatted(safeToken);
         return ResponseEntity.ok(html);
     }
 

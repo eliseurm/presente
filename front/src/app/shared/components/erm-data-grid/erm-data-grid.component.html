@@ -95,6 +95,15 @@
                 </tr>
             </ng-template>
 
+            <ng-template pTemplate="footer">
+                <tr *ngIf="summariesEnabled">
+                    <td *ngFor="let col of visibleColumns; let i = index">
+                        {{ getFooterTextForColumn(col.dataField, i === 0) }}
+                    </td>
+                    <td *ngIf="editingConfig.allowUpdating || editingConfig.allowDeleting"></td>
+                </tr>
+            </ng-template>
+
             <ng-template pTemplate="emptymessage">
                 <tr>
                     <td [attr.colspan]="visibleColumns.length + 1" class="empty-message">
@@ -227,7 +236,7 @@
                         <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
                             <div [class.field-error]="hasError(item.dataField)">
                                 <ng-container
-                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, row: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
+                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: getByPath(editingRow, item.dataField), data: getByPath(editingRow, item.dataField), row: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
                                 </ng-container>
                             </div>
                         </ng-container>

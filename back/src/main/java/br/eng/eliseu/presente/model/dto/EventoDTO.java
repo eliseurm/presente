@@ -14,16 +14,23 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class EventoDTO {
+
     private Long id;
     private String nome;
     private String descricao;
-    private IdNomeDTO cliente;
+
+    private Long clienteId;
+    private String clienteNome;
+
     private StatusEnum status;
     private String anotacoes;
     private LocalDateTime inicio;
     private LocalDateTime fimPrevisto;
     private LocalDateTime fim;
+
     private List<EventoPessoaDTO> pessoas;
     private List<EventoProdutoDTO> produtos;
+
     private Long version;
+
 }

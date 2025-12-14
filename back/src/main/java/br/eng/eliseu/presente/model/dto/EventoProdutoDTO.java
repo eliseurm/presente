@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class EventoProdutoDTO {
-    private IdNomeDTO produto; // leitura: {id, nome}; escrita: pode vir apenas {id}
+
+    private Long produtoId;
+    private String produtoNome;
+
     private StatusEnum status;
 }

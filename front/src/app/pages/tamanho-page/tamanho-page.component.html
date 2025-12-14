@@ -33,9 +33,9 @@
       <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
       <!-- Templates -->
-      <ng-template ermTemplate="tipoTpl" let-data>{{ getTipoDescricao(data) }}</ng-template>
+      <ng-template ermTemplate="tipoTpl" let-row>{{ getTipoDescricao(row?.tipo) }}</ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row="row">
+      <ng-template ermTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>

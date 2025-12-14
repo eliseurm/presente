@@ -17,15 +17,19 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecif
     Optional<Pessoa> findByEmailOrTelefone(String email, String telefone);
 
     // Busca leve para ADMIN (por nome/email/telefone)
-    @Query("select p from Pessoa p where " +
-            "(:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') " +
-            " or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))")
+    @Query("""
+        select p from Pessoa p 
+        where 1=1
+        and (:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))
+            """)
     List<Pessoa> lookupAdmin(@Param("q") String q);
 
     // Pessoas vinculadas a eventos de um cliente específico
-    @Query("select distinct p from EventoPessoa ep join ep.pessoa p join ep.evento e " +
-            "where e.cliente.id = :clienteId and " +
-            "(:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') " +
-            " or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))")
+    @Query("""
+        select distinct p from EventoPessoa ep join ep.pessoa p join ep.evento e 
+        where 1=1 
+        and e.cliente.id = :clienteId 
+        and (:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))
+        """)
     List<Pessoa> lookupByCliente(@Param("clienteId") Long clienteId, @Param("q") String q);
 }

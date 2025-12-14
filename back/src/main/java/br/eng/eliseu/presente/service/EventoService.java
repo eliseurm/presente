@@ -366,6 +366,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return page;
     }
 
+/*
     @Override
     @Transactional(readOnly = true)
     public Optional<Evento> buscarPorId(Long id) {
@@ -387,6 +388,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         });
         return opt;
     }
+*/
 
     // Suporte ao expand para GET /evento/{id}?expand=...
     @Override
@@ -394,7 +396,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     public Optional<Evento> buscarPorIdComExpand(Long id, String expand) {
         boolean hasExpand = expand != null && !expand.isBlank();
         if (!hasExpand) {
-            return buscarPorId(id);
+//            return buscarPorId(id);
+            return super.buscarPorId(id);
         }
         // Carrega a entidade base e inicializa coleções solicitadas evitando fetch join múltiplo
         Optional<Evento> opt = eventoRepository.findById(id);
@@ -465,24 +468,36 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
     private EventoDTO toDTO(Evento e) {
         if (e == null) return null;
-        IdNomeDTO clienteDTO = null;
-        if (e.getCliente() != null) {
-            clienteDTO = new IdNomeDTO(e.getCliente().getId(), e.getCliente().getNome());
-        }
+//        IdNomeDTO clienteDTO = null;
+//        if (e.getCliente() != null) {
+//            clienteDTO = new IdNomeDTO(e.getCliente().getId(), e.getCliente().getNome());
+//        }
+
+        // Carrega em lote as escolhas ATIVAS para este evento, a fim de marcar quem "já escolheu"
+        Set<Long> pessoasQueJaEscolheram = Optional
+                .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(e.getId(), StatusEnum.ATIVO))
+                .orElseGet(List::of)
+                .stream()
+                .map(ev -> ev.getPessoa() != null ? ev.getPessoa().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getPessoas()).orElseGet(List::of).stream()
                 .filter(Objects::nonNull)
                 .map(ep -> EventoPessoaDTO.builder()
-                        .pessoa(ep.getPessoa() != null ? new IdNomeDTO(ep.getPessoa().getId(), ep.getPessoa().getNome()) : null)
+                        .pessoaId(ep.getPessoa() != null ? ep.getPessoa().getId() : null)
+                        .pessoaNome(ep.getPessoa() != null ? ep.getPessoa().getNome() : null)
                         .status(ep.getStatus())
                         .nomeMagicNumber(ep.getNomeMagicNumber())
+                        .jaEscolheu(ep.getPessoa() != null && pessoasQueJaEscolheram.contains(ep.getPessoa().getId()))
                         .build())
                 .collect(Collectors.toList());
 
         List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
                 .map(evPr -> EventoProdutoDTO.builder()
-                        .produto(evPr.getProduto() != null ? new IdNomeDTO(evPr.getProduto().getId(), evPr.getProduto().getNome()) : null)
+                        .produtoId(evPr.getProduto() != null ? evPr.getProduto().getId() : null)
+                        .produtoNome(evPr.getProduto() != null ? evPr.getProduto().getNome() : null)
                         .status(evPr.getStatus())
                         .build())
                 .collect(Collectors.toList());
@@ -491,7 +506,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .id(e.getId())
                 .nome(e.getNome())
                 .descricao(e.getDescricao())
-                .cliente(clienteDTO)
+                .clienteId(e.getCliente()!=null ? e.getCliente().getId() : null)
+                .clienteNome(e.getCliente()!=null ? e.getCliente().getNome() : null)
                 .status(e.getStatus())
                 .anotacoes(e.getAnotacoes())
                 .inicio(e.getInicio())
@@ -517,8 +533,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .version(dto.getVersion());
 
         // Cliente
-        if (dto.getCliente() != null && dto.getCliente().getId() != null) {
-            clienteRepository.findById(dto.getCliente().getId()).ifPresent(builder::cliente);
+        if (dto.getClienteId() != null) {
+            clienteRepository.findById(dto.getClienteId()).ifPresent(builder::cliente);
         } else {
             builder.cliente(null);
         }
@@ -529,8 +545,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         if (dto.getPessoas() != null) {
             List<EventoPessoa> pessoas = new ArrayList<>();
             for (EventoPessoaDTO pDto : dto.getPessoas()) {
-                if (pDto == null || pDto.getPessoa() == null || pDto.getPessoa().getId() == null) continue;
-                Pessoa pessoa = pessoaRepository.findById(pDto.getPessoa().getId()).orElse(null);
+                if (pDto == null || pDto.getPessoaId() == null) continue;
+                Pessoa pessoa = pessoaRepository.findById(pDto.getPessoaId()).orElse(null);
                 if (pessoa == null) continue;
                 EventoPessoa ep = EventoPessoa.builder()
                         .evento(entidade)
@@ -547,8 +563,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         if (dto.getProdutos() != null) {
             Set<EventoProduto> set = new HashSet<>();
             for (EventoProdutoDTO prDto : dto.getProdutos()) {
-                if (prDto == null || prDto.getProduto() == null || prDto.getProduto().getId() == null) continue;
-                Produto pr = produtoRepository.findById(prDto.getProduto().getId()).orElse(null);
+                if (prDto == null || prDto.getProdutoId() == null) continue;
+                Produto pr = produtoRepository.findById(prDto.getProdutoId()).orElse(null);
                 if (pr == null) continue;
                 EventoProduto evp = EventoProduto.builder()
                         .evento(entidade)

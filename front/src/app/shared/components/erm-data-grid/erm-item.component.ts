@@ -28,7 +28,7 @@ import { ErmFormContextService } from './erm-form-context.service';
                     <!-- Campo com template customizado definido na coluna -->
                     <ng-container *ngIf="c.getColumnByDataField?.(dataField)?.editCellTemplate; else autoEditors">
                         <div [class.field-error]="!!c.hasError?.(dataField)">
-                            <ng-container *ngTemplateOutlet="c.getTemplate?.(c.getColumnByDataField?.(dataField)!.editCellTemplate!)!; context: { $implicit: row, data: row, dataField: dataField, onChange: c.setFormItemValue?.bind(c) }">
+                            <ng-container *ngTemplateOutlet="c.getTemplate?.(c.getColumnByDataField?.(dataField)!.editCellTemplate!)!; context: { $implicit: row?.[dataField], data: row?.[dataField], row: row, dataField: dataField, onChange: c.setFormItemValue?.bind(c) }">
                             </ng-container>
                         </div>
                     </ng-container>
