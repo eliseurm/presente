@@ -1,6 +1,8 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.model.dto.ProdutoDto;
+import br.eng.eliseu.presente.model.dto.ProdutoMapper;
 import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.repository.*;
 import br.eng.eliseu.presente.service.ImagemService;
@@ -46,7 +48,7 @@ public class PresenteController {
             String pessoaEmail,
             String pessoaTelefone,
             String pessoaEndereco,
-            List<Produto> produtos,
+            List<ProdutoDto> produtos,
             EventoEscolha ultimaEscolha,
             boolean podeRefazer,
             boolean expirado,
@@ -59,11 +61,15 @@ public class PresenteController {
     @GetMapping(path = "/{token}", produces = "application/json")
     @Transactional(readOnly = true)
     public ResponseEntity<ResumoResponse> carregar(@PathVariable("token") String token) {
+
+        System.out.println("LOG: Requisicao para validar token CHEGOU no controller. Token: " + token); // Adicione isto
+
         EventoPessoa ep = eventoPessoaRepository.findByNomeMagicNumber(token).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token inválido"));
 
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
         List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
+        List<ProdutoDto> produtosDto = ProdutoMapper.toDtoList(produtos);
 
         // Última escolha
         EventoEscolha ultima = eventoEscolhaRepository
@@ -97,7 +103,7 @@ public class PresenteController {
                 email,
                 telefone,
                 endereco,
-                produtos,
+                produtosDto,
                 ultima,
                 podeRefazer,
                 expirado,

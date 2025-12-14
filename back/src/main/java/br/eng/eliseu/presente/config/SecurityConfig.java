@@ -59,13 +59,12 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/presente/**").permitAll()
+                        .requestMatchers("/api/presente/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/pessoa/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
-                        // Rotas públicas (considera execução direta e atrás de proxy com prefixo /api)
-                        .requestMatchers("/presente/**").permitAll()
-                        .requestMatchers("/api/presente/**").permitAll()
                         // Observação: não usar padrões inválidos com múltiplos **
                         // Mantemos as duas principais variantes explícitas
                         .requestMatchers(HttpMethod.GET, "/imagem/*/arquivo").permitAll()
@@ -74,9 +73,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/**/imagem/*/arquivo**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(conf -> conf
-                        .bearerTokenResolver(bearerTokenResolver())
-                        .jwt(jwt -> jwt
-                        .decoder(jwtDecoder())
+//                        .bearerTokenResolver(bearerTokenResolver())
+                        .jwt(jwt -> jwt.decoder(jwtDecoder())
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())
                 ));
 
@@ -118,6 +116,7 @@ public class SecurityConfig {
         return converter;
     }
 
+/*
     @Bean
     BearerTokenResolver bearerTokenResolver() {
         DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();
@@ -149,6 +148,7 @@ public class SecurityConfig {
             return delegate.resolve(request);
         };
     }
+*/
 
 
 }

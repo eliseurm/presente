@@ -104,12 +104,4 @@ export class TamanhoPageComponent implements OnInit {
         this.router.navigate(['/']);
     }
 
-    getTipoDescricao(tipo: any): string {
-        if (!tipo) return '';
-        if (typeof tipo === 'string') {
-            const enumValue = Object.values(ProdutoTipoEnum).find((e: any) => (e as any).key === tipo) as any;
-            return (enumValue as any)?.descricao || tipo;
-        }
-        return (tipo as any).descricao || (tipo as any).key || '';
-    }
 }

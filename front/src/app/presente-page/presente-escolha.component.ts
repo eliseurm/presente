@@ -1,4 +1,4 @@
-import {Component, inject, output} from '@angular/core';
+import {Component, inject, OnInit, output} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +39,7 @@ type Produto = {
     styleUrls: ['./presente-escolha.component.scss'],
     providers: [MessageService]
 })
-export class PresenteEscolhaComponent {
+export class PresenteEscolhaComponent implements OnInit {
 
     private route = inject(ActivatedRoute);
     private service = inject(PresenteService);
