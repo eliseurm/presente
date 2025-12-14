@@ -63,29 +63,6 @@ public class PresenteController {
 
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
-        // Produtos associados ao evento
-//        List<Produto> produtos = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
-//                .filter(Objects::nonNull)
-//                .filter(evProd -> evProd.getStatus() == null || evProd.getStatus() == StatusEnum.ATIVO)
-//                .map(EventoProduto::getProduto)
-//                .filter(Objects::nonNull)
-//                .distinct()
-//                .peek(p -> {
-//                    // Inicializa coleções necessárias para a tela (tamanhos, cores, imagens)
-//                    if (p.getTamanhos() != null) p.getTamanhos().size();
-//                    if (p.getCores() != null) p.getCores().size();
-//                    if (p.getImagens() != null) p.getImagens().size();
-//                })
-//                .collect(Collectors.toList());
-//        List<Produto> produtos = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
-//                .filter(Objects::nonNull)
-//                .filter(evProd -> evProd.getStatus() == null || evProd.getStatus() == StatusEnum.ATIVO)
-//                .map(EventoProduto::getProduto)
-//                .filter(Objects::nonNull)
-//                .distinct()
-//                // O bloco .peek() é removido ou esvaziado, pois as coleções já virão inicializadas (eager)
-//                // .peek(p -> { /* ... */ })
-//                .collect(Collectors.toList());
         List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
 
         // Última escolha

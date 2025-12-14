@@ -66,6 +66,8 @@ public class SecurityConfig {
                         // Rotas públicas (considera execução direta e atrás de proxy com prefixo /api)
                         .requestMatchers("/presente/**").permitAll()
                         .requestMatchers("/api/presente/**").permitAll()
+                        // Observação: não usar padrões inválidos com múltiplos **
+                        // Mantemos as duas principais variantes explícitas
                         .requestMatchers(HttpMethod.GET, "/imagem/*/arquivo").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/imagem/*/arquivo").permitAll()
                         // Cobre proxies com prefixos adicionais (ex.: /v1/api/imagem/ID/arquivo, etc.)
@@ -133,7 +135,8 @@ public class SecurityConfig {
 
             // Não tentar resolver Bearer Token em rotas públicas — mesmo que venha Authorization no header
             // Usa path normalizado e também tolera ambientes com prefixo adicional (ex.: /api)
-            boolean isPresentePublic = (path != null && path.startsWith("/presente/")) || (uri != null && uri.contains("/presente/"));
+            // Tratar como público qualquer rota que contenha "/presente/" em qualquer posição
+            boolean isPresentePublic = (path != null && path.contains("/presente/")) || (uri != null && uri.contains("/presente/"));
             boolean isPublicImage = "GET".equalsIgnoreCase(method)
                     && ((path != null && path.contains("/imagem/") && path.contains("/arquivo"))
                         || (uri != null && uri.contains("/imagem/") && uri.contains("/arquivo")));

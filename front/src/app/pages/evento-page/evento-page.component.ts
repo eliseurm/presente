@@ -286,9 +286,9 @@ export class EventoPageComponent implements OnInit {
     }
 
     private getPublicBaseUrl(): string {
-        // Deriva a base pública removendo sufixo /api da environment.apiUrl
-        const api = environment.apiUrl || '';
-        return api.replace(/\/+api\/?$/, '');
+        // Usa a origem atual para que o link seja sensível ao ambiente (dev/prod/domínio atual)
+        // Evita hardcode do host e independe de environment.apiUrl
+        return window.location.origin;
     }
 
     buildTokenLink(token?: string): string {
