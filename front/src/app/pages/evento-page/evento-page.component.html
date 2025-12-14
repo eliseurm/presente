@@ -151,9 +151,9 @@
 
                 <p-tabpanel value="1">
                     <div class="flex items-center gap-2 mb-2">
-                        <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshPessoas()"></button>
+                        <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
                     </div>
-                    <erm-data-grid
+                    <erm-data-grid #gridPessoas
                         [dataSource]="vm.model.pessoas || []"
                         [summaryDataSource]="vm.model.pessoas || []"
                         [loading]="false"
@@ -183,8 +183,8 @@
                                     <p-tabpanels>
 
                                         <p-tabpanel value="0">
-                                            <erm-item dataField="pessoa" label="Pessoa" editorType="template"></erm-item>
-                                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
+                                            <erm-item dataField="pessoaNome" label=" " editorType="template"></erm-item>
+                                            <erm-item dataField="status" label=" " editorType="template"></erm-item>
                                         </p-tabpanel>
 
                                         <p-tabpanel value="1">
@@ -206,7 +206,7 @@
                                                 <erm-column dataField="corNome" caption="Cor"></erm-column>
                                                 <erm-column dataField="tamanhoDescricao" caption="Tamanho"></erm-column>
 
-                                                <ng-template ermTemplate="dataTemplate" let-row>{{ row?.dataEscolha | date:'dd/MM/yyyy HH:mm' }}</ng-template>
+                                                <ng-template ermTemplate="dataTemplate" let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}</ng-template>
 
 
                                             </erm-data-grid>
@@ -222,46 +222,24 @@
                         <!-- Colunas -->
                         <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
+                        <erm-column dataField="pessoaNome" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
                         <erm-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></erm-column>
                         <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
                         <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
 
-                        <ng-template ermTemplate="pessoaCellTemplate" let-row="row">{{ getPessoaRotulo(row) }}</ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
+                        <ng-template ermTemplate="pessoaCellTemplate" let-data="data">{{ data }}</ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
                         <ng-template ermTemplate="jaEscolheuTpl" let-data let-row="row">
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
-                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row="row">
-                            <p-autoComplete class="w-full"
-                                            [(ngModel)]="row.pessoa"
-                                            [ngModelOptions]="{standalone:true}"
-                                            [suggestions]="pessoasSugestoes"
-                                            (completeMethod)="searchPessoas($event)"
-                                            (onSelect)="onPessoaSelecionada(row, $event)"
-                                            (onClear)="onPessoaLimpar(row)"
-                                            (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
-                                            optionLabel="nome"
-                                            [dropdown]="true"
-                                            [forceSelection]="true"
-                                            placeholder="Buscar pessoa por nome">
-                                <ng-template pTemplate="item" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                                <ng-template pTemplate="selectedItem" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                            </p-autoComplete>
+                        <ng-template ermTemplate="pessoaEditCellTemplate" let-data="data">
+                            <span><b>Nome:</b> {{data}}</span>
                         </ng-template>
 
-                        <ng-template ermTemplate="statusEditCellTemplate" let-row="row">
-                            <enum-select class="w-full"
-                                         [enumObject]="statusEnumType"
-                                         [(ngModel)]="row.status"
-                                         [ngModelOptions]="{standalone:true}"
-                            ></enum-select>
+                        <ng-template ermTemplate="statusEditCellTemplate" let-data="data">
+                            <span><b>Status:</b> {{statusEnumType[data].descricao}}</span>
                         </ng-template>
 
                         <ng-template ermTemplate="magicLinkCell" let-row="row">
@@ -336,15 +314,11 @@
                         <!-- Colunas -->
                         <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <erm-column dataField="produto" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></erm-column>
+                        <erm-column dataField="produtoNome" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
 
-                        <ng-template ermTemplate="produtoCellTemplate" let-row>
-                            {{ getProdutoRotulo(row) }}
-                        </ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-row>
-                            {{ getStatusDescricao(row?.status) }}
-                        </ng-template>
+                        <ng-template ermTemplate="produtoCellTemplate" let-data="data">{{ data }}</ng-template>
+                        <ng-template ermTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
 
                         <ng-template ermTemplate="produtoEditCellTemplate" let-row>
                             <p-autoComplete class="w-full"
@@ -377,6 +351,7 @@
                         </ng-template>
 
                     </erm-data-grid>
+
                 </p-tabpanel>
 
             </p-tabpanels>

@@ -44,6 +44,7 @@ import {
 } from '@/shared/components/erm-data-grid';
 import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
 import { EoSomatoriaComponent, EiTotalItemComponent } from '@/shared/components/erm-data-grid';
+import {EventoDTO} from "@/shared/model/dto/evento-dto";
 
 @Component({
     selector: 'evento-page',
@@ -85,10 +86,10 @@ import { EoSomatoriaComponent, EiTotalItemComponent } from '@/shared/components/
     ],
     providers: [MessageService, EventoCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [Evento, EventoFilter])
+@CrudMetadata("EventoPageComponent", [EventoDTO, EventoFilter])
 export class EventoPageComponent implements OnInit {
 
-    @ViewChild('crudRef') crudRef?: CrudComponent<Evento, EventoFilter>;
+    @ViewChild('crudRef') crudRef?: CrudComponent<EventoDTO, EventoFilter>;
 
     // Opções
     clientesOptions: Cliente[] = [];
@@ -126,7 +127,7 @@ export class EventoPageComponent implements OnInit {
         this.carregarOpcoes();
     }
 
-    onRefreshPessoas(): void {
+    onRefreshGridPessoas(): void {
         const id = this.vm?.model?.id;
         if (!id) return;
         this.eventoService.buscarPorId(id).subscribe({
@@ -319,20 +320,6 @@ export class EventoPageComponent implements OnInit {
         }
     }
 
-    // Rótulos de exibição nas células da grid, evitando [object Object]
-    getPessoaRotulo(row: any): string {
-        if (!row || typeof row.pessoa !== 'object') return '';
-        return row.pessoa.nome;
-    }
-
-    getProdutoRotulo(row: any): string {
-        if (!row) return '';
-        if (row.produtoNome) return row.produtoNome;
-        const id = typeof row.produto === 'object' ? row.produto?.id : row.produto;
-        const obj = this.produtosOptions.find(p => p.id === id);
-        return obj?.nome || (id != null ? String(id) : '');
-    }
-
     // ======= Handlers para ERM Data Grid nas abas =======
     onInitNewPessoa(event: any) {
         event.data = event.data || {};
@@ -454,26 +441,30 @@ export class EventoPageComponent implements OnInit {
 
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Pessoa)
     onEditingStartPessoa(event: any) {
-        const row: any = event?.data || {};
+        const data: any = event?.data || {};
         // Garante que o Status apareça selecionado no enum-select do popup
-        row.status = this.getStatusOption(row.status);
+        // data.status = this.statusEnumType[data].descricao;
         // Define a aba inicial do popup como 'geral' (tabs headless)
-        row._tab = 'geral';
+        data._tab = 'geral';
 
         // Carrega última escolha e histórico da pessoa nesta aba
         try {
             const eventoId = this.vm.model?.id;
-            const pessoaId = typeof row?.pessoa === 'object' ? row.pessoa?.id : row?.pessoa;
+            const pessoaId = data?.pessoaId;
             if (!eventoId || !pessoaId) return;
             this.pessoaEscolhaLoading = true;
             this.pessoaUltimaEscolha = null as any;
             this.pessoaHistorico = [] as any[];
             this.eventoService.getUltimaEscolha(eventoId as number, pessoaId as number).subscribe({
-                next: (e) => this.pessoaUltimaEscolha = e,
+                next: (e) => {
+                    this.pessoaUltimaEscolha = e;
+                },
                 error: () => this.pessoaUltimaEscolha = null
             });
             this.eventoService.getHistoricoEscolhas(eventoId as number, pessoaId as number).subscribe({
-                next: (list) => this.pessoaHistorico = list || [],
+                next: (list) => {
+                    this.pessoaHistorico = list || [];
+                },
                 error: () => this.pessoaHistorico = []
             });
         } finally {
@@ -483,32 +474,32 @@ export class EventoPageComponent implements OnInit {
 
     // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)
     onEditingStartProduto(event: any) {
-        const row: any = event?.data || {};
+        const data: any = event?.data || {};
         // Garante que o Status apareça selecionado no enum-select do popup
-        row.status = this.getStatusOption(row.status);
-        const id = typeof row?.produto === 'object' ? row.produto?.id : row?.produto;
+        // data.status = this.statusEnumType[data].descricao;
+        const id = typeof data?.produto === 'object' ? data.produto?.id : data?.produto;
         if (!id) {
-            row._produtoObj = null;
-            row.produto = null;
+            data._produtoObj = null;
+            data.produto = null;
             return;
         }
         const cached = this.produtosOptions.find(p => p.id === id);
         if (cached) {
-            row._produtoObj = cached;
-            row.produto = cached.id;
-            row.produtoNome = cached.nome;
+            data._produtoObj = cached;
+            data.produto = cached.id;
+            data.produtoNome = cached.nome;
             return;
         }
         try {
             this.produtoService.getById(id).subscribe({
-                next: (p) => { row._produtoObj = p; row.produto = p?.id; row.produtoNome = p?.nome; },
-                error: () => { const tmp = { id, nome: row?.produtoNome || String(id) } as any; row._produtoObj = tmp; row.produto = id; row.produtoNome = tmp.nome; }
+                next: (p) => { data._produtoObj = p; data.produto = p?.id; data.produtoNome = p?.nome; },
+                error: () => { const tmp = { id, nome: data?.produtoNome || String(id) } as any; data._produtoObj = tmp; data.produto = id; data.produtoNome = tmp.nome; }
             });
         } catch {
-            const tmp = { id, nome: row?.produtoNome || String(id) } as any;
-            row._produtoObj = tmp;
-            row.produto = id;
-            row.produtoNome = tmp.nome;
+            const tmp = { id, nome: data?.produtoNome || String(id) } as any;
+            data._produtoObj = tmp;
+            data.produto = id;
+            data.produtoNome = tmp.nome;
         }
     }
 
@@ -543,19 +534,10 @@ export class EventoPageComponent implements OnInit {
     // Preenche labels auxiliares para exibição na grid
     private preencherCamposDeExibicao(): void {
         try {
-            if (this.vm.model) {
-                // Mantém cliente como objeto completo; para datas, converte para Date (necessário ao p-datepicker)
+            if (this.vm.model && this.vm.model.id) {
                 this.vm.model.inicio = this.toDateOrNull(this.vm.model.inicio) as any;
                 this.vm.model.fimPrevisto = this.toDateOrNull(this.vm.model.fimPrevisto) as any;
                 this.vm.model.fim = this.toDateOrNull(this.vm.model.fim) as any;
-                // Se cliente vier como ID por alguma chamada antiga, tenta casar com opções para transformar em objeto
-                const cli: any = (this.vm.model as any).cliente;
-                if (cli && typeof cli !== 'object') {
-                    const match = this.clientesOptions.find(c => c.id === cli);
-                    if (match) {
-                        (this.vm.model as any).cliente = match;
-                    }
-                }
             }
         } catch {}
     }
@@ -575,22 +557,6 @@ export class EventoPageComponent implements OnInit {
         // aceita formatos ISO com minutos
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
-    }
-
-    // Converte valor de status (string | objeto | null) na opção esperada pelo enum-select
-    private getStatusOption(val: any): any {
-        if (!val) return null;
-        // Se já for um objeto com 'key' ou 'descricao', mantém
-        if (typeof val === 'object') return val;
-        // Caso seja string, procura a opção correspondente em StatusEnum
-        try {
-            const options = Object.values(this.statusEnumType) as any[];
-            const lower = String(val).toLowerCase();
-            const found = options.find(opt => String(opt?.key ?? opt?.name ?? '').toLowerCase() === lower || String(opt?.descricao ?? '').toLowerCase() === lower);
-            return found || val;
-        } catch {
-            return val;
-        }
     }
 
     // Limpa campos de data da aba Geral
