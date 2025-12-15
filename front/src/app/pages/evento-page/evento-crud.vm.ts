@@ -6,9 +6,10 @@ import { EventoFilter } from '@/shared/model/filter/evento-filter';
 import { EventoService } from '@/services/evento.service';
 import { Observable } from 'rxjs';
 import { StatusEnum } from '@/shared/model/enum/status.enum';
+import {EventoDTO} from "@/shared/model/dto/evento-dto";
 
 @Injectable()
-export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
+export class EventoCrudVM extends AbstractCrud<EventoDTO, EventoFilter> {
   constructor(
     port: EventoService,
     route: ActivatedRoute,
@@ -33,21 +34,22 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     // A tela (EventoPage) chamará doFilter após selecionar/definir clienteId.
   }
 
-  protected newModel(): Evento {
-    return {
-      id: undefined,
-      nome: '',
-      descricao: '',
-      cliente: undefined,
-      status: undefined,
-      anotacoes: '',
-      inicio: undefined,
-      fimPrevisto: undefined,
-      fim: undefined,
-      pessoas: [],
-      produtos: [],
-      version: undefined,
-    };
+  protected newModel(): EventoDTO {
+      return new EventoDTO();
+    // return {
+    //   id: undefined,
+    //   nome: '',
+    //   descricao: '',
+    //   cliente: undefined,
+    //   status: undefined,
+    //   anotacoes: '',
+    //   inicio: undefined,
+    //   fimPrevisto: undefined,
+    //   fim: undefined,
+    //   pessoas: [],
+    //   produtos: [],
+    //   version: undefined,
+    // };
   }
 
   protected newFilter(): EventoFilter {
@@ -75,7 +77,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
   }
 
   // Normaliza payload antes de salvar (status enum e cliente id)
-  override doSave(): Observable<Evento> {
+  override doSave(): Observable<EventoDTO> {
     const payload: any = { ...this.model };
     // status: enviar a KEY do enum
     payload.status = this.toStatusKey(payload.status);
@@ -137,11 +139,11 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
   }
 
   private getClienteId(): number | undefined {
-    const c: any = this.model?.cliente;
-    if (!c) return undefined;
-    if (typeof c === 'object') return c.id ?? undefined;
-    if (typeof c === 'number') return c;
-    return undefined;
+    // const c: any = this.model?.cliente;
+    // if (!c) return undefined;
+    // if (typeof c === 'object') return c.id ?? undefined;
+    // if (typeof c === 'number') return c;
+    return this.model.clienteId;
   }
 
   // Converte Date para string local no padrão 'YYYY-MM-DDTHH:mm' (sem fuso/segundos)

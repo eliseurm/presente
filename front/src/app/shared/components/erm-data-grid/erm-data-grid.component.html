@@ -67,7 +67,7 @@
                         </ng-container>
                         <ng-template #customCell>
                             <ng-container
-                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: getByPath(rowData, col.dataField), row: rowData, data: getByPath(rowData, col.dataField) }">
+                                *ngTemplateOutlet="getTemplate(col.cellTemplate!)!; context: { $implicit: rowData, data: getByPath(rowData, col.dataField) }">
                             </ng-container>
                         </ng-template>
                     </td>
@@ -236,7 +236,7 @@
                         <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
                             <div [class.field-error]="hasError(item.dataField)">
                                 <ng-container
-                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: getByPath(editingRow, item.dataField), data: getByPath(editingRow, item.dataField), row: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
+                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
                                 </ng-container>
                             </div>
                         </ng-container>

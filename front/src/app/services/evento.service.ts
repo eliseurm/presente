@@ -5,9 +5,10 @@ import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {Observable} from 'rxjs';
 import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
+import {EventoDTO} from "@/shared/model/dto/evento-dto";
 
 @Injectable({providedIn: 'root'})
-export class EventoService extends BaseCrudService<Evento, EventoFilter> {
+export class EventoService extends BaseCrudService<EventoDTO, EventoFilter> {
 
     protected apiUrl = '/api/evento';
 

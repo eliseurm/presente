@@ -24,7 +24,7 @@
             (onLazyLoad)="onLazyLoad($event)"
             (rowDblClick)="crudRef.onRowDblClick($event)">
 
-            <erm-column dataField="cliente.nome" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
+            <erm-column dataField="clienteNome" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
             <erm-column dataField="nome" caption="Nome"></erm-column>
             <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
             <erm-column dataField="fimPrevisto" caption="Previsto" cellTemplate="dataTpl"></erm-column>
@@ -33,11 +33,11 @@
             <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
             <!-- Ajuste para novo contrato do erm-data-grid: $implicit = valor da célula, linha via alias -->
-            <ng-template ermTemplate="clienteTpl" let-data>{{ data || '-' }}</ng-template>
+            <ng-template ermTemplate="clienteTpl" let-data="data">{{ data || '-' }}</ng-template>
             <ng-template ermTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
-            <ng-template ermTemplate="dataTpl" let-data let-row="row">{{ data | date:'short' }}</ng-template>
+            <ng-template ermTemplate="dataTpl" let-data="data">{{ data | date:'short' }}</ng-template>
 
-            <ng-template ermTemplate="acoesTpl" let-row="row">
+            <ng-template ermTemplate="acoesTpl" let-row>
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                         (click)="crudRef.onRowDblClick(row)"></button>
             </ng-template>
@@ -90,7 +90,7 @@
                                       name="cliente"
                                       placeholder="Selecione"
                                       [options]="clientesOptions"
-                                      [(ngModel)]="vm.model.cliente"
+                                      [(ngModel)]="vm.model.clienteId"
                             ></p-select>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:w-1/2">
@@ -153,10 +153,12 @@
                     <div class="flex items-center gap-2 mb-2">
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
                     </div>
+<!--                    [summaryDataSource]="vm.model.pessoas || []"-->
+
                     <erm-data-grid #gridPessoas
                         [dataSource]="vm.model.pessoas || []"
-                        [summaryDataSource]="vm.model.pessoas || []"
                         [loading]="false"
+                        [summaryDataSource]="vm.model.pessoas || []"
                         (onInitNewRow)="onInitNewPessoa($event)"
                         (onEditDialogOpen)="onEditingStartPessoa($event)"
                         (onSaving)="onSavingPessoa($event)"
@@ -239,7 +241,7 @@
                         </ng-template>
 
                         <ng-template ermTemplate="statusEditCellTemplate" let-data="data">
-                            <span><b>Status:</b> {{statusEnumType[data].descricao}}</span>
+                            <span><b>Status:</b> {{data}}</span>
                         </ng-template>
 
                         <ng-template ermTemplate="magicLinkCell" let-row="row">

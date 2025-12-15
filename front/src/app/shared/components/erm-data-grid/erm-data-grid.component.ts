@@ -1,4 +1,4 @@
-import { Component, ContentChildren, QueryList, Input, Output, EventEmitter, TemplateRef, ContentChild, AfterContentInit, OnChanges, SimpleChanges } from '@angular/core';
+import {Component, ContentChildren, QueryList, Input, Output, EventEmitter, TemplateRef, ContentChild, AfterContentInit, SimpleChanges, OnChanges} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -21,8 +21,8 @@ import { ErmTemplateDirective } from './erm-template.directive';
 import { ErmDataGridEvent } from './erm-data-grid.types';
 import { ErmItemComponent } from './erm-item.component';
 import { ErmFormContextComponent } from './erm-form-context.component';
-import { EoSomatoriaComponent } from './eo-somatoria.component';
-import { EiTotalItemComponent, SummaryType } from './ei-total-item.component';
+import {EoSomatoriaComponent} from "@/shared/components/erm-data-grid/eo-somatoria.component";
+import {EiTotalItemComponent, SummaryType} from "@/shared/components/erm-data-grid/ei-total-item.component";
 
 @Component({
     selector: 'erm-data-grid',
@@ -69,8 +69,6 @@ import { EiTotalItemComponent, SummaryType } from './ei-total-item.component';
 export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     @Input() dataSource: any[] = [];
     @Input() loading: boolean = false;
-    // Fonte alternativa para somatórios (ex.: total geral, ignorando paginação)
-    @Input() summaryDataSource?: any[];
     // Scroll configuration passthrough to PrimeNG p-table
     @Input() scrollable: boolean = false;
     @Input() scrollHeight?: string;
@@ -80,6 +78,12 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     @Input() rowsPerPageOptions: number[] = [];
     @Input() totalRecords: number = 0;
     @Input() lazy: boolean = false;
+    // Fonte alternativa para somatórios (ex.: total geral, ignorando paginação)
+    @Input() summaryDataSource?: any[];
+    @ContentChild(EoSomatoriaComponent) summaryContainer?: EoSomatoriaComponent;
+    // Precisa capturar itens mesmo quando aninhados dentro de <eo-somatoria>
+    @ContentChildren(EiTotalItemComponent, { descendants: true }) summaryItems?: QueryList<EiTotalItemComponent>;
+
     @Output() onLazyLoad = new EventEmitter<any>();
     // Row double click
     @Output() rowDblClick = new EventEmitter<any>();
@@ -94,9 +98,6 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     @ContentChildren(ErmColumnComponent) columns!: QueryList<ErmColumnComponent>;
     @ContentChild(ErmEditingComponent) editing!: ErmEditingComponent;
     @ContentChildren(ErmTemplateDirective) templates!: QueryList<ErmTemplateDirective>;
-    @ContentChild(EoSomatoriaComponent) summaryContainer?: EoSomatoriaComponent;
-    // Precisa capturar itens mesmo quando aninhados dentro de <eo-somatoria>
-    @ContentChildren(EiTotalItemComponent, { descendants: true }) summaryItems?: QueryList<EiTotalItemComponent>;
 
     displayDialog = false;
     editingRow: any = null;
@@ -407,7 +408,6 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     }
 
     getCellValue(rowData: any, column: ErmColumnComponent): any {
-        // const value = rowData[column.dataField];
         const value = this.getByPath(rowData, column.dataField);
 
         if (column.lookup) {
@@ -606,6 +606,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
 
         return parts.length ? parts.join(' • ') : null;
     }
+
 
     getFormItemValue(dataField: string): any {
         return this.editingRow[dataField];

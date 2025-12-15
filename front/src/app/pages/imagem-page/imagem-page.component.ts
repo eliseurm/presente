@@ -134,7 +134,10 @@ export class ImagemPageComponent {
     }
 
     getThumbUrl(img: Imagem): string | null {
-        return this.imagemService.getArquivoUrl(img?.id);
+        if(img && img.id) {
+            return this.imagemService.getArquivoUrl(img?.id);
+        }
+        return null;
     }
 
     onCloseCrud() {
