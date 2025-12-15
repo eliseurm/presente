@@ -1,25 +1,27 @@
-import { Component, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToastModule } from 'primeng/toast';
-import { HttpClient } from '@angular/common/http';
+import {Component, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {MessageService} from 'primeng/api';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {ToastModule} from 'primeng/toast';
+import {HttpClient} from '@angular/common/http';
 
-import { PessoaService } from '@/services/pessoa.service';
-import { Pessoa } from '@/shared/model/pessoa';
-import { PessoaFilter } from '@/shared/model/filter/pessoa-filter';
-import { FilterField } from '@/shared/components/crud-filter/filter-field';
+import {PessoaService} from '@/services/pessoa.service';
+import {Pessoa} from '@/shared/model/pessoa';
+import {PessoaFilter} from '@/shared/model/filter/pessoa-filter';
+import {FilterField} from '@/shared/components/crud-filter/filter-field';
 
-import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
+import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.component';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import { CrudComponent } from '@/shared/crud/crud.component';
-import { TableModule } from 'primeng/table';
-import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
-import { PessoaCrudVM } from './pessoa-crud.vm';
-import { SelectModule } from 'primeng/select';
+import {CrudComponent} from '@/shared/crud/crud.component';
+import {TableModule} from 'primeng/table';
+import {ErmColumnComponent, ErmDataGridComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {PessoaCrudVM} from './pessoa-crud.vm';
+import {SelectModule} from 'primeng/select';
+import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
+import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 @Component({
     selector: 'pessoa-page',
@@ -49,6 +51,8 @@ import { SelectModule } from 'primeng/select';
 export class PessoaPageComponent  {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<Pessoa, PessoaFilter>;
+
+    statusEnumType: any = StatusEnum;
 
     readonly statusOptions = [
         { label: 'Ativo', value: 'ATIVO' },
@@ -165,4 +169,6 @@ export class PessoaPageComponent  {
         // 99.999-999
         return `${d.substring(0,2)}.${d.substring(2,5)}-${d.substring(5)}`;
     }
+
+    protected readonly tipoProdutoEnumType = ProdutoTipoEnum;
 }

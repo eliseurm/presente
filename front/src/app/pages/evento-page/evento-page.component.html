@@ -53,6 +53,7 @@
                 <p-tab value="1">Pessoas</p-tab>
                 <p-tab value="2">Produtos</p-tab>
             </p-tablist>
+
             <p-tabpanels>
 
                 <p-tabpanel value="0">
@@ -153,7 +154,6 @@
                     <div class="flex items-center gap-2 mb-2">
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
                     </div>
-<!--                    [summaryDataSource]="vm.model.pessoas || []"-->
 
                     <erm-data-grid #gridPessoas
                         [dataSource]="vm.model.pessoas || []"
@@ -182,11 +182,12 @@
                                         <p-tab value="1">Escolha atual</p-tab>
                                         <p-tab value="2">Historico</p-tab>
                                     </p-tablist>
+
                                     <p-tabpanels>
 
                                         <p-tabpanel value="0">
-                                            <erm-item dataField="pessoaNome" label=" " editorType="template"></erm-item>
-                                            <erm-item dataField="status" label=" " editorType="template"></erm-item>
+                                            <erm-item dataField="pessoaNome" label="Nome" editorType="template"></erm-item>
+                                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
                                         </p-tabpanel>
 
                                         <p-tabpanel value="1">
