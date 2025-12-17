@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    selector: 'erm-lookup',
+    selector: 'eo-lookup',
     standalone: true,
     template: ''
 })
-export class ErmLookupComponent {
+export class EoLookupComponent {
     @Input() dataSource: any[] = [];
     @Input() displayExpr: string = 'name';
     @Input() valueExpr: string = 'id';

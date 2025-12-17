@@ -14,7 +14,7 @@
 
     <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
-        <erm-data-grid
+        <e-data-grid
             [dataSource]="vm.dataSource"
             [paginator]="true"
             [rows]="vm.filter.size || 10"
@@ -24,25 +24,25 @@
             (onLazyLoad)="onLazyLoad($event)"
             (rowDblClick)="crudRef.onRowDblClick($event)">
 
-            <erm-column dataField="cliente" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
-            <erm-column dataField="nome" caption="Nome"></erm-column>
-            <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
-            <erm-column dataField="fimPrevisto" caption="Previsto" cellTemplate="dataTpl"></erm-column>
-            <erm-column dataField="inicio" caption="Início" cellTemplate="dataTpl"></erm-column>
-            <erm-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></erm-column>
-            <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+            <ei-column dataField="cliente" caption="Cliente" cellTemplate="clienteTpl"></ei-column>
+            <ei-column dataField="nome" caption="Nome"></ei-column>
+            <ei-column dataField="status" caption="Status" cellTemplate="statusTpl"></ei-column>
+            <ei-column dataField="fimPrevisto" caption="Previsto" cellTemplate="dataTpl"></ei-column>
+            <ei-column dataField="inicio" caption="Início" cellTemplate="dataTpl"></ei-column>
+            <ei-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></ei-column>
+            <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-            <!-- Ajuste para novo contrato do erm-data-grid: $implicit = valor da célula, linha via alias -->
-            <ng-template ermTemplate="clienteTpl" let-data="data">{{ data.nome || '-' }}</ng-template>
-            <ng-template ermTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
-            <ng-template ermTemplate="dataTpl" let-data="data">{{ data | date:'short' }}</ng-template>
+            <!-- Ajuste para novo contrato do e-data-grid: $implicit = valor da célula, linha via alias -->
+            <ng-template eTemplate="clienteTpl" let-data="data">{{ data.nome || '-' }}</ng-template>
+            <ng-template eTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
+            <ng-template eTemplate="dataTpl" let-data="data">{{ data | date:'short' }}</ng-template>
 
-            <ng-template ermTemplate="acoesTpl" let-row>
+            <ng-template eTemplate="acoesTpl" let-row>
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                         (click)="crudRef.onRowDblClick(row)"></button>
             </ng-template>
 
-        </erm-data-grid>
+        </e-data-grid>
     </div>
 
     <!-- Formulário de edição com abas -->
@@ -155,7 +155,7 @@
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
                     </div>
 
-                    <erm-data-grid #gridPessoas
+                    <e-data-grid #gridPessoas
                         [dataSource]="vm.model.pessoas || []"
                         [loading]="false"
                         [summaryDataSource]="vm.model.pessoas || []"
@@ -164,17 +164,17 @@
                         (onSaving)="onSavingPessoa($event)"
                         (onDeleting)="onDeletingPessoa($event)">
 
-                        <erm-editing
+                        <eo-editing
                             mode="popup"
                             [allowAdding]="true"
                             [allowUpdating]="true"
                             [allowDeleting]="true"
                             [confirmDelete]="true">
 
-                            <erm-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></erm-popup>
+                            <e-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></e-popup>
 
-                            <!-- Para garantir renderização dentro do popup, encapsulamos as abas em um erm-item template -->
-                            <erm-form [colCount]="1" [useContentProjection]="true">
+                            <!-- Para garantir renderização dentro do popup, encapsulamos as abas em um ei-item template -->
+                            <eo-form [colCount]="1" [useContentProjection]="true">
 
                                 <p-tabs value="0" class="w-full">
                                     <p-tablist>
@@ -186,8 +186,8 @@
                                     <p-tabpanels>
 
                                         <p-tabpanel value="0">
-                                            <erm-item dataField="pessoaNome" label="Nome" editorType="template"></erm-item>
-                                            <erm-item dataField="status" label="Status" editorType="template"></erm-item>
+                                            <ei-item dataField="pessoaNome" label="Nome" editorType="template"></ei-item>
+                                            <ei-item dataField="status" label="Status" editorType="template"></ei-item>
                                         </p-tabpanel>
 
                                         <p-tabpanel value="1">
@@ -200,44 +200,44 @@
                                         </p-tabpanel>
 
                                         <p-tabpanel value="2">
-                                            <erm-data-grid [dataSource]="pessoaHistorico" [scrollable]="true" scrollHeight="400px">
+                                            <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true" scrollHeight="400px">
 
-                                                <erm-column dataField="dataEscolha" caption="Escolha" cellTemplate="dataTemplate"></erm-column>
-                                                <erm-column dataField="alteradoEm" caption="Alterado em" cellTemplate="dataTemplate"></erm-column>
-                                                <erm-column dataField="eventoNome" caption="Evento"></erm-column>
-                                                <erm-column dataField="produtoNome" caption="Produto"></erm-column>
-                                                <erm-column dataField="corNome" caption="Cor"></erm-column>
-                                                <erm-column dataField="tamanhoDescricao" caption="Tamanho"></erm-column>
+                                                <ei-column dataField="dataEscolha" caption="Escolha" cellTemplate="dataTemplate"></ei-column>
+                                                <ei-column dataField="alteradoEm" caption="Alterado em" cellTemplate="dataTemplate"></ei-column>
+                                                <ei-column dataField="eventoNome" caption="Evento"></ei-column>
+                                                <ei-column dataField="produtoNome" caption="Produto"></ei-column>
+                                                <ei-column dataField="corNome" caption="Cor"></ei-column>
+                                                <ei-column dataField="tamanhoDescricao" caption="Tamanho"></ei-column>
 
-                                                <ng-template ermTemplate="dataTemplate" let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}</ng-template>
+                                                <ng-template eTemplate="dataTemplate" let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}</ng-template>
 
 
-                                            </erm-data-grid>
+                                            </e-data-grid>
                                         </p-tabpanel>
 
                                     </p-tabpanels>
                                 </p-tabs>
 
-                            </erm-form>
+                            </eo-form>
 
-                        </erm-editing>
+                        </eo-editing>
 
                         <!-- Colunas -->
                         <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
-                        <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
-                        <erm-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></erm-column>
-                        <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
-                        <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
+                        <ei-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></ei-column>
+                        <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
+                        <ei-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></ei-column>
+                        <ei-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></ei-column>
+                        <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></ei-column>
 
-                        <ng-template ermTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
-                        <ng-template ermTemplate="jaEscolheuTpl" let-data let-row="row">
+                        <ng-template eTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
+                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+                        <ng-template eTemplate="jaEscolheuTpl" let-data let-row="row">
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
-                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row>
+                        <ng-template eTemplate="pessoaEditCellTemplate" let-row>
                             <p-autoComplete class="w-full"
                                             [ngModel]="row?.pessoa"
                                             (ngModelChange)="row && (row.pessoa = $event)"
@@ -260,7 +260,7 @@
                             </p-autoComplete>
                         </ng-template>
 
-                        <ng-template ermTemplate="statusEditCellTemplate" let-data="data">
+                        <ng-template eTemplate="statusEditCellTemplate" let-data="data">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
                                          [ngModel]="data"
@@ -269,7 +269,7 @@
                             ></enum-select>
                         </ng-template>
 
-                        <ng-template ermTemplate="magicLinkCell" let-row="row">
+                        <ng-template eTemplate="magicLinkCell" let-row="row">
                             <ng-container *ngIf="row?.nomeMagicNumber; else semToken">
                                 <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">
                                     {{ row?.nomeMagicNumber }}
@@ -280,7 +280,7 @@
                             </ng-template>
                         </ng-template>
 
-                        <ng-template ermTemplate="acoesCellTemplate" let-row="row">
+                        <ng-template eTemplate="acoesCellTemplate" let-row="row">
                             <button pButton type="button"
                                     icon="pi pi-external-link"
                                     class="p-button-text p-button-sm"
@@ -305,12 +305,12 @@
                             <ei-total-item column="jaEscolheu" summaryType="sum" label="Já escolheram"></ei-total-item>
                         </eo-somatoria>
 
-                    </erm-data-grid>
+                    </e-data-grid>
 
                 </p-tabpanel>
 
                 <p-tabpanel value="2">
-                    <erm-data-grid
+                    <e-data-grid
                         [dataSource]="vm.model.produtos || []"
                         [loading]="false"
                         (onInitNewRow)="onInitNewProduto($event)"
@@ -318,36 +318,36 @@
                         (onSaving)="onSavingProduto($event)"
                         (onDeleting)="onDeletingProduto($event)">
 
-                        <erm-editing
+                        <eo-editing
                             mode="popup"
                             [allowAdding]="true"
                             [allowUpdating]="true"
                             [allowDeleting]="true"
                             [confirmDelete]="true">
 
-                            <erm-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></erm-popup>
+                            <e-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></e-popup>
 
-                            <erm-form [colCount]="2">
-                                <erm-item dataField="produto" label="Produto" editorType="template">
-                                    <erm-validation-rule type="required" message="Produto é obrigatório"></erm-validation-rule>
-                                </erm-item>
-                                <erm-item dataField="status" label="Status" editorType="template">
-                                    <erm-validation-rule type="required" message="Status é obrigatório"></erm-validation-rule>
-                                </erm-item>
-                            </erm-form>
+                            <eo-form [colCount]="2">
+                                <ei-item dataField="produto" label="Produto" editorType="template">
+                                    <ei-validation-rule type="required" message="Produto é obrigatório"></ei-validation-rule>
+                                </ei-item>
+                                <ei-item dataField="status" label="Status" editorType="template">
+                                    <ei-validation-rule type="required" message="Status é obrigatório"></ei-validation-rule>
+                                </ei-item>
+                            </eo-form>
 
-                        </erm-editing>
+                        </eo-editing>
 
                         <!-- Colunas -->
                         <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <erm-column dataField="produtoNome" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></erm-column>
-                        <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
+                        <ei-column dataField="produtoNome" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></ei-column>
+                        <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
 
-                        <ng-template ermTemplate="produtoCellTemplate" let-data="data">{{ data }}</ng-template>
-                        <ng-template ermTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+                        <ng-template eTemplate="produtoCellTemplate" let-data="data">{{ data }}</ng-template>
+                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
 
-                        <ng-template ermTemplate="produtoEditCellTemplate" let-row>
+                        <ng-template eTemplate="produtoEditCellTemplate" let-row>
                             <p-autoComplete class="w-full"
                                             [(ngModel)]="row._produtoObj"
                                             [ngModelOptions]="{standalone:true}"
@@ -369,7 +369,7 @@
                             </p-autoComplete>
                         </ng-template>
 
-                        <ng-template ermTemplate="statusEditCellTemplate" let-row>
+                        <ng-template eTemplate="statusEditCellTemplate" let-row>
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
                                          [(ngModel)]="row.status"
@@ -377,7 +377,7 @@
                             ></enum-select>
                         </ng-template>
 
-                    </erm-data-grid>
+                    </e-data-grid>
 
                 </p-tabpanel>
 

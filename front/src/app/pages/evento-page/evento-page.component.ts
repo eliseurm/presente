@@ -33,17 +33,17 @@ import {ProdutoService} from '@/services/produto.service';
 import {ClienteService} from '@/services/cliente.service';
 import { environment } from '../../../environments/environment';
 import {
-    ErmColumnComponent,
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmPopupComponent,
-    ErmTemplateDirective,
-    ErmValidationRuleComponent
-} from '@/shared/components/erm-data-grid';
+    EiColumnComponent,
+    EDataGridComponent,
+    EoEditingComponent,
+    EoFormComponent,
+    EiItemComponent,
+    EPopupComponent,
+    ETemplateDirective,
+    EiValidationRuleComponent
+} from '@/shared/components/e-data-grid';
 import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
-import { EoSomatoriaComponent, EiTotalItemComponent } from '@/shared/components/erm-data-grid';
+import { EoSomatoriaComponent, EiTotalItemComponent } from '@/shared/components/e-data-grid';
 import {EventoDTO} from "@/shared/model/dto/evento-dto";
 
 @Component({
@@ -68,14 +68,14 @@ import {EventoDTO} from "@/shared/model/dto/evento-dto";
         CrudFilterComponent,
         CrudComponent,
         TableModule,
-        ErmDataGridComponent,
-        ErmEditingComponent,
-        ErmPopupComponent,
-        ErmFormComponent,
-        ErmItemComponent,
-        ErmColumnComponent,
-        ErmValidationRuleComponent,
-        ErmTemplateDirective,
+        EDataGridComponent,
+        EoEditingComponent,
+        EPopupComponent,
+        EoFormComponent,
+        EiItemComponent,
+        EiColumnComponent,
+        EiValidationRuleComponent,
+        ETemplateDirective,
         AutoCompleteModule,
         EoSomatoriaComponent,
         EiTotalItemComponent

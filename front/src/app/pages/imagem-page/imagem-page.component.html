@@ -16,7 +16,7 @@
 
   <!-- Grid de listagem -->
   <div crud-list-grid class="w-full">
-    <erm-data-grid
+    <e-data-grid
       [dataSource]="vm.dataSource"
       [paginator]="true"
       [rows]="vm.filter.size || 10"
@@ -26,20 +26,20 @@
       (onLazyLoad)="onLazyLoad($event)"
       (rowDblClick)="crudRef.onRowDblClick($event)">
 
-      <erm-column dataField="nome" caption="Nome"></erm-column>
-      <erm-column dataField="imagem" caption="Imagem" cellTemplate="imgTpl"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+      <ei-column dataField="nome" caption="Nome"></ei-column>
+      <ei-column dataField="imagem" caption="Imagem" cellTemplate="imgTpl"></ei-column>
+      <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-      <ng-template ermTemplate="imgTpl" let-row>
+      <ng-template eTemplate="imgTpl" let-row>
         <img *ngIf="getThumbUrl(row) as src" [src]="src" alt="thumb" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row>
+      <ng-template eTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
 
-    </erm-data-grid>
+    </e-data-grid>
   </div>
 
   <!-- Formulário de edição -->

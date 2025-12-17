@@ -5,11 +5,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
-import { ErmValidationRuleComponent } from './erm-validation-rule.component';
-import { ErmFormContextService } from './erm-form-context.service';
+import { EiValidationRuleComponent } from './ei-validation-rule.component';
+import { EoFormContextService } from './eo-form-context.service';
 
 @Component({
-    selector: 'erm-item',
+    selector: 'ei-item',
     standalone: true,
     imports: [CommonModule, FormsModule, InputTextModule, InputNumberModule, DatePickerModule, SelectModule],
     template: `
@@ -17,7 +17,7 @@ import { ErmFormContextService } from './erm-form-context.service';
         <ng-container *ngIf="ctx as c">
             <!-- Só renderiza quando existir uma linha em edição; evita erros ao abrir a página -->
             <ng-container *ngIf="c?.row as row">
-                <div class="erm-form-item"
+                <div class="eo-form-item"
                      [class.has-error]="!!c.hasError?.(dataField)"
                      [style.grid-column]="colSpan ? 'span ' + colSpan : null">
                     <label [for]="dataField">
@@ -98,13 +98,13 @@ import { ErmFormContextService } from './erm-form-context.service';
         </ng-container>
     `
 })
-export class ErmItemComponent {
+export class EiItemComponent {
     @Input() dataField!: string;
     @Input() label?: string;
     @Input() colSpan?: number;
     @Input() editorType?: 'text' | 'number' | 'date' | 'dropdown' | 'template' | 'enum';
 
-    @ContentChildren(ErmValidationRuleComponent) validationRules!: QueryList<ErmValidationRuleComponent>;
+    @ContentChildren(EiValidationRuleComponent) validationRules!: QueryList<EiValidationRuleComponent>;
 
-    constructor(@Optional() public ctx?: ErmFormContextService) {}
+    constructor(@Optional() public ctx?: EoFormContextService) {}
 }

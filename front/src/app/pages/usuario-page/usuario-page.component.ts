@@ -18,7 +18,7 @@ import {StatusEnum} from '@/shared/model/enum/status.enum';
 import {CrudMetadata} from '@/shared/core/crud.metadata.decorator';
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
-import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {UsuarioCrudVM} from './usuario-crud.vm';
 import { AuthService } from '@/pages/auth/auth-service';
 
@@ -35,9 +35,9 @@ import { AuthService } from '@/pages/auth/auth-service';
         CrudComponent,
         TableModule,
         EnumSelectComponent,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective
     ],
     templateUrl: './usuario-page.component.html',
     styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],

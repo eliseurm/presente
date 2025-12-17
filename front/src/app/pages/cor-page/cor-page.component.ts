@@ -17,7 +17,7 @@ import {CorFilter} from "@/shared/model/filter/cor-filter";
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
-import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {CorCrudVM} from './cor-crud.vm';
 
 @Component({
@@ -33,9 +33,9 @@ import {CorCrudVM} from './cor-crud.vm';
         CrudFilterComponent,
         CrudComponent,
         TableModule,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective
     ],
     templateUrl: './cor-page.component.html',
     styleUrls: [

@@ -20,7 +20,7 @@
 
     <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
-        <erm-data-grid
+        <e-data-grid
             [dataSource]="vm.dataSource"
             [paginator]="true"
             [rows]="vm.filter.size || 10"
@@ -30,20 +30,20 @@
             (onLazyLoad)="onLazyLoad($event)"
             (rowDblClick)="crudRef.onRowDblClick($event)">
 
-            <erm-column dataField="username" caption="Usuário"></erm-column>
-            <erm-column dataField="papel" caption="Papel" cellTemplate="papelTpl"></erm-column>
-            <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
-            <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+            <ei-column dataField="username" caption="Usuário"></ei-column>
+            <ei-column dataField="papel" caption="Papel" cellTemplate="papelTpl"></ei-column>
+            <ei-column dataField="status" caption="Status" cellTemplate="statusTpl"></ei-column>
+            <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-            <ng-template ermTemplate="papelTpl" let-data="data">{{ papelEnumType[data].descricao }}</ng-template>
-            <ng-template ermTemplate="statusTpl" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+            <ng-template eTemplate="papelTpl" let-data="data">{{ papelEnumType[data].descricao }}</ng-template>
+            <ng-template eTemplate="statusTpl" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
 
-            <ng-template ermTemplate="acoesTpl" let-row>
+            <ng-template eTemplate="acoesTpl" let-row>
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar" (click)="crudRef.onRowDblClick(row)"></button>
 <!--                <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"(click)="onDeleteRow(row)"></button>-->
             </ng-template>
 
-        </erm-data-grid>
+        </e-data-grid>
     </div>
 
     <!-- Formulário de edição -->

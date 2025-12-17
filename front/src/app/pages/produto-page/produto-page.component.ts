@@ -10,7 +10,7 @@ import {InputNumberModule} from 'primeng/inputnumber';
 import {ToastModule} from 'primeng/toast';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {TableModule} from 'primeng/table';
-import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {ProdutoService} from '@/services/produto.service';
@@ -43,9 +43,9 @@ import {ProdutoCrudVM} from './produto-crud.vm';
         ToastModule,
         MultiSelectModule,
         TableModule,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective,
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective,
         CrudComponent,
         CrudFilterComponent,
     ],

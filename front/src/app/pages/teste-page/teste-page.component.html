@@ -1,44 +1,44 @@
-<erm-data-grid
+<e-data-grid
     #dataGrid
     [dataSource]="notaList"
     (onInitNewRow)="onInitNewRowNota($event)"
     (onSaving)="onSavingNota($event)"
     (onSaved)="onSavedNota($event)">
 
-    <erm-editing
+    <eo-editing
         mode="popup"
         [allowAdding]="true"
         [allowUpdating]="true"
         [allowDeleting]="true"
         [confirmDelete]="false">
 
-        <erm-popup title="Informações notas" [showTitle]="true" width="80%" height="80%"></erm-popup>
+        <e-popup title="Informações notas" [showTitle]="true" width="80%" height="80%"></e-popup>
 
-        <erm-form [colCount]="2">
-            <erm-item dataField="id"></erm-item>
-            <erm-item dataField="data"></erm-item>
-            <erm-item dataField="numero">
-                <erm-validation-rule type="required" message="Número é obrigatório"></erm-validation-rule>
-            </erm-item>
-            <erm-item dataField="cliente">
-                <erm-validation-rule type="required" message="Cliente é obrigatório"></erm-validation-rule>
-            </erm-item>
-            <erm-item dataField="items" [colSpan]="2"></erm-item>
-        </erm-form>
+        <eo-form [colCount]="2">
+            <ei-item dataField="id"></ei-item>
+            <ei-item dataField="data"></ei-item>
+            <ei-item dataField="numero">
+                <ei-validation-rule type="required" message="Número é obrigatório"></ei-validation-rule>
+            </ei-item>
+            <ei-item dataField="cliente">
+                <ei-validation-rule type="required" message="Cliente é obrigatório"></ei-validation-rule>
+            </ei-item>
+            <ei-item dataField="items" [colSpan]="2"></ei-item>
+        </eo-form>
 
-    </erm-editing>
+    </eo-editing>
 
-    <erm-column dataField="id"></erm-column>
-    <erm-column dataField="numero"></erm-column>
-    <erm-column dataField="cliente">
-        <erm-lookup [dataSource]="clienteList" displayExpr="nome" valueExpr="nome"></erm-lookup>
-    </erm-column>
-    <erm-column dataField="data" dataType="date"></erm-column>
-    <erm-column dataField="items" [visible]="false" editCellTemplate="editCellTemplateItens"></erm-column>
+    <ei-column dataField="id"></ei-column>
+    <ei-column dataField="numero"></ei-column>
+    <ei-column dataField="cliente">
+        <eo-lookup [dataSource]="clienteList" displayExpr="nome" valueExpr="nome"></eo-lookup>
+    </ei-column>
+    <ei-column dataField="data" dataType="date"></ei-column>
+    <ei-column dataField="items" [visible]="false" editCellTemplate="editCellTemplateItens"></ei-column>
 
-    <div *ermTemplate="'editCellTemplateItens'; let data">
+    <div *eTemplate="'editCellTemplateItens'; let data">
         <!-- Template customizado aqui -->
         <p>Items: {{ data.items }}</p>
     </div>
 
-</erm-data-grid>
+</e-data-grid>

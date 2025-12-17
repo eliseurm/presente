@@ -17,7 +17,7 @@ import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.c
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
-import {ErmColumnComponent, ErmDataGridComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EiColumnComponent, EDataGridComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {PessoaCrudVM} from './pessoa-crud.vm';
 import {SelectModule} from 'primeng/select';
 import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
@@ -44,9 +44,9 @@ import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.c
         CrudComponent,
         TableModule,
         SelectModule,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective,
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective,
         InputMask,
         EnumSelectComponent
     ],

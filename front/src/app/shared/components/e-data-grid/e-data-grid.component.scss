@@ -1,4 +1,4 @@
-.erm-data-grid {
+.e-data-grid {
     .erm-toolbar {
         margin-bottom: 1rem;
         display: flex;
@@ -44,16 +44,16 @@
     }
 
     // Formulário do Dialog
-    .erm-form {
+    .eo-form {
         min-height: 300px; // Altura mínima para acomodar o select aberto
 
-        .erm-form-grid {
+        .eo-form-grid {
             display: grid;
             gap: 1.5rem;
             margin-bottom: 1rem;
         }
 
-        .erm-form-item {
+        .eo-form-item {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;

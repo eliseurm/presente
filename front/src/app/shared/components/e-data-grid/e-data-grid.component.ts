@@ -15,17 +15,17 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { MessageModule } from 'primeng/message';
 
-import { ErmColumnComponent } from './erm-column.component';
-import { ErmEditingComponent } from './erm-editing.component';
-import { ErmTemplateDirective } from './erm-template.directive';
-import { ErmDataGridEvent } from './erm-data-grid.types';
-import { ErmItemComponent } from './erm-item.component';
-import { ErmFormContextComponent } from './erm-form-context.component';
-import {EoSomatoriaComponent} from "@/shared/components/erm-data-grid/eo-somatoria.component";
-import {EiTotalItemComponent, SummaryType} from "@/shared/components/erm-data-grid/ei-total-item.component";
+import { EiColumnComponent } from './ei-column.component';
+import { EoEditingComponent } from './eo-editing.component';
+import { ETemplateDirective } from './e-template.directive';
+import { IEDataGridEvent } from './e-data-grid.types';
+import { EiItemComponent } from './ei-item.component';
+import { EoFormContextComponent } from './eo-form-context.component';
+import {EoSomatoriaComponent} from "@/shared/components/e-data-grid/eo-somatoria.component";
+import {EiTotalItemComponent, SummaryType} from "@/shared/components/e-data-grid/ei-total-item.component";
 
 @Component({
-    selector: 'erm-data-grid',
+    selector: 'e-data-grid',
     standalone: true,
     imports: [
         CommonModule,
@@ -40,11 +40,11 @@ import {EiTotalItemComponent, SummaryType} from "@/shared/components/erm-data-gr
         ConfirmDialogModule,
         ToastModule,
         MessageModule,
-        ErmFormContextComponent
+        EoFormContextComponent
     ],
     providers: [ConfirmationService, MessageService],
-    templateUrl: './erm-data-grid.component.html',
-    styleUrls: ['./erm-data-grid.component.scss'],
+    templateUrl: './e-data-grid.component.html',
+    styleUrls: ['./e-data-grid.component.scss'],
     animations: [
         trigger('slideDown', [
             state('void', style({
@@ -66,7 +66,7 @@ import {EiTotalItemComponent, SummaryType} from "@/shared/components/erm-data-gr
         ])
     ]
 })
-export class ErmDataGridComponent implements AfterContentInit, OnChanges {
+export class EDataGridComponent implements AfterContentInit, OnChanges {
     @Input() dataSource: any[] = [];
     @Input() loading: boolean = false;
     // Scroll configuration passthrough to PrimeNG p-table
@@ -87,17 +87,17 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     @Output() onLazyLoad = new EventEmitter<any>();
     // Row double click
     @Output() rowDblClick = new EventEmitter<any>();
-    @Output() onInitNewRow = new EventEmitter<ErmDataGridEvent>();
-    @Output() onSaving = new EventEmitter<ErmDataGridEvent>();
-    @Output() onSaved = new EventEmitter<ErmDataGridEvent>();
-    @Output() onDeleting = new EventEmitter<ErmDataGridEvent>();
-    @Output() onDeleted = new EventEmitter<ErmDataGridEvent>();
+    @Output() onInitNewRow = new EventEmitter<IEDataGridEvent>();
+    @Output() onSaving = new EventEmitter<IEDataGridEvent>();
+    @Output() onSaved = new EventEmitter<IEDataGridEvent>();
+    @Output() onDeleting = new EventEmitter<IEDataGridEvent>();
+    @Output() onDeleted = new EventEmitter<IEDataGridEvent>();
     // Evento emitido quando o diálogo de edição é aberto (novo ou edição)
-    @Output() onEditDialogOpen = new EventEmitter<ErmDataGridEvent>();
+    @Output() onEditDialogOpen = new EventEmitter<IEDataGridEvent>();
 
-    @ContentChildren(ErmColumnComponent) columns!: QueryList<ErmColumnComponent>;
-    @ContentChild(ErmEditingComponent) editing!: ErmEditingComponent;
-    @ContentChildren(ErmTemplateDirective) templates!: QueryList<ErmTemplateDirective>;
+    @ContentChildren(EiColumnComponent) columns!: QueryList<EiColumnComponent>;
+    @ContentChild(EoEditingComponent) editing!: EoEditingComponent;
+    @ContentChildren(ETemplateDirective) templates!: QueryList<ETemplateDirective>;
 
     displayDialog = false;
     editingRow: any = null;
@@ -156,7 +156,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         };
     }
 
-    get formItems(): QueryList<ErmItemComponent> | null {
+    get formItems(): QueryList<EiItemComponent> | null {
         return this.editing?.form?.items || null;
     }
 
@@ -179,7 +179,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         this.validationErrors.clear();
         this.showValidationMessage = false;
 
-        const event: ErmDataGridEvent = {
+        const event: IEDataGridEvent = {
             data: this.editingRow,
             isNew: true
         };
@@ -194,7 +194,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         this.editingRow = { ...rowData };
         this.validationErrors.clear();
         this.showValidationMessage = false;
-        const event: ErmDataGridEvent = {
+        const event: IEDataGridEvent = {
             data: this.editingRow,
             isNew: false
         };
@@ -220,7 +220,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
     }
 
     performDelete(rowData: any) {
-        const event: ErmDataGridEvent = {
+        const event: IEDataGridEvent = {
             data: rowData,
             isNew: false
         };
@@ -255,7 +255,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
             return;
         }
 
-        const event: ErmDataGridEvent = {
+        const event: IEDataGridEvent = {
             data: this.editingRow,
             isNew: this.isNewRow
         };
@@ -407,7 +407,7 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         return row.id || row;
     }
 
-    getCellValue(rowData: any, column: ErmColumnComponent): any {
+    getCellValue(rowData: any, column: EiColumnComponent): any {
         const value = this.getByPath(rowData, column.dataField);
 
         if (column.lookup) {
@@ -620,11 +620,11 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         }
     }
 
-    getColumnByDataField(dataField: string): ErmColumnComponent | undefined {
+    getColumnByDataField(dataField: string): EiColumnComponent | undefined {
         return this.columns?.find(col => col.dataField === dataField);
     }
 
-    getFormItemLabel(item: ErmItemComponent): string {
+    getFormItemLabel(item: EiItemComponent): string {
         return item.label || item.dataField;
     }
 
@@ -634,11 +634,11 @@ export class ErmDataGridComponent implements AfterContentInit, OnChanges {
         return template || null;
     }
 
-    isFieldRequired(item: ErmItemComponent): boolean {
+    isFieldRequired(item: EiItemComponent): boolean {
         return item.validationRules?.some(rule => rule.type === 'required') || false;
     }
 
-    getValidationMessages(item: ErmItemComponent): string[] {
+    getValidationMessages(item: EiItemComponent): string[] {
         return item.validationRules?.map(rule => rule.message) || [];
     }
 

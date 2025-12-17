@@ -19,7 +19,7 @@ import {UsuarioFilter} from '@/shared/model/filter/usuario-filter';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
-import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {ClienteCrudVM} from './cliente-crud.vm';
 import {AuthService} from '@/pages/auth/auth-service';
 
@@ -36,9 +36,9 @@ import {AuthService} from '@/pages/auth/auth-service';
         CrudComponent,
         TableModule,
         SelectModule,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective
     ],
     templateUrl: './cliente-page.component.html',
     styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],

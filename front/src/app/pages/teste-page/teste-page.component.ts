@@ -1,16 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-    ErmDataGridComponent,
-    ErmEditingComponent,
-    ErmPopupComponent,
-    ErmFormComponent,
-    ErmItemComponent,
-    ErmColumnComponent,
-    ErmLookupComponent,
-    ErmValidationRuleComponent,
-    ErmTemplateDirective
-} from "@/shared/components/erm-data-grid";
+    EDataGridComponent,
+    EoEditingComponent,
+    EPopupComponent,
+    EoFormComponent,
+    EiItemComponent,
+    EiColumnComponent,
+    EoLookupComponent,
+    EiValidationRuleComponent,
+    ETemplateDirective
+} from "@/shared/components/e-data-grid";
 
 
 @Component({
@@ -18,15 +18,15 @@ import {
     standalone: true,
     imports: [
         CommonModule,
-        ErmDataGridComponent,
-        ErmEditingComponent,
-        ErmPopupComponent,
-        ErmFormComponent,
-        ErmItemComponent,
-        ErmColumnComponent,
-        ErmLookupComponent,
-        ErmValidationRuleComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EoEditingComponent,
+        EPopupComponent,
+        EoFormComponent,
+        EiItemComponent,
+        EiColumnComponent,
+        EoLookupComponent,
+        EiValidationRuleComponent,
+        ETemplateDirective
     ],
     templateUrl: './teste-page.component.html',
     styleUrl: './teste-page.component.scss'

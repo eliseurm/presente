@@ -1,11 +1,11 @@
 
-<div class="erm-data-grid">
+<div class="e-data-grid">
     <p-toast />
 
     <style>
         /* Mostrar o caption (rótulo da coluna) dentro da célula apenas em telas pequenas (stack) */
         @media (max-width: 768px) {
-            .erm-data-grid .p-column-title {
+            .e-data-grid .p-column-title {
                 display: inline-block;
                 font-weight: 600;
                 color: var(--text-color-secondary);
@@ -13,7 +13,7 @@
             }
         }
         @media (min-width: 769px) {
-            .erm-data-grid .p-column-title {
+            .e-data-grid .p-column-title {
                 display: none !important;
             }
         }
@@ -129,16 +129,16 @@
 
         <style>
             /* Layout do formulário no popup */
-            .erm-dialog .erm-form-grid {
+            .erm-dialog .eo-form-grid {
                 display: grid;
                 gap: 1rem;
             }
             /* Telas pequenas: campos em coluna (vertical) */
             @media (max-width: 768px) {
-                .erm-dialog .erm-form-grid {
+                .erm-dialog .eo-form-grid {
                     grid-template-columns: 1fr !important;
                 }
-                .erm-dialog .erm-form-item {
+                .erm-dialog .eo-form-item {
                     grid-column: span 1 !important;
                 }
             }
@@ -147,7 +147,7 @@
         <!-- Renderização do conteúdo personalizado do formulário, permitindo HTML arbitrário (ex.: p-tabs) -->
         <ng-container *ngIf="editingRow && editing.form?.useContentProjection && editing.form?.contentTemplate">
             <!-- Fornece contexto e renderiza o template DENTRO do componente para garantir DI correto -->
-            <erm-form-context
+            <eo-form-context
                 [row]="editingRow"
                 [isNewRow]="isNewRow"
                 [columns]="visibleColumns"
@@ -160,14 +160,14 @@
                 [isFieldRequired]="isFieldRequired.bind(this)"
                 [template]="editing.form?.contentTemplate"
                 [templateContext]="{ $implicit: editingRow, data: editingRow }">
-            </erm-form-context>
+            </eo-form-context>
         </ng-container>
 
-        <!-- Renderização automática baseada em <erm-item> (desativada quando o conteúdo projetado está ativo) -->
-        <div class="erm-form" *ngIf="editingRow && formItems && !(editing.form?.useContentProjection && editing.form?.contentTemplate)">
-                <div class="erm-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
+        <!-- Renderização automática baseada em <ei-item> (desativada quando o conteúdo projetado está ativo) -->
+        <div class="eo-form" *ngIf="editingRow && formItems && !(editing.form?.useContentProjection && editing.form?.contentTemplate)">
+                <div class="eo-form-grid" [style.grid-template-columns]="'repeat(' + formColCount + ', 1fr)'">
                     <div *ngFor="let item of formItems"
-                        class="erm-form-item"
+                        class="eo-form-item"
                         [class.has-error]="hasError(item.dataField)"
                         [style.grid-column]="item.colSpan ? 'span ' + item.colSpan : 'span 1'">
 

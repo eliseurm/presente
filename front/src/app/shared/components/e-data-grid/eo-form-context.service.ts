@@ -1,7 +1,7 @@
 import { Injectable, TemplateRef } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
-export class ErmFormContextService {
+export class EoFormContextService {
     row: any = null;
     isNewRow: boolean = false;
     columns: any[] = [];
@@ -16,6 +16,6 @@ export class ErmFormContextService {
     isFieldRequired?: (item: any) => boolean;
 
     constructor() {
-        // Mantemos sem inicialização; o template do <erm-item> usará optional chaining
+        // Mantemos sem inicialização; o template do <ei-item> usará optional chaining
     }
 }

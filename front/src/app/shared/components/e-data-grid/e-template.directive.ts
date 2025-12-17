@@ -2,15 +2,15 @@
 import { Directive, Input, TemplateRef } from '@angular/core';
 
 @Directive({
-    selector: '[ermTemplate]',
+    selector: '[eTemplate]',
     standalone: true
 })
-export class ErmTemplateDirective {
-    @Input() ermTemplate: string = '';
+export class ETemplateDirective {
+    @Input() eTemplate: string = '';
 
     constructor(public template: TemplateRef<any>) {}
 
     get name(): string {
-        return this.ermTemplate;
+        return this.eTemplate;
     }
 }

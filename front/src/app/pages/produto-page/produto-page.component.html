@@ -14,7 +14,7 @@
 
   <!-- Grid de listagem -->
   <div crud-list-grid class="w-full">
-    <erm-data-grid
+    <e-data-grid
       [dataSource]="vm.dataSource"
       [paginator]="true"
       [rows]="vm.filter.size || 10"
@@ -24,17 +24,17 @@
       (onLazyLoad)="onLazyLoad($event)"
       (rowDblClick)="crudRef.onRowDblClick($event)">
 
-      <erm-column dataField="nome" caption="Nome"></erm-column>
-      <erm-column dataField="status" caption="Situação" cellTemplate="statusTpl"></erm-column>
-      <erm-column dataField="preco" caption="Preço"></erm-column>
-      <erm-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+      <ei-column dataField="nome" caption="Nome"></ei-column>
+      <ei-column dataField="status" caption="Situação" cellTemplate="statusTpl"></ei-column>
+      <ei-column dataField="preco" caption="Preço"></ei-column>
+      <ei-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></ei-column>
+      <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-      <ng-template ermTemplate="statusTpl" let-row>
+      <ng-template eTemplate="statusTpl" let-row>
         {{ row?.status ? 'Ativo' : 'Inativo' }}
       </ng-template>
 
-      <ng-template ermTemplate="imgsTpl" let-row>
+      <ng-template eTemplate="imgsTpl" let-row>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <ng-container *ngFor="let img of (row?.imagens || []); let i = index">
             <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
@@ -42,12 +42,12 @@
         </div>
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row>
+      <ng-template eTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
 
-    </erm-data-grid>
+    </e-data-grid>
   </div>
 
   <!-- Formulário de edição -->

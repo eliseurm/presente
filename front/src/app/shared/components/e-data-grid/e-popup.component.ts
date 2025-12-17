@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    selector: 'erm-popup',
+    selector: 'e-popup',
     standalone: true,
     template: ''
 })
-export class ErmPopupComponent {
+export class EPopupComponent {
     @Input() title: string = 'Editar';
     @Input() showTitle: boolean = true;
     @Input() width: string = '600px';

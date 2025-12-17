@@ -15,7 +15,7 @@ import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.c
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {CrudComponent} from '@/shared/crud/crud.component';
 import {TableModule} from 'primeng/table';
-import {ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective} from '@/shared/components/erm-data-grid';
+import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {ImagemCrudVM} from './imagem-crud.vm';
 
 @Component({
@@ -30,9 +30,9 @@ import {ImagemCrudVM} from './imagem-crud.vm';
         CrudFilterComponent,
         CrudComponent,
         TableModule,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective
     ],
     templateUrl: './imagem-page.component.html',
     styleUrls: [

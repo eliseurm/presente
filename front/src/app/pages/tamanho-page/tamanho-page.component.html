@@ -16,7 +16,7 @@
 
   <!-- Grid -->
   <div crud-list-grid class="w-full">
-    <erm-data-grid
+    <e-data-grid
       [dataSource]="vm.dataSource"
       [paginator]="true"
       [rows]="vm.filter.size || 10"
@@ -27,19 +27,19 @@
       (rowDblClick)="crudRef.onRowDblClick($event)">
 
       <!-- Colunas -->
-      <erm-column dataField="id" caption="ID"></erm-column>
-      <erm-column dataField="tipo" caption="Tipo" cellTemplate="tipoTpl"></erm-column>
-      <erm-column dataField="tamanho" caption="Tamanho"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+      <ei-column dataField="id" caption="ID"></ei-column>
+      <ei-column dataField="tipo" caption="Tipo" cellTemplate="tipoTpl"></ei-column>
+      <ei-column dataField="tamanho" caption="Tamanho"></ei-column>
+      <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
       <!-- Templates -->
-      <ng-template ermTemplate="tipoTpl" let-data="data">{{ tipoProdutoEnumType[data].descricao }}</ng-template>
+      <ng-template eTemplate="tipoTpl" let-data="data">{{ tipoProdutoEnumType[data].descricao }}</ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row>
+      <ng-template eTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"(click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
 
-    </erm-data-grid>
+    </e-data-grid>
   </div>
 
   <!-- Formulário de edição (Tailwind puro) - um campo por linha -->

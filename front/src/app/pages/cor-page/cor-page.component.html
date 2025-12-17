@@ -14,7 +14,7 @@
 
   <!-- Grid de listagem -->
   <div crud-list-grid class="w-full">
-    <erm-data-grid
+    <e-data-grid
       [dataSource]="vm.dataSource"
       [paginator]="true"
       [rows]="vm.filter.size || 10"
@@ -24,20 +24,20 @@
       (onLazyLoad)="onLazyLoad($event)"
       (rowDblClick)="crudRef.onRowDblClick($event)">
 
-      <erm-column dataField="nome" caption="Nome"></erm-column>
-      <erm-column dataField="corHex" caption="Cor" cellTemplate="corTpl"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+      <ei-column dataField="nome" caption="Nome"></ei-column>
+      <ei-column dataField="corHex" caption="Cor" cellTemplate="corTpl"></ei-column>
+      <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-      <ng-template ermTemplate="corTpl" let-data="data">
+      <ng-template eTemplate="corTpl" let-data="data">
         <div class="color-preview" [style.background-color]="data" [title]="data"></div>
       </ng-template>
 
-      <ng-template ermTemplate="acoesTpl" let-row>
+      <ng-template eTemplate="acoesTpl" let-row>
         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                 (click)="crudRef.onRowDblClick(row)"></button>
       </ng-template>
 
-    </erm-data-grid>
+    </e-data-grid>
   </div>
 
   <!-- Formulário de edição -->

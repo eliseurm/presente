@@ -17,7 +17,7 @@ import {ProdutoTipoEnum} from '../../shared/model/enum/produto-tipo.enum';
 import {TamanhoFilter} from "@/shared/model/filter/tamanho-filter";
 import { CrudComponent } from '@/shared/crud/crud.component';
 import { TamanhoCrudVM } from './tamanho-crud.vm';
-import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '@/shared/components/erm-data-grid';
+import { EDataGridComponent, EiColumnComponent, ETemplateDirective } from '@/shared/components/e-data-grid';
 
 @Component({
     selector: 'app-tamanho-page',
@@ -32,9 +32,9 @@ import { ErmDataGridComponent, ErmColumnComponent, ErmTemplateDirective } from '
         CrudFilterComponent,
         EnumSelectComponent,
         CrudComponent,
-        ErmDataGridComponent,
-        ErmColumnComponent,
-        ErmTemplateDirective
+        EDataGridComponent,
+        EiColumnComponent,
+        ETemplateDirective
     ],
     providers: [MessageService, ConfirmationService, TamanhoCrudVM],
     templateUrl: './tamanho-page.component.html',

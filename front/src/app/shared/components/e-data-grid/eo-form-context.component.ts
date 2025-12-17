@@ -1,24 +1,24 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateRef } from '@angular/core';
-import { ErmFormContextService } from './erm-form-context.service';
+import { EoFormContextService } from './eo-form-context.service';
 
 @Component({
-    selector: 'erm-form-context',
+    selector: 'eo-form-context',
     standalone: true,
     imports: [CommonModule],
     template: `
         <!--
           Renderizamos o template recebido DENTRO deste componente para que o injector
           local (que provê ErmFormContextService) seja usado pelos filhos, permitindo
-          que <erm-item> injete o contexto e renderize inline.
+          que <ei-item> injete o contexto e renderize inline.
         -->
         <ng-container *ngIf="template as tpl">
             <ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="templateContext"></ng-container>
         </ng-container>
     `
 })
-export class ErmFormContextComponent implements OnChanges {
+export class EoFormContextComponent implements OnChanges {
     @Input() row: any = null;
     @Input() isNewRow: boolean = false;
     @Input() columns: any[] = [];
@@ -36,7 +36,7 @@ export class ErmFormContextComponent implements OnChanges {
     @Input() template?: TemplateRef<any>;
     @Input() templateContext: any;
 
-    constructor(private ctx: ErmFormContextService) {}
+    constructor(private ctx: EoFormContextService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         this.ctx.row = this.row;

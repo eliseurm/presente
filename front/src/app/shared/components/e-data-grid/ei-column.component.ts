@@ -1,12 +1,12 @@
 import { Component, ContentChild, Input } from '@angular/core';
-import { ErmLookupComponent } from './erm-lookup.component';
+import { EoLookupComponent } from './eo-lookup.component';
 
 @Component({
-    selector: 'erm-column',
+    selector: 'ei-column',
     standalone: true,
     template: ''
 })
-export class ErmColumnComponent {
+export class EiColumnComponent {
     @Input() dataField!: string;
     @Input() caption?: string;
     @Input() dataType?: 'string' | 'number' | 'date' | 'boolean' | any;
@@ -15,5 +15,5 @@ export class ErmColumnComponent {
     @Input() editCellTemplate?: string;
     @Input() cellTemplate?: string;
 
-    @ContentChild(ErmLookupComponent) lookup?: ErmLookupComponent;
+    @ContentChild(EoLookupComponent) lookup?: EoLookupComponent;
 }
