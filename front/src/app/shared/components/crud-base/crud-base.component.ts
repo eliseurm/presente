@@ -55,15 +55,6 @@ export class CrudBaseComponent<T extends { id?: any; version?: number }, F exten
         }
     }
 
-    // messageToastAdd(msg: string, resumo?: string, tipo?: 'success'|'info'|'warn'|'error', tempo?: number ){
-    //     this.messages.push({
-    //         severity: tipo ?? 'info',
-    //         summary: resumo ?? 'Atençao',
-    //         life: tempo ?? 3000,
-    //         detail: msg
-    //     });
-    // }
-
     messageToastAddAndShow(msg: string, resumo?: string, tipo?: 'success'|'info'|'warn'|'error', tempo?: number ){
         this.messageToastAdd({detail: msg, summary: resumo, severity: tipo, life: tempo});
         this.messageToastShow();

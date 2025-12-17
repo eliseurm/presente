@@ -575,5 +575,8 @@ export class EventoPageComponent implements OnInit {
         (this.vm.model as any)[field] = null;
     }
 
+    protected setPessoaRow(event: any) {
+        console.log(event);
+    }
 }
 

@@ -237,16 +237,16 @@
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
-                        <ng-template eTemplate="pessoaEditCellTemplate" let-row>
+                        <ng-template eTemplate="pessoaEditCellTemplate" let-data="data">
                             <p-autoComplete class="w-full"
-                                            [ngModel]="row?.pessoa"
-                                            (ngModelChange)="row && (row.pessoa = $event)"
+                                            [ngModel]="data"
+                                            (ngModelChange)="setPessoaRow($event)"
                                             [ngModelOptions]="{standalone:true}"
                                             [suggestions]="pessoasSugestoes"
                                             (completeMethod)="searchPessoas($event)"
-                                            (onSelect)="onPessoaSelecionada(row, $event)"
-                                            (onClear)="onPessoaLimpar(row)"
-                                            (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
+                                            (onSelect)="onPessoaSelecionada(data, $event)"
+                                            (onClear)="onPessoaLimpar(data)"
+                                            (onBlur)="onPessoaSelecionada(data, { value: data._pessoaObj })"
                                             optionLabel="nome"
                                             [dropdown]="true"
                                             [forceSelection]="true"
