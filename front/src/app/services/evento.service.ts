@@ -8,7 +8,7 @@ import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
 import {EventoDTO} from "@/shared/model/dto/evento-dto";
 
 @Injectable({providedIn: 'root'})
-export class EventoService extends BaseCrudService<EventoDTO, EventoFilter> {
+export class EventoService extends BaseCrudService<Evento, EventoFilter> {
 
     protected apiUrl = '/api/evento';
 

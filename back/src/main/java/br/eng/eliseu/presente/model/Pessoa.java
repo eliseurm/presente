@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +17,17 @@ public class Pessoa {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JsonIgnoreProperties({"usuario"})
+    @JoinColumn(name = "cliente_id")
+    private Cliente cliente;
+
     private String nome;
+
+    @NotBlank(message = "Cpf é obrigatório")
+    @Pattern(regexp = "^\\+?\\d{11}$", message = "O CPF deve ter sempre 11 numeros.")
+    @Column(unique = true, nullable = false)
+    private String cpf;
 
     @NotBlank(message = "Telefone é obrigatório")
     @Pattern(regexp = "^\\+?\\d{8,15}$", message = "Telefone inválido. Use apenas dígitos, opcional '+' no início, 8-15 dígitos")
@@ -28,7 +39,8 @@ public class Pessoa {
     @Column(unique = true, nullable = false)
     private String email;
 
-    private String status; // INVITED, ACTIVE, COMPLETED
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
     
     private String endereco;
     

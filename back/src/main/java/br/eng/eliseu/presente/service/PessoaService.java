@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,10 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
     protected Specification<Pessoa> buildSpecification(PessoaFilter filtro) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (filtro.getClienteId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("cliente").get("id"), filtro.getClienteId()));
+            }
 
             if (filtro.getNome() != null && !filtro.getNome().trim().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
@@ -73,9 +78,10 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Pessoa entidade, Pessoa entidadeExistente) {
-        entidade.setId(id);
-        entidade.setCriadoEm(entidadeExistente.getCriadoEm());
+    protected void prepararParaAtualizacao(Long id, Pessoa nova, Pessoa existente) {
+        nova.setId(id);
+        nova.setCriadoEm(existente.getCriadoEm());
+        nova.setAlteradoEm(LocalDateTime.now());
     }
 
     // Métodos específicos de negócio podem ser adicionados aqui

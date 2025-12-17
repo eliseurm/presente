@@ -77,7 +77,7 @@ drop table teste ;
 -- ##########################################################
 select * from flyway_schema_history  ;
 
-delete from flyway_schema_history where installed_rank >= 2 ;
+delete from flyway_schema_history where installed_rank >= 11 ;
 
 INSERT INTO presente_sh.usuario (id, username, password_hash, papel, status, criado_em, alterado_em) VALUES (1, 'admin', '$2a$10$UX68K.ZTOT4YiWIDMRONXONP3mV9vyYdlKfT.a7hbk.0IkykAfvN2', 'ADMINISTRADOR', 'ATIVO', '2025-11-12 09:46:52.613582', '2025-11-12 09:46:52.613582');
 

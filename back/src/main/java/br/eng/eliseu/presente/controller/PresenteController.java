@@ -2,7 +2,7 @@ package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.dto.ProdutoDto;
-import br.eng.eliseu.presente.model.dto.ProdutoMapper;
+import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
 import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.repository.*;
 import br.eng.eliseu.presente.service.ImagemService;
@@ -21,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/presente")

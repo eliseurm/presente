@@ -35,14 +35,14 @@ public class PessoaController {
     private final ClienteRepository clienteRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<Pessoa>> listar(PessoaFilter filtro) {
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClient(#filtro.clienteId)")
+    public ResponseEntity<Page<Pessoa>> listar(@Valid @ModelAttribute PessoaFilter filtro) {
         Page<Pessoa> pessoas = pessoaService.listar(filtro);
         return ResponseEntity.ok(pessoas);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @authService.isOwnerPessoa(#id)")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Pessoa> buscarPorId(@PathVariable Long id) {
         return pessoaService.buscarPorId(id)
                 .map(ResponseEntity::ok)
@@ -50,14 +50,30 @@ public class PessoaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("""
+                hasRole('ADMIN') or 
+                (
+                    #pessoa != null and
+                    #pessoa.cliente != null and
+                    #pessoa.cliente.id != null and
+                    @authService.isLinkedToClient(#pessoa.cliente.id)
+                )
+            """)
     public ResponseEntity<Pessoa> criar(@Valid @RequestBody Pessoa pessoa) {
         Pessoa novaPessoa = pessoaService.criar(pessoa);
         return ResponseEntity.ok(novaPessoa);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @authService.isOwnerPessoa(#id)")
+    @PreAuthorize("""
+                hasRole('ADMIN') or 
+                (
+                    #pessoa != null and
+                    #pessoa.cliente != null and
+                    #pessoa.cliente.id != null and
+                    @authService.isLinkedToClient(#pessoa.cliente.id)
+                )
+            """)
     public ResponseEntity<Pessoa> atualizar(@PathVariable Long id, @Valid @RequestBody Pessoa pessoa) {
         try {
             Pessoa pessoaAtualizada = pessoaService.atualizar(id, pessoa);

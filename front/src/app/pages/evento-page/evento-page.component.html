@@ -24,7 +24,7 @@
             (onLazyLoad)="onLazyLoad($event)"
             (rowDblClick)="crudRef.onRowDblClick($event)">
 
-            <erm-column dataField="clienteNome" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
+            <erm-column dataField="cliente" caption="Cliente" cellTemplate="clienteTpl"></erm-column>
             <erm-column dataField="nome" caption="Nome"></erm-column>
             <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
             <erm-column dataField="fimPrevisto" caption="Previsto" cellTemplate="dataTpl"></erm-column>
@@ -33,7 +33,7 @@
             <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
 
             <!-- Ajuste para novo contrato do erm-data-grid: $implicit = valor da célula, linha via alias -->
-            <ng-template ermTemplate="clienteTpl" let-data="data">{{ data || '-' }}</ng-template>
+            <ng-template ermTemplate="clienteTpl" let-data="data">{{ data.nome || '-' }}</ng-template>
             <ng-template ermTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
             <ng-template ermTemplate="dataTpl" let-data="data">{{ data | date:'short' }}</ng-template>
 
@@ -91,7 +91,7 @@
                                       name="cliente"
                                       placeholder="Selecione"
                                       [options]="clientesOptions"
-                                      [(ngModel)]="vm.model.clienteId"
+                                      [(ngModel)]="vm.model.cliente"
                             ></p-select>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:w-1/2">
@@ -225,24 +225,48 @@
                         <!-- Colunas -->
                         <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
                         <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <erm-column dataField="pessoaNome" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
+                        <erm-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></erm-column>
                         <erm-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></erm-column>
                         <erm-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></erm-column>
                         <erm-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></erm-column>
                         <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></erm-column>
 
-                        <ng-template ermTemplate="pessoaCellTemplate" let-data="data">{{ data }}</ng-template>
+                        <ng-template ermTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
                         <ng-template ermTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
                         <ng-template ermTemplate="jaEscolheuTpl" let-data let-row="row">
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
-                        <ng-template ermTemplate="pessoaEditCellTemplate" let-data="data">
-                            <span><b>Nome:</b> {{data}}</span>
+                        <ng-template ermTemplate="pessoaEditCellTemplate" let-row>
+                            <p-autoComplete class="w-full"
+                                            [ngModel]="row?.pessoa"
+                                            (ngModelChange)="row && (row.pessoa = $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            [suggestions]="pessoasSugestoes"
+                                            (completeMethod)="searchPessoas($event)"
+                                            (onSelect)="onPessoaSelecionada(row, $event)"
+                                            (onClear)="onPessoaLimpar(row)"
+                                            (onBlur)="onPessoaSelecionada(row, { value: row._pessoaObj })"
+                                            optionLabel="nome"
+                                            [dropdown]="true"
+                                            [forceSelection]="true"
+                                            placeholder="Buscar pessoa por nome">
+                                <ng-template pTemplate="item" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                                <ng-template pTemplate="selectedItem" let-item>
+                                    {{ item?.nome }}
+                                </ng-template>
+                            </p-autoComplete>
                         </ng-template>
 
                         <ng-template ermTemplate="statusEditCellTemplate" let-data="data">
-                            <span><b>Status:</b> {{data}}</span>
+                            <enum-select class="w-full"
+                                         [enumObject]="statusEnumType"
+                                         [ngModel]="data"
+                                         (ngModelChange)="$event"
+                                         [ngModelOptions]="{standalone:true}"
+                            ></enum-select>
                         </ng-template>
 
                         <ng-template ermTemplate="magicLinkCell" let-row="row">

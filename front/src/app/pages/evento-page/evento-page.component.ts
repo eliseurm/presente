@@ -86,7 +86,7 @@ import {EventoDTO} from "@/shared/model/dto/evento-dto";
     ],
     providers: [MessageService, EventoCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [EventoDTO, EventoFilter])
+@CrudMetadata("EventoPageComponent", [Evento, EventoFilter])
 export class EventoPageComponent implements OnInit {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<EventoDTO, EventoFilter>;
@@ -101,6 +101,11 @@ export class EventoPageComponent implements OnInit {
     produtosSugestoes: Produto[] = [];
     carregandoPessoas = false;
     carregandoProdutos = false;
+
+    // ======= Estado do popup: escolha/histórico =======
+    pessoaEscolhaLoading = false;
+    pessoaUltimaEscolha: any = null;
+    pessoaHistorico: EventoEscolhaDTO[] = [];
 
     filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -167,7 +172,12 @@ export class EventoPageComponent implements OnInit {
             if (idx >= 0) {
                 this.filterFields[idx] = {
                     ...this.filterFields[idx],
-                    options: this.clientesOptions.map(c => ({ label: c?.nome ?? String(c?.id ?? ''), value: c?.id }))
+                    options: this.clientesOptions.map(c => {
+                        return {
+                            label: c?.nome ?? String(c?.id ?? ''),
+                            value: c?.id
+                        };
+                    })
                 };
             }
             this.preencherCamposDeExibicao();
@@ -565,10 +575,5 @@ export class EventoPageComponent implements OnInit {
         (this.vm.model as any)[field] = null;
     }
 
-    // ======= Estado do popup: escolha/histórico =======
-    pessoaEscolhaLoading = false;
-    pessoaUltimaEscolha: any = null;
-    pessoaHistorico: EventoEscolhaDTO[] = [];
 }
 
-// Helpers de exibição (espaço reservado)

@@ -8,11 +8,12 @@ import {ConfirmationService} from 'primeng/api';
 import {Mode} from '@/shared/crud/crud.mode';
 import {AbstractCrud} from '@/shared/crud/abstract.crud';
 import {BaseFilter} from '@/shared/model/filter/base-filter';
+import {Nl2BrPipe} from "@/shared/pipe/nl2br.pipe";
 
 @Component({
     selector: 'crud',
     standalone: true,
-    imports: [CommonModule, ToolbarModule, ButtonModule, PanelModule, ConfirmDialogModule],
+    imports: [CommonModule, ToolbarModule, ButtonModule, PanelModule, ConfirmDialogModule, Nl2BrPipe],
     templateUrl: './crud.component.html',
     styleUrls: ['./crud.component.scss'],
     encapsulation: ViewEncapsulation.None,

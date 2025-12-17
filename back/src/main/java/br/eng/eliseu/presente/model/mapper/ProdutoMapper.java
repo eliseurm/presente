@@ -1,6 +1,10 @@
-package br.eng.eliseu.presente.model.dto;
+package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.Produto;
+import br.eng.eliseu.presente.model.dto.CorDto;
+import br.eng.eliseu.presente.model.dto.ImagemDto;
+import br.eng.eliseu.presente.model.dto.ProdutoDto;
+import br.eng.eliseu.presente.model.dto.TamanhoDto;
 
 import java.util.List;
 import java.util.stream.Collectors;

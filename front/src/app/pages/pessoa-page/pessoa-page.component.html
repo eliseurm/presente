@@ -1,101 +1,118 @@
 <crud #crudRef [parent]="vm" listToolbarTitle="Pessoas" editToolbarTitle="Editar Pessoa"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-  <!-- Filtros -->
-  <div crud-list-filter-fields class="w-full text-left">
-    <crud-filter
-      [filter]="vm.filter"
-      [fields]="filterFields"
-      [loading]="false"
-      (onSearch)="vm.doFilter().subscribe()"
-      (onClear)="onClearFilters()"
-    ></crud-filter>
-  </div>
-
-  <!-- Grid de listagem -->
-  <div crud-list-grid class="w-full">
-    <erm-data-grid
-      [dataSource]="vm.dataSource"
-      [paginator]="true"
-      [rows]="vm.filter.size || 10"
-      [rowsPerPageOptions]="[10,20,50,100]"
-      [totalRecords]="vm.totalRecords"
-      [lazy]="true"
-      (onLazyLoad)="onLazyLoad($event)"
-      (rowDblClick)="crudRef.onRowDblClick($event)">
-
-      <erm-column dataField="nome" caption="Nome"></erm-column>
-      <erm-column dataField="email" caption="E-mail"></erm-column>
-      <erm-column dataField="telefone" caption="Telefone"></erm-column>
-      <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
-      <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
-
-        <ng-template ermTemplate="statusTpl" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
-
-        <ng-template ermTemplate="acoesTpl" let-row>
-        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                (click)="crudRef.onRowDblClick(row)"></button>
-        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
-                (click)="onDeleteRow(row)"></button>
-      </ng-template>
-
-    </erm-data-grid>
-  </div>
-
-  <!-- Formulário de edição -->
-  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
-
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Nome *</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">E-mail *</label>
-        <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Telefone</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Status</label>
-        <p-select class="w-full" [options]="statusOptions" optionLabel="label" optionValue="value"
-                  [(ngModel)]="vm.model.status" name="status" placeholder="Selecione"></p-select>
-      </div>
-      <!-- CEP sozinho na linha, com máscara 99.999-999 -->
-      <div class="flex flex-col gap-2 w-full md:col-span-2">
-        <label class="block">CEP</label>
-        <input class="w-full" pInputText type="text"
-               [ngModel]="cepMask" name="cepMask"
-               maxlength="10"
-               placeholder="99.999-999"
-               (input)="onCepInput($event.target.value)"
-               (blur)="onCepBlur()" />
-      </div>
-
-      <!-- Endereço sozinho na linha -->
-      <div class="flex flex-col gap-2 w-full md:col-span-2">
-        <label class="block">Endereço</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.endereco" name="endereco" />
-      </div>
-
-      <!-- Complemento sozinho na linha -->
-      <div class="flex flex-col gap-2 w-full md:col-span-2">
-        <label class="block">Complemento</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.complemento" name="complemento" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Cidade</label>
-          <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.cidade" name="cidade" />
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Estado</label>
-          <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.estado" name="estado" />
-      </div>
-
+    <!-- Filtros -->
+    <div crud-list-filter-fields class="w-full text-left">
+        <crud-filter
+            [filter]="vm.filter"
+            [fields]="filterFields"
+            [loading]="false"
+            (onSearch)="vm.doFilter().subscribe()"
+            (onClear)="onClearFilters()"
+        ></crud-filter>
     </div>
-  </div>
+
+    <!-- Grid de listagem -->
+    <div crud-list-grid class="w-full">
+
+        <erm-data-grid
+            [dataSource]="vm.dataSource"
+            [paginator]="true"
+            [rows]="vm.filter.size || 10"
+            [rowsPerPageOptions]="[10,20,50,100]"
+            [totalRecords]="vm.totalRecords"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            (rowDblClick)="crudRef.onRowDblClick($event)">
+
+            <erm-column dataField="nome" caption="Nome"></erm-column>
+            <erm-column dataField="email" caption="E-mail"></erm-column>
+            <erm-column dataField="telefone" caption="Telefone"></erm-column>
+            <erm-column dataField="status" caption="Status" cellTemplate="statusTpl"></erm-column>
+            <erm-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></erm-column>
+
+            <ng-template ermTemplate="statusTpl" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+
+            <ng-template ermTemplate="acoesTpl" let-row>
+                <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                        (click)="crudRef.onRowDblClick(row)"></button>
+                <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm" aria-label="Excluir"
+                        (click)="onDeleteRow(row)"></button>
+            </ng-template>
+
+        </erm-data-grid>
+    </div>
+
+    <!-- Formulário de edição -->
+    <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+
+            <div class="flex flex-col gap-2 w-full md:w-1/2  md:col-span-2">
+                <label class="block">Cliente *</label>
+                <p-select class="w-full"
+                          optionLabel="nome"
+                          dataKey="id"
+                          name="cliente"
+                          placeholder="Selecione"
+                          [options]="clientesOptions"
+                          [(ngModel)]="vm.model.cliente"
+                ></p-select>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Nome *</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">CPF *</label>
+                <p-input-mask class="w-full" mask="999.999.999-99" [(ngModel)]="vm.model.cpf"
+                              placeholder="999.999.999-99" name="cpf" [invalid]="!isValidCpf"
+                              (onBlur)="onBlurCpf($event)"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Telefone *</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.telefone" name="telefone"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">E-mail *</label>
+                <input class="w-full" pInputText type="email" [(ngModel)]="vm.model.email" name="email"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Status</label>
+                <enum-select class="w-full"
+                             [enumObject]="statusEnumType"
+                             [(ngModel)]="vm.model.status"
+                             name="status"
+                ></enum-select>
+            </div>
+            <!-- CEP sozinho na linha, com máscara 99.999-999 -->
+            <div class="flex flex-col gap-2 w-full md:w-1/2  md:col-span-2">
+                <label class="block">CEP</label>
+                <p-input-mask class="w-full" mask="99.999-999" [(ngModel)]="vm.model.cep" placeholder="99.999-999"
+                              name="cep" [invalid]="!isValidCep" (onBlur)="onBlurCep($event)"/>
+            </div>
+
+            <!-- Endereço sozinho na linha -->
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+                <label class="block">Endereço</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.endereco" name="endereco"/>
+            </div>
+
+            <!-- Complemento sozinho na linha -->
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+                <label class="block">Complemento</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.complemento" name="complemento"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Cidade</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.cidade" name="cidade"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Estado</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.estado" name="estado"/>
+            </div>
+
+        </div>
+    </div>
 
 </crud>
 

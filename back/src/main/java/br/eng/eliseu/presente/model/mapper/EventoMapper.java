@@ -1,6 +1,9 @@
-package br.eng.eliseu.presente.model.dto;
+package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.model.dto.EventoDTO;
+import br.eng.eliseu.presente.model.dto.EventoPessoaDTO;
+import br.eng.eliseu.presente.model.dto.EventoProdutoDTO;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;

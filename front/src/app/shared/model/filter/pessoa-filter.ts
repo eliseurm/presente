@@ -2,6 +2,11 @@
 import { BaseFilter } from './base-filter';
 
 export class PessoaFilter extends BaseFilter {
+
+    id?: number;
+
+    clienteId?: number;
+
     nome?: string;
     email?: string;
     telefone?: string;
@@ -11,4 +16,5 @@ export class PessoaFilter extends BaseFilter {
         super();
         Object.assign(this, init);
     }
+
 }

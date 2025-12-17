@@ -47,7 +47,12 @@
 <!-- Mensagens de erro (sem dependência de p-messages para evitar incompatibilidade de versão) -->
 <div *ngIf="parent?.errorsVisible && errorMessages?.length" class="crud-messages error mb-3">
     <ul>
-        <li *ngFor="let m of errorMessages">{{ m }}</li>
+        <li *ngFor="let m of errorMessages">
+            <div *ngIf="parent?.errorsVisible && errorMessages?.length"
+                 class="crud-messages error mb-3"
+                 [innerHTML]="m | nl2br">
+            </div>
+        </li>
     </ul>
 </div>
 

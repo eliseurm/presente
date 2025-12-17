@@ -2,6 +2,7 @@ package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.ChaveMagica;
+import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.repository.ChaveMagicaRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
 import br.eng.eliseu.presente.security.AuthenticationService;
@@ -59,7 +60,7 @@ public class PessoaAuthController {
         pessoa.setEstado(req.estado());
         pessoa.setCep(req.cep());
         pessoa.setSenha(req.senha()); // texto puro, por requisito
-        pessoa.setStatus("PENDING");
+        pessoa.setStatus(StatusEnum.ATIVO);
         pessoa = pessoaRepository.save(pessoa);
 
         // Gera token de 6 dígitos e persiste em ChaveMagica
@@ -101,7 +102,7 @@ public class PessoaAuthController {
         chaveMagicaRepository.save(chave);
 
         Pessoa pessoa = pessoaRepository.findById(req.pessoaId()).orElseThrow();
-        pessoa.setStatus("ACTIVE");
+        pessoa.setStatus(StatusEnum.ATIVO);
         pessoaRepository.save(pessoa);
 
         return ResponseEntity.ok(Map.of("mensagem", "Cadastro confirmado com sucesso"));
@@ -124,7 +125,7 @@ public class PessoaAuthController {
         if (pessoa.getSenha() == null || !pessoa.getSenha().equals(req.senha())) {
             return ResponseEntity.status(401).body(Map.of("erro", "Credenciais inválidas"));
         }
-        if (!"ACTIVE".equalsIgnoreCase(pessoa.getStatus())) {
+        if (!StatusEnum.ATIVO.equals(pessoa.getStatus())) {
             return ResponseEntity.status(403).body(Map.of("erro", "Cadastro não confirmado"));
         }
 

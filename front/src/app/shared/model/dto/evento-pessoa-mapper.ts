@@ -1,0 +1,51 @@
+import { EventoPessoaDTO } from './evento-pessoa-dto'; // Arquivo evento-pessoa-dto.ts
+import { StatusEnum } from "@/shared/model/enum/status.enum";
+import {EventoPessoa} from "@/shared/model/evento-pessoa";
+import {Pessoa} from "@/shared/model/pessoa"; // Assumindo o caminho
+
+export class EventoPessoaMapper {
+
+    /**
+     * Converte EventoPessoaDTO (API) para EventoPessoa (Modelo Local).
+     * @param dto O DTO recebido da API.
+     * @returns O modelo EventoPessoa.
+     */
+    public static fromDTO(dto: EventoPessoaDTO): EventoPessoa | undefined{
+        if (!dto) return undefined;
+
+        const pessoa = new Pessoa()
+        pessoa.id = dto.id;
+        pessoa.nome = dto.pessoaNome;
+
+        return {
+            id: dto.id,
+            pessoa: pessoa,
+            status: dto.status,
+            nomeMagicNumber: dto.nomeMagicNumber,
+            jaEscolheu: dto.jaEscolheu,
+        };
+    }
+
+    /**
+     * Converte EventoPessoa (Modelo Local) para EventoPessoaDTO (API).
+     * @param model O modelo EventoPessoa local.
+     * @returns O DTO a ser enviado para a API.
+     */
+    public static toDTO(model: EventoPessoa): EventoPessoaDTO | undefined{
+        if (!model) return undefined;
+
+        // Assume que 'pessoa' pode ser um objeto parcial { id: number }
+        const pessoaId = model.pessoa && 'id' in model.pessoa ? model.pessoa.id : undefined;
+        // Assume que se o objeto 'pessoa' contiver 'nome', ele deve ser usado.
+        const pessoaNome = model.pessoa && 'nome' in model.pessoa ? (model.pessoa as any).nome : undefined;
+
+        return {
+            pessoaId: pessoaId,
+            pessoaNome: pessoaNome,
+            status: model.status as StatusEnum,
+            nomeMagicNumber: model.nomeMagicNumber,
+            jaEscolheu: model.jaEscolheu,
+        };
+    }
+
+}

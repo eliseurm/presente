@@ -4,6 +4,11 @@ import {AbstractCrud} from '@/shared/crud/abstract.crud';
 import {Pessoa} from '@/shared/model/pessoa';
 import {PessoaFilter} from '@/shared/model/filter/pessoa-filter';
 import {PessoaService} from '@/services/pessoa.service';
+import {StringUtils} from "@/shared/core/string-utils";
+import {Observable, of} from "rxjs";
+import {PageResponse} from "@/shared/model/page-response";
+import {catchError, tap} from "rxjs/operators";
+import {ToastMessageOptions} from "primeng/api";
 
 @Injectable()
 export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
@@ -19,26 +24,50 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
     }
 
     protected newModel(): Pessoa {
-        return {
-            id: undefined,
-            nome: '',
-            email: '',
-            telefone: '',
-            status: 'ATIVO' as any,
-            version: undefined,
-        } as unknown as Pessoa;
+        return new Pessoa();
     }
 
     protected newFilter(): PessoaFilter {
     return new PessoaFilter();
   }
 
+    override doFilter(): Observable<PageResponse<Pessoa>> {
+        const filtroComExpand = this.attachExpandToFilterIfNeeded();
+
+        if (!filtroComExpand || filtroComExpand && !filtroComExpand.clienteId) {
+            this.messageToastShow('Informe um Cliente');
+            return of();
+        }
+
+        return this.port.listar(filtroComExpand).pipe(
+            tap((page) => {
+                this.dataSource = page.content;
+                this.totalRecords = page.totalElements;
+                this.saveToStorage();
+            }),
+            catchError((err) => this.handleError<PageResponse<Pessoa>>(err, 'Falha ao carregar lista'))
+        );
+    }
+
+
     override canDoSave(): boolean {
-        const errors: string[] = [];
-        if (!(this.model?.nome && String(this.model.nome).trim().length > 0)) errors.push('Informe o nome da pessoa.');
-        if (!(this.model as any)?.email || !String((this.model as any).email).trim()) errors.push('Informe o e-mail da pessoa.');
-        this.errorMessages = errors;
-        this.errorsVisible = errors.length > 0;
-        return errors.length === 0;
+
+        this.model.cpf = StringUtils.somenteNumeros(this.model.cpf);
+        this.model.cep = StringUtils.somenteNumeros(this.model.cep);
+
+        this.errorMessages = [];
+        if (!this.model?.cliente) this.errorMessages.push('Informe o Cliente.');
+        if (!(this.model?.nome && String(this.model.nome).trim().length > 0)) this.errorMessages.push('Informe o nome da pessoa.');
+        if (!(this.model as any)?.cpf || !String((this.model as any).cpf).trim()) this.errorMessages.push('Informe o cpf da pessoa.');
+        if (!(this.model as any)?.email || !String((this.model as any).email).trim()) this.errorMessages.push('Informe o e-mail da pessoa.');
+        if (!(this.model as any)?.telefone || !String((this.model as any).telefone).trim()) this.errorMessages.push('Informe o telefone da pessoa.');
+        if (!(this.model as any)?.status || !String((this.model as any).status).trim()) this.errorMessages.push('Informe o status deste cadastro.');
+
+        const ok = this.errorMessages.length === 0;
+        // if(!ok) {
+        //     this.messageToastSubject.next(this.errorMessages);
+        // }
+        this.errorsVisible = true;
+        return ok;
     }
 }

@@ -115,15 +115,11 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
         // ----------------------------
         // 5) Remover valores vazios/undefined
         // ----------------------------
-        Object.keys(payload).forEach(key => {
-            const v = payload[key];
-            if (
-                v === undefined ||
-                v === null ||
-                v === "" ||
-                (Array.isArray(v) && v.length === 0)
-            ) {
-                delete payload[key];
+        Object.keys(anyFiltro).forEach(key => {
+            const v = anyFiltro[key];
+            const vp = payload[key];
+            if (v && !vp) {
+                payload[key] = v;
             }
         });
 

@@ -1,13 +1,17 @@
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subject, Observable, of} from 'rxjs';
+import {Subject, Observable, of, map} from 'rxjs';
 import {catchError, tap} from 'rxjs/operators';
 import {CrudPort} from '@/shared/services/crud-port';
 import {Mode} from '@/shared/crud/crud.mode';
 import {PageResponse} from '@/shared/model/page-response';
 import {BaseFilter} from '@/shared/model/filter/base-filter';
 import {stringify as flattedStringify, parse as flattedParse} from 'flatted';
+import {Evento} from "@/shared/model/evento";
+import {EventoMapper} from "@/shared/model/dto/evento-mapper";
+import {EventoProduto} from "@/shared/model/evento-produto";
 
 export abstract class AbstractCrud<T extends { id?: any; version?: number }, F extends BaseFilter> {
+
     // Estado base
     model!: T;
     filter!: F;
@@ -16,7 +20,7 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
 
     // Mensagens/erros
     errorsVisible = false;
-    errorMessages: string[] = [];
+    errorMessages: any[] = [];
     registryUnlocked = true;
     totalRecords = 0;
 
@@ -24,6 +28,7 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     refreshModel = new Subject<void>();
     filterSubject = new Subject<F>();
     listGridSelectionSubject = new Subject<T | T[]>();
+    messageToastSubject = new Subject<any[]>();
 
     protected storage: Storage = sessionStorage;
 
@@ -150,7 +155,7 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     }
 
     // Permite ao componente chamar abertura de linha de forma uniforme e com suporte a expand
-    public onRowOpen(row: T): void {
+    onRowOpen(row: T): void {
         const id = row && (row as any).id;
         if (id != null) {
             this.port.getById(id, this.getExpandParam()).subscribe({
@@ -175,7 +180,7 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
         }
     }
 
-    // Concorrência otimista: stub (JPA @Version no back já garante)
+    // Substitua (overload) este metodo caso precise checar alguma coisa antes, coisas como, bloquear se um cliente nao puder editar/ver
     protected verifyAndLockRegistry(m: T): Observable<T> {
         return of(m);
     }
@@ -245,8 +250,42 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
 
     protected normalizeError(e: any): string {
         // Prioriza mensagem do backend
-        const beMsg = e?.error?.message || e?.error?.error;
-        if (beMsg) return beMsg;
+        const backendMessage = e?.error?.message || e?.error?.error;
+        const errors = e?.error?.errors;
+
+        // 🎯 Caso ideal: erro estruturado vindo do backend
+        if (backendMessage && Array.isArray(errors) && errors.length > 0) {
+            const lines: string[] = [];
+
+            lines.push(backendMessage);
+
+            const limit = Math.min(errors.length, 3);
+
+            for (let i = 0; i < limit; i++) {
+                const field = errors[i]?.field ?? 'campo';
+                const msg =
+                    errors[i]?.error ||
+                    errors[i]?.message ||
+                    'inválido';
+
+                lines.push(`${field}: ${msg}`);
+            }
+
+            if (errors.length > 3) {
+                lines.push('continua..');
+            }
+
+            // emite mensagens para messageToast
+            this.messageToastShow(lines);
+
+            return lines.join('\n');
+        }
+
+        // 🔹 Apenas mensagem do backend
+        if (backendMessage) {
+            return backendMessage;
+        }
+
         // Trata por status
         const status = e?.status;
         if (status === 0) return 'Falha de conexão. Verifique sua rede e tente novamente.';
@@ -287,6 +326,10 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     public disableExpand(): void {
         this.useExpand = false;
         this.expandFields = [];
+    }
+
+    public messageToastShow(erros: any[] | any){
+        this.messageToastSubject.next(erros)
     }
 
 }

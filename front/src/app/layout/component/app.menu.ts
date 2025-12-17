@@ -53,6 +53,7 @@ export class AppMenu {
             // Evento e Cliente para ADMIN e CLIENTE
             cadastrosItems.push(
                 { label: 'Eventos', icon: 'pi pi-fw pi-sparkles', routerLink: ['/evento'] },
+                { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
                 { label: 'Cliente', icon: 'pi pi-fw pi-users', routerLink: ['/cliente'] },
             );
         }
@@ -61,7 +62,6 @@ export class AppMenu {
             // Apenas ADMIN vê os demais cadastros
             cadastrosItems.push(
                 { label: 'Usuário', icon: 'pi pi-fw pi-user', routerLink: ['/usuario'] },
-                { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
                 { label: 'Produto', icon: 'pi pi-fw pi-box', routerLink: ['/produto'] },
                 { label: 'Imagem', icon: 'pi pi-fw pi-image', routerLink: ['/imagem'] },
                 { label: 'Cor', icon: 'pi pi-fw pi-palette', routerLink: ['/cor'] },

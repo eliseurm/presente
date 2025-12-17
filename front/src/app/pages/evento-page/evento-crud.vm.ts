@@ -1,159 +1,141 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AbstractCrud } from '@/shared/crud/abstract.crud';
-import { Evento } from '@/shared/model/evento';
-import { EventoFilter } from '@/shared/model/filter/evento-filter';
-import { EventoService } from '@/services/evento.service';
-import { Observable } from 'rxjs';
-import { StatusEnum } from '@/shared/model/enum/status.enum';
+import {Injectable} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {AbstractCrud} from '@/shared/crud/abstract.crud';
+import {Evento} from '@/shared/model/evento';
+import {EventoFilter} from '@/shared/model/filter/evento-filter';
+import {EventoService} from '@/services/evento.service';
+import {map, Observable} from 'rxjs';
+import {StatusEnum} from '@/shared/model/enum/status.enum';
 import {EventoDTO} from "@/shared/model/dto/evento-dto";
+import {PageResponse} from "@/shared/model/page-response";
+import {EventoMapper} from "@/shared/model/dto/evento-mapper";
+import {catchError, filter, tap} from "rxjs/operators";
+import {Mode} from "@/shared/crud/crud.mode";
+import {Cliente} from "@/shared/model/cliente";
 
 @Injectable()
-export class EventoCrudVM extends AbstractCrud<EventoDTO, EventoFilter> {
-  constructor(
-    port: EventoService,
-    route: ActivatedRoute,
-    router: Router,
-  ) {
-    super(port, route, router);
-    this.model = this.newModel();
-    this.filter = this.newFilter();
-  }
-
-  // Evita que a listagem inicial dispare sem clienteId (pois CLIENTE precisa do escopo)
-  // Mantemos o carregamento por ID quando a rota possuir :id
-  override init(): void {
-    this.newModelIfNull();
-    this.newFilterIfNull();
-    this.loadFromStorage();
-    const id = this.route?.snapshot.paramMap.get('id');
-    if (id) {
-      this.onIdParam(id);
-    }
-    // Caso não haja :id, não chamamos doFilter automaticamente aqui.
-    // A tela (EventoPage) chamará doFilter após selecionar/definir clienteId.
-  }
-
-  protected newModel(): EventoDTO {
-      return new EventoDTO();
-    // return {
-    //   id: undefined,
-    //   nome: '',
-    //   descricao: '',
-    //   cliente: undefined,
-    //   status: undefined,
-    //   anotacoes: '',
-    //   inicio: undefined,
-    //   fimPrevisto: undefined,
-    //   fim: undefined,
-    //   pessoas: [],
-    //   produtos: [],
-    //   version: undefined,
-    // };
-  }
-
-  protected newFilter(): EventoFilter {
-    return new EventoFilter();
-  }
-
-  override canDoSave(): boolean {
-    const errors: string[] = [];
-
-    const nomeOk = !!(this.model?.nome && String(this.model.nome).trim().length > 0);
-    if (!nomeOk) errors.push('Informe o nome do evento.');
-
-    const statusOk = !!this.model?.status;
-    if (!statusOk) errors.push('Informe o status do evento.');
-
-    const clienteId = this.getClienteId();
-    const clienteOk = !!clienteId;
-    if (!clienteOk) errors.push('Selecione o cliente.');
-
-    // Datas passam a ser opcionais: não validar como obrigatórias
-
-    this.errorMessages = errors;
-    this.errorsVisible = errors.length > 0;
-    return errors.length === 0;
-  }
-
-  // Normaliza payload antes de salvar (status enum e cliente id)
-  override doSave(): Observable<EventoDTO> {
-    const payload: any = { ...this.model };
-    // status: enviar a KEY do enum
-    payload.status = this.toStatusKey(payload.status);
-    // cliente: enviar apenas o id
-    const clienteId = this.getClienteId();
-    payload.cliente = clienteId ? { id: clienteId } : null;
-
-    // Normaliza datas: string vazia/undefined -> null; Date -> 'YYYY-MM-DDTHH:mm' (horário local)
-    const fixDate = (v: any) => {
-      if (v === '' || v === undefined) return null;
-      if (v instanceof Date) return this.toLocalMinuteString(v);
-      return v;
-    };
-    payload.inicio = fixDate(payload.inicio);
-    payload.fimPrevisto = fixDate(payload.fimPrevisto);
-    payload.fim = fixDate(payload.fim);
-
-    // pessoas: enviar apenas { pessoa: {id}, status: KEY }
-    if (Array.isArray(payload.pessoas)) {
-      payload.pessoas = payload.pessoas
-        .filter((ep: any) => ep && (ep.pessoa != null))
-        .map((ep: any) => {
-          const pessoaId = typeof ep.pessoa === 'object' ? ep.pessoa?.id : ep.pessoa;
-          return {
-            pessoa: pessoaId ? { id: pessoaId } : null,
-            status: this.toStatusKey(ep.status)
-          };
-        });
+export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
+    constructor(
+        port: EventoService,
+        route: ActivatedRoute,
+        router: Router,
+    ) {
+        super(port, route, router);
+        this.model = this.newModel();
+        this.filter = this.newFilter();
     }
 
-    // produtos: enviar apenas { produto: {id}, status: KEY }
-    if (Array.isArray(payload.produtos)) {
-      payload.produtos = payload.produtos
-        .filter((pr: any) => pr && (pr.produto != null))
-        .map((pr: any) => {
-          const produtoId = typeof pr.produto === 'object' ? pr.produto?.id : pr.produto;
-          return {
-            produto: produtoId ? { id: produtoId } : null,
-            status: this.toStatusKey(pr.status)
-          };
-        });
-    }
-    this.model = payload;
-    return super.doSave();
-  }
 
-  private toStatusKey(value: any): string | undefined {
-    if (!value) return undefined;
-    if (typeof value === 'string') {
-      const encontrado = (Object.values(StatusEnum) as any[])
-        .find(v => v.key === value) ||
-        (Object.values(StatusEnum) as any[]).find(v => (v.descricao || '').toLowerCase() === value.toLowerCase());
-      return encontrado?.key;
+    protected newModel(): Evento {
+        return new Evento();
     }
-    if (typeof value === 'object') {
-      return value.key ?? undefined;
+
+    protected newFilter(): EventoFilter {
+        return new EventoFilter();
     }
-    return undefined;
-  }
 
-  private getClienteId(): number | undefined {
-    // const c: any = this.model?.cliente;
-    // if (!c) return undefined;
-    // if (typeof c === 'object') return c.id ?? undefined;
-    // if (typeof c === 'number') return c;
-    return this.model.clienteId;
-  }
+    // Este metodo foi sobreposto porque o back retorna um EventoDTO e aqui eu reverto para Evento
+    override doFilter(): Observable<PageResponse<Evento>> {
+        // aplica expand opcionalmente sem poluir o filtro persistido
+        const filtroComExpand = this.attachExpandToFilterIfNeeded();
+        return this.port.listar(filtroComExpand).pipe(
+            map((page) => {
+                const eventos: Evento[] = (page.content as EventoDTO[]) // 1. Garante que é EventoDTO[]
+                    .map(EventoMapper.fromDTO)                          // 2. Transforma cada EventoDTO em Evento | undefined
+                    .filter((e): e is Evento => !!e);   // 3. Filtra os undefined e garante o tipo Evento[]
+                return {
+                    ...page,
+                    content: eventos
+                } as PageResponse<any>; // Cast para lidar com o tipo genérico T
+            }),
+            tap((page) => {
+                this.dataSource = page.content;
+                this.totalRecords = page.totalElements;
+                this.saveToStorage();
+            }),
+            catchError((err) => this.handleError<PageResponse<Evento>>(err, 'Falha ao carregar lista'))
+        );
+    }
 
-  // Converte Date para string local no padrão 'YYYY-MM-DDTHH:mm' (sem fuso/segundos)
-  private toLocalMinuteString(d: Date): string {
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const year = d.getFullYear();
-    const month = pad(d.getMonth() + 1);
-    const day = pad(d.getDate());
-    const hour = pad(d.getHours());
-    const minute = pad(d.getMinutes());
-    return `${year}-${month}-${day}T${hour}:${minute}`;
-  }
+    override onRowOpen(row: Evento): void {
+        // aqui vou fazer diferente do abstract que vai no back, vou tentar aproveitar a informacao que ja esta aqui no row
+        this.model = row as Evento;
+        this.mode = Mode.Edit;
+        this.refreshModel.next();
+    }
+
+    override canDoSave(): boolean {
+        const errors: string[] = [];
+
+        const nomeOk = !!(this.model?.nome && String(this.model.nome).trim().length > 0);
+        if (!nomeOk) errors.push('Informe o nome do evento.');
+
+        const statusOk = !!this.model?.status;
+        if (!statusOk) errors.push('Informe o status do evento.');
+
+        const clienteId = this.getClienteId();
+        const clienteOk = !!clienteId;
+        if (!clienteOk) errors.push('Selecione o cliente.');
+
+        // Datas passam a ser opcionais: não validar como obrigatórias
+
+        this.errorMessages = errors;
+        this.errorsVisible = errors.length > 0;
+        return errors.length === 0;
+    }
+
+    // Normaliza payload antes de salvar (status enum e cliente id)
+    override doSave(): Observable<Evento> {
+
+        const eventoDTO = EventoMapper.toDTO(this.model);
+
+        return (this.port.salvar(eventoDTO as Evento) as Observable<EventoDTO>).pipe(
+            map((savedDTO: EventoDTO) => {
+                // Mapeia o DTO retornado pela API para o seu modelo local (Evento)
+                const eventoModel = EventoMapper.fromDTO(savedDTO);
+                if (!eventoModel) {
+                    throw new Error('Falha crítica de mapeamento: DTO retornado é inválido.');
+                }
+                return eventoModel;
+            }),
+            tap((saved) => {
+                this.model = saved;
+                this.onSaveSuccess();
+            }),
+            catchError((err) => this.handleError<Evento>(err, 'Falha ao salvar registro'))
+        );
+    }
+
+    private toStatusKey(value: any): string | undefined {
+        if (!value) return undefined;
+        if (typeof value === 'string') {
+            const encontrado = (Object.values(StatusEnum) as any[])
+                    .find(v => v.key === value) ||
+                (Object.values(StatusEnum) as any[]).find(v => (v.descricao || '').toLowerCase() === value.toLowerCase());
+            return encontrado?.key;
+        }
+        if (typeof value === 'object') {
+            return value.key ?? undefined;
+        }
+        return undefined;
+    }
+
+    private getClienteId(): number | undefined {
+        const c: any = this.model?.cliente;
+        if (!c) return undefined;
+        if (typeof c === 'object') return c.id ?? undefined;
+        if (typeof c === 'number') return c;
+        return undefined;
+    }
+
+    // Converte Date para string local no padrão 'YYYY-MM-DDTHH:mm' (sem fuso/segundos)
+    private toLocalMinuteString(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const year = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+        const hour = pad(d.getHours());
+        const minute = pad(d.getMinutes());
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
 }

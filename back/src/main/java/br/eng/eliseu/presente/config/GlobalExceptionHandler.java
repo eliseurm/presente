@@ -1,5 +1,10 @@
 package br.eng.eliseu.presente.config;
 
+import br.eng.eliseu.presente.model.config.ApiFieldError;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,10 +14,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Autowired ConstraintViolationResolver  constraintViolationResolver;
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
@@ -31,13 +34,34 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
+
+        List<Map<String, String>> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
                 .map(this::toError)
                 .collect(Collectors.toList());
+
+        int total = errors.size();
+
+        // Pega no máximo os 3 primeiros
+        List<Map<String, String>> firstErrors = errors.stream()
+                .limit(3)
+                .collect(Collectors.toList());
+
+        // Monta mensagem resumida
+        String resumo = firstErrors.stream()
+                .map(e -> e.get("field") + ": " + e.get("error"))
+                .collect(Collectors.joining("; "));
+
+        if (total > 3) {
+            resumo += " (3 de " + total + ")";
+        }
+
         Map<String, Object> body = new HashMap<>();
         body.put("code", "BAD_REQUEST");
-        body.put("message", "Erro de validação");
-        body.put("errors", errors);
+        body.put("message", resumo);
+        body.put("errors", errors); // mantém todos os erros
+
         return ResponseEntity.badRequest().body(body);
     }
 
@@ -62,10 +86,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+    public ResponseEntity<?> handleDataIntegrity(DataIntegrityViolationException ex) {
+
+        List<ApiFieldError> errors = constraintViolationResolver.resolve(ex);
+
+        if (errors.isEmpty()) {
+            errors = List.of(new ApiFieldError("global", "Violação de integridade"));
+        }
+
         Map<String, Object> body = new HashMap<>();
-        body.put("code", "CONFLICT");
+        body.put("code", "DUPLICATE_KEY");
         body.put("message", "Violação de integridade de dados");
+        body.put("errors", errors);
+
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
