@@ -153,6 +153,7 @@
                 <p-tabpanel value="1">
                     <div class="flex items-center gap-2 mb-2">
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
+                        <button pButton type="button" label="Adicionar" icon="pi pi-plus" class="p-button-success" (click)="onOpenAddPessoas()"></button>
                     </div>
 
                     <e-data-grid #gridPessoas
@@ -166,7 +167,7 @@
 
                         <eo-editing
                             mode="popup"
-                            [allowAdding]="true"
+                            [allowAdding]="false"
                             [allowUpdating]="true"
                             [allowDeleting]="true"
                             [confirmDelete]="true">
@@ -239,8 +240,7 @@
 
                         <ng-template eTemplate="pessoaEditCellTemplate" let-data="data">
                             <p-autoComplete class="w-full"
-                                            [ngModel]="data"
-                                            (ngModelChange)="setPessoaRow($event)"
+                                            [ngModel]="data._pessoaObj"
                                             [ngModelOptions]="{standalone:true}"
                                             [suggestions]="pessoasSugestoes"
                                             (completeMethod)="searchPessoas($event)"
@@ -263,8 +263,8 @@
                         <ng-template eTemplate="statusEditCellTemplate" let-data="data">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
-                                         [ngModel]="data"
-                                         (ngModelChange)="$event"
+                                         [ngModel]="data.status"
+                                         (ngModelChange)="data.status = $event"
                                          [ngModelOptions]="{standalone:true}"
                             ></enum-select>
                         </ng-template>
@@ -306,6 +306,48 @@
                         </eo-somatoria>
 
                     </e-data-grid>
+
+                    <!-- Popup custom de Adição de Pessoas -->
+                    <p-dialog [(visible)]="addPessoasDialogVisible" [modal]="true" [dismissableMask]="false" [closable]="true"
+                              header="Adicionar Pessoas" [style]="{width: '900px'}" [breakpoints]="{'960px':'95vw','640px':'95vw'}">
+                        <!-- Layout responsivo: 1 coluna no mobile, 2 colunas no desktop -->
+                        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Lado esquerdo: Select com filtro e múltipla seleção -->
+                            <div class="flex-1 md:max-w-[500px] md:w-[500px]">
+                                <label class="block mb-2">Pessoas disponíveis</label>
+                                <p-listbox class="w-full"
+                                           [options]="pessoasDisponiveis"
+                                           optionLabel="nome"
+                                           [filter]="true"
+                                           [multiple]="true"
+                                           [checkbox]="true"
+                                           [metaKeySelection]="false"
+                                           [(ngModel)]="pessoasSelecionadas"
+                                           name="pessoasSelecionadas">
+                                </p-listbox>
+                                <small class="opacity-70">Somente pessoas que ainda não estão na lista do evento são exibidas.</small>
+                            </div>
+
+                            <!-- Lado direito: Enum de Status -->
+                            <div class="flex flex-col gap-2 md:min-w-[220px]">
+                                <label class="block">Status</label>
+                                <enum-select class="w-full"
+                                             [enumObject]="statusEnumType"
+                                             [(ngModel)]="statusSelecionado"
+                                             name="statusSelecionado"
+                                ></enum-select>
+                            </div>
+                        </div>
+
+                        <ng-template pTemplate="footer">
+                            <div class="flex w-full gap-2 justify-end flex-col sm:flex-row">
+                                <button pButton type="button" label="Cancelar" class="p-button-text" (click)="onCancelAddPessoas()"></button>
+                                <button pButton type="button" label="Adicionar Selecionados" icon="pi pi-check" class="p-button-success"
+                                        [disabled]="pessoasSelecionadas.length === 0 || !statusSelecionado"
+                                        (click)="onConfirmAddPessoas()"></button>
+                            </div>
+                        </ng-template>
+                    </p-dialog>
 
                 </p-tabpanel>
 

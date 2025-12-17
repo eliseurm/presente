@@ -12,6 +12,7 @@ import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DialogModule} from 'primeng/dialog';
 import {TextareaModule} from 'primeng/textarea';
 import {TableModule} from 'primeng/table';
+import { ListboxModule } from 'primeng/listbox';
 
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {FilterField} from '@/shared/components/crud-filter/filter-field';
@@ -77,6 +78,7 @@ import {EventoDTO} from "@/shared/model/dto/evento-dto";
         EiValidationRuleComponent,
         ETemplateDirective,
         AutoCompleteModule,
+        ListboxModule,
         EoSomatoriaComponent,
         EiTotalItemComponent
     ],
@@ -106,6 +108,13 @@ export class EventoPageComponent implements OnInit {
     pessoaEscolhaLoading = false;
     pessoaUltimaEscolha: any = null;
     pessoaHistorico: EventoEscolhaDTO[] = [];
+
+    // ======= Popup custom de Adição de Pessoas =======
+    addPessoasDialogVisible = false;
+    pessoasDisponiveis: Pessoa[] = [];
+    pessoasSelecionadas: Pessoa[] = [];
+    statusSelecionado: any = null;
+    carregandoPessoasDisponiveis = false;
 
     filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -145,6 +154,85 @@ export class EventoPageComponent implements OnInit {
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
             }
         });
+    }
+
+    // ======= Popup custom: adicionar pessoas =======
+    onOpenAddPessoas() {
+        // Limpa seleção anterior
+        this.pessoasSelecionadas = [];
+        // Tenta inferir cliente atual (do filtro ou do modelo)
+        let clienteId: number | undefined = (this.vm.filter as any)?.clienteId;
+        const mc = (this.vm.model as any)?.cliente;
+        if (!clienteId && mc) {
+            if (typeof mc === 'object') clienteId = mc.id ?? undefined;
+            if (typeof mc === 'number') clienteId = mc;
+        }
+        if (!clienteId) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione um Cliente antes de adicionar pessoas.'});
+            return;
+        }
+        this.carregandoPessoasDisponiveis = true;
+        this.pessoaService.lookup(undefined, clienteId).subscribe({
+            next: (list) => {
+                const jaIds = new Set((this.vm.model?.pessoas || []).map((p:any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
+                this.pessoasDisponiveis = (list || []).filter(p => !jaIds.has(p.id));
+                this.carregandoPessoasDisponiveis = false;
+                this.addPessoasDialogVisible = true;
+            },
+            error: _ => {
+                this.pessoasDisponiveis = [];
+                this.carregandoPessoasDisponiveis = false;
+                this.messageService.add({severity:'error', summary:'Erro', detail:'Não foi possível carregar as pessoas disponíveis.'});
+            }
+        });
+    }
+
+    onCancelAddPessoas() {
+        this.addPessoasDialogVisible = false;
+        this.pessoasSelecionadas = [];
+    }
+
+    onConfirmAddPessoas() {
+        const selecionados = this.pessoasSelecionadas || [];
+        if (!selecionados.length) return;
+        // Normaliza status para string do enum
+        let status = this.statusSelecionado;
+        if (status && typeof status === 'object') {
+            status = status.key ?? status.name ?? status;
+        }
+        if (!status) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione o Status.'});
+            return;
+        }
+        const pessoasArr = this.ensurePessoasArray();
+        const jaIds = new Set((pessoasArr || []).map((p:any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
+        const adicionados: any[] = [];
+        for (const pes of selecionados) {
+            if (!pes?.id || jaIds.has(pes.id)) continue;
+            const row: any = {
+                pessoa: pes, // manter objeto para exibição na grid
+                status: status
+            };
+            pessoasArr.push(row);
+            adicionados.push(pes.id);
+        }
+        // Remove adicionados da lista disponível
+        if (adicionados.length) {
+            const ids = new Set(adicionados);
+            this.pessoasDisponiveis = this.pessoasDisponiveis.filter(p => !ids.has(p.id));
+            this.messageService.add({severity:'success', summary:'OK', detail:`${adicionados.length} pessoa(s) adicionada(s) (pendente de Gravar).`});
+        }
+        // Limpa seleção e fecha
+        this.pessoasSelecionadas = [];
+        this.addPessoasDialogVisible = false;
+    }
+
+    private ensurePessoasArray(): any[] {
+        const model: any = this.vm.model as any;
+        if (!model.pessoas) {
+            model.pessoas = [];
+        }
+        return model.pessoas as any[];
     }
 
     private carregarOpcoes(): void {
@@ -457,10 +545,31 @@ export class EventoPageComponent implements OnInit {
         // Define a aba inicial do popup como 'geral' (tabs headless)
         data._tab = 'geral';
 
+        // Hidrata o AutoComplete com a pessoa atual da linha
+        try {
+            const id = typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa);
+            if (!id) {
+                data._pessoaObj = null;
+                data.pessoa = null;
+            } else {
+                // tenta reaproveitar sugestão em cache ou buscar do backend
+                const cached = this.pessoasSugestoes.find(p => p.id === id);
+                if (cached) {
+                    data._pessoaObj = cached;
+                    data.pessoa = cached.id;
+                } else {
+                    this.pessoaService.getById(id).subscribe({
+                        next: (p) => { data._pessoaObj = p; data.pessoa = p?.id; },
+                        error: () => { data._pessoaObj = { id, nome: data?.pessoaNome || String(id) } as any; data.pessoa = id; }
+                    });
+                }
+            }
+        } catch {}
+
         // Carrega última escolha e histórico da pessoa nesta aba
         try {
             const eventoId = this.vm.model?.id;
-            const pessoaId = data?.pessoaId;
+            const pessoaId = (typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa));
             if (!eventoId || !pessoaId) return;
             this.pessoaEscolhaLoading = true;
             this.pessoaUltimaEscolha = null as any;
