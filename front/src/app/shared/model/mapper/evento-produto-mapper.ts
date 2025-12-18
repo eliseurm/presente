@@ -1,7 +1,9 @@
-import { EventoProdutoDTO } from './evento-produto-dto'; // Arquivo evento-produto-dto.ts
+import { EventoProdutoDTO } from '../dto/evento-produto-dto'; // Arquivo evento-produto-dto.ts
 import { StatusEnum } from "@/shared/model/enum/status.enum";
 import {EventoProduto} from "@/shared/model/evento-produto";
-import {Produto} from "@/shared/model/produto"; // Assumindo o caminho
+import {Produto} from "@/shared/model/produto";
+import {EventoPessoaDTO} from "@/shared/model/dto/evento-pessoa-dto";
+import {EventoPessoa} from "@/shared/model/evento-pessoa"; // Assumindo o caminho
 
 export class EventoProdutoMapper {
 
@@ -14,7 +16,7 @@ export class EventoProdutoMapper {
         if (!dto) return undefined;
 
         const produto = new Produto();
-        produto.id = dto.id;
+        produto.id = dto.produtoId;
         produto.nome = dto.produtoNome;
 
         return {
@@ -38,9 +40,22 @@ export class EventoProdutoMapper {
         const produtoNome = model.produto && 'nome' in model.produto ? (model.produto as any).nome : undefined;
 
         return {
+            id: model.id,
             produtoId: produtoId,
             produtoNome: produtoNome,
             status: model.status as StatusEnum,
         };
     }
+
+    static toDtoList(entities: any[]): EventoProdutoDTO[] {
+        if (!entities) return [];
+        return entities.map(entity => this.toDTO(entity))
+            .filter(dto => !!dto) as EventoProdutoDTO[];
+    }
+
+    static listFromDto(dtos: EventoProdutoDTO[]): EventoProduto[] {
+        if (!dtos) return [];
+        return dtos.map(dto => this.fromDTO(dto)).filter(dto => !!dto) as EventoProduto[];
+    }
+
 }

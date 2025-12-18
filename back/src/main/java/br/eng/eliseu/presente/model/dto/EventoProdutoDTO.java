@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EventoProdutoDTO {
 
+    private Long id;
+
     private Long produtoId;
     private String produtoNome;
 

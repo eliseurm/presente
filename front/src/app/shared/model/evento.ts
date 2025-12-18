@@ -17,9 +17,9 @@ export class Evento {
     fimPrevisto?: string | Date;
     fim?: string | Date;
 
-    pessoas?: EventoPessoa[];
-    produtos?: EventoProduto[];
-    escolhas?: EventoEscolha[];
+    eventoPessoas?: EventoPessoa[];
+    eventoProdutos?: EventoProduto[];
+    eventoEscolhas?: EventoEscolha[];
 
     // Concorrência otimista
     version?: number;

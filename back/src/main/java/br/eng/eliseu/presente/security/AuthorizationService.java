@@ -91,7 +91,7 @@ public class AuthorizationService {
         if (evento.getFimPrevisto() != null && !evento.getFimPrevisto().isAfter(now)) return false;
 
         // 3) Status do vínculo da pessoa no evento deve estar ATIVO (ou nulo tratado como ativo)
-        EventoPessoa vinculo = Optional.ofNullable(evento.getPessoas())
+        EventoPessoa vinculo = Optional.ofNullable(evento.getEventoPessoas())
                 .orElseGet(java.util.List::of)
                 .stream()
                 .filter(ep -> ep != null && ep.getPessoa() != null && Objects.equals(ep.getPessoa().getId(), pessoaId))

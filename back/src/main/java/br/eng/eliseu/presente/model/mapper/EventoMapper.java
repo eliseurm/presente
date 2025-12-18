@@ -48,7 +48,7 @@ public class EventoMapper {
                 .collect(Collectors.toSet());
 
         // Mapeamento de Pessoas (usando a lógica de negócio acima)
-        List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getPessoas()).orElseGet(List::of).stream()
+        List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
                 .filter(Objects::nonNull)
                 .map(ep -> EventoPessoaDTO.builder()
                         .pessoaId(ep.getPessoa() != null ? ep.getPessoa().getId() : null)
@@ -60,7 +60,7 @@ public class EventoMapper {
                 .collect(Collectors.toList());
 
         // Mapeamento de Produtos
-        List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getProdutos()).orElseGet(Set::of).stream()
+        List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
                 .map(evPr -> EventoProdutoDTO.builder()
                         .produtoId(evPr.getProduto() != null ? evPr.getProduto().getId() : null)
@@ -81,8 +81,8 @@ public class EventoMapper {
                 .inicio(e.getInicio())
                 .fimPrevisto(e.getFimPrevisto())
                 .fim(e.getFim())
-                .pessoas(pessoasDTO)
-                .produtos(produtosDTO)
+                .eventoPessoas(pessoasDTO)
+                .eventoProdutos(produtosDTO)
                 .version(e.getVersion())
                 .build();
     }
@@ -111,13 +111,14 @@ public class EventoMapper {
         Evento entidade = builder.build();
 
         // Pessoas (requer acesso ao pessoaRepository)
-        if (dto.getPessoas() != null) {
+        if (dto.getEventoPessoas() != null) {
             List<EventoPessoa> pessoas = new ArrayList<>();
-            for (EventoPessoaDTO pDto : dto.getPessoas()) {
+            for (EventoPessoaDTO pDto : dto.getEventoPessoas()) {
                 if (pDto == null || pDto.getPessoaId() == null) continue;
                 Pessoa pessoa = pessoaRepository.findById(pDto.getPessoaId()).orElse(null);
                 if (pessoa == null) continue;
                 EventoPessoa ep = EventoPessoa.builder()
+                        .id(pDto.getId())
                         .evento(entidade)
                         .pessoa(pessoa)
                         .status(pDto.getStatus())
@@ -125,24 +126,25 @@ public class EventoMapper {
                         .build();
                 pessoas.add(ep);
             }
-            entidade.setPessoas(pessoas);
+            entidade.setEventoPessoas(pessoas);
         }
 
         // Produtos (requer acesso ao produtoRepository)
-        if (dto.getProdutos() != null) {
+        if (dto.getEventoProdutos() != null) {
             Set<EventoProduto> set = new HashSet<>();
-            for (EventoProdutoDTO prDto : dto.getProdutos()) {
+            for (EventoProdutoDTO prDto : dto.getEventoProdutos()) {
                 if (prDto == null || prDto.getProdutoId() == null) continue;
                 Produto pr = produtoRepository.findById(prDto.getProdutoId()).orElse(null);
                 if (pr == null) continue;
                 EventoProduto evp = EventoProduto.builder()
+                        .id(prDto.getId())
                         .evento(entidade)
                         .produto(pr)
                         .status(prDto.getStatus())
                         .build();
                 set.add(evp);
             }
-            entidade.setProdutos(set);
+            entidade.setEventoProdutos(set);
         }
 
         return entidade;

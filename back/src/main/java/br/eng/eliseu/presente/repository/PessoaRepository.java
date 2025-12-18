@@ -22,7 +22,7 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecif
         where 1=1
         and (:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))
             """)
-    List<Pessoa> lookupAdmin(@Param("q") String q);
+    List<Pessoa> pesquisaAdmin(@Param("q") String q);
 
     // Pessoas vinculadas a eventos de um cliente específico
     @Query("""
@@ -31,5 +31,5 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecif
         and e.cliente.id = :clienteId 
         and (:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))
         """)
-    List<Pessoa> lookupByCliente(@Param("clienteId") Long clienteId, @Param("q") String q);
+    List<Pessoa> pesquisaByCliente(@Param("clienteId") Long clienteId, @Param("q") String q);
 }

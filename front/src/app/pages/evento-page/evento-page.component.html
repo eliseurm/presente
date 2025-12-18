@@ -157,9 +157,9 @@
                     </div>
 
                     <e-data-grid #gridPessoas
-                        [dataSource]="vm.model.pessoas || []"
+                        [dataSource]="vm.model.eventoPessoas || []"
                         [loading]="false"
-                        [summaryDataSource]="vm.model.pessoas || []"
+                        [summaryDataSource]="vm.model.eventoPessoas || []"
                         (onInitNewRow)="onInitNewPessoa($event)"
                         (onEditDialogOpen)="onEditingStartPessoa($event)"
                         (onSaving)="onSavingPessoa($event)"
@@ -187,7 +187,7 @@
                                     <p-tabpanels>
 
                                         <p-tabpanel value="0">
-                                            <ei-item dataField="pessoaNome" label="Nome" editorType="template"></ei-item>
+                                            <ei-item dataField="pessoa" label="Nome" editorType="template"></ei-item>
                                             <ei-item dataField="status" label="Status" editorType="template"></ei-item>
                                         </p-tabpanel>
 
@@ -238,26 +238,22 @@
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
-                        <ng-template eTemplate="pessoaEditCellTemplate" let-data="data">
-                            <p-autoComplete class="w-full"
-                                            [ngModel]="data._pessoaObj"
-                                            [ngModelOptions]="{standalone:true}"
-                                            [suggestions]="pessoasSugestoes"
-                                            (completeMethod)="searchPessoas($event)"
-                                            (onSelect)="onPessoaSelecionada(data, $event)"
-                                            (onClear)="onPessoaLimpar(data)"
-                                            (onBlur)="onPessoaSelecionada(data, { value: data._pessoaObj })"
-                                            optionLabel="nome"
-                                            [dropdown]="true"
-                                            [forceSelection]="true"
-                                            placeholder="Buscar pessoa por nome">
-                                <ng-template pTemplate="item" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                                <ng-template pTemplate="selectedItem" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                            </p-autoComplete>
+                        <ng-template eTemplate="pessoaEditCellTemplate" let-row>
+                            {{ row.pessoa | chaveValorPipe}}
+                            <p-select class="w-full"
+                                      [(ngModel)]="row.pessoa"
+                                      [options]="pessoasSugestoes"
+                                      optionLabel="nome"
+                                      dataKey="id"
+                                      [filter]="true"
+                                      filterBy="nome"
+                                      (onFilter)="searchPessoas($event)"
+                                      [showClear]="true"
+                                      (onClear)="onPessoaLimpar(row.pessoa)"
+                                      [ngModelOptions]="{standalone:true}"
+                                      placeholder="Selecionar pessoa"
+                                      appendTo="body">
+                            </p-select>
                         </ng-template>
 
                         <ng-template eTemplate="statusEditCellTemplate" let-data="data">
@@ -313,10 +309,10 @@
                         <!-- Layout responsivo: 1 coluna no mobile, 2 colunas no desktop -->
                         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Lado esquerdo: Select com filtro e múltipla seleção -->
-                            <div class="flex-1 md:max-w-[500px] md:w-[500px]">
+                            <div class="flex flex-col gap-2 md:min-w-[220px]">
                                 <label class="block mb-2">Pessoas disponíveis</label>
                                 <p-listbox class="w-full"
-                                           [options]="pessoasDisponiveis"
+                                           [options]="pessoasPossiveis"
                                            optionLabel="nome"
                                            [filter]="true"
                                            [multiple]="true"
@@ -353,7 +349,7 @@
 
                 <p-tabpanel value="2">
                     <e-data-grid
-                        [dataSource]="vm.model.produtos || []"
+                        [dataSource]="vm.model.eventoProdutos || []"
                         [loading]="false"
                         (onInitNewRow)="onInitNewProduto($event)"
                         (onEditDialogOpen)="onEditingStartProduto($event)"

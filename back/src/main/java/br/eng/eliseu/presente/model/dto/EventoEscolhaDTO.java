@@ -13,10 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 public class EventoEscolhaDTO {
 
-    // ... (Todos os atributos declarados anteriormente) ...
-
-    // --- Campos de EventoEscolha ---
     private Long id;
+
     private LocalDateTime dataEscolha;
     private LocalDateTime alteradoEm;
     private StatusEnum status;

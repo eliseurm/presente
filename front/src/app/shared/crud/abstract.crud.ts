@@ -7,7 +7,7 @@ import {PageResponse} from '@/shared/model/page-response';
 import {BaseFilter} from '@/shared/model/filter/base-filter';
 import {stringify as flattedStringify, parse as flattedParse} from 'flatted';
 import {Evento} from "@/shared/model/evento";
-import {EventoMapper} from "@/shared/model/dto/evento-mapper";
+import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
 import {EventoProduto} from "@/shared/model/evento-produto";
 
 export abstract class AbstractCrud<T extends { id?: any; version?: number }, F extends BaseFilter> {

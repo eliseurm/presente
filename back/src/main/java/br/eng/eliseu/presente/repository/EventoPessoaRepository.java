@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.repository;
 
+import br.eng.eliseu.presente.model.EventoEscolha;
 import br.eng.eliseu.presente.model.EventoPessoa;
 import br.eng.eliseu.presente.model.StatusEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +18,6 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
     List<EventoPessoa> findByEvento_IdAndNomeMagicNumberIsNotNull(Long eventoId);
 
     Optional<EventoPessoa> findByNomeMagicNumber(String nomeMagicNumber);
+
+    List<EventoPessoa> findByEvento_Id(Long eventoId);
 }

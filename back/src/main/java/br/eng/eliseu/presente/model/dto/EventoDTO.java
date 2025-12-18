@@ -1,6 +1,7 @@
 package br.eng.eliseu.presente.model.dto;
 
 import br.eng.eliseu.presente.model.StatusEnum;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ import java.util.List;
 public class EventoDTO {
 
     private Long id;
+
     private String nome;
     private String descricao;
 
@@ -28,8 +30,12 @@ public class EventoDTO {
     private LocalDateTime fimPrevisto;
     private LocalDateTime fim;
 
-    private List<EventoPessoaDTO> pessoas;
-    private List<EventoProdutoDTO> produtos;
+    // Access.WRITE_ONLY: O campo só pode ser escrito (do Front para o Back). Ele será ignorado quando o Back enviar para o Front.
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private List<EventoPessoaDTO> eventoPessoas;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private List<EventoProdutoDTO> eventoProdutos;
 
     private Long version;
 

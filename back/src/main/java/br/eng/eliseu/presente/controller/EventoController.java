@@ -1,18 +1,24 @@
 package br.eng.eliseu.presente.controller;
 
-import br.eng.eliseu.presente.model.EventoPessoa;
-import br.eng.eliseu.presente.model.EventoProduto;
-import br.eng.eliseu.presente.model.StatusEnum;
-import br.eng.eliseu.presente.model.EventoEscolha;
+import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.dto.EventoDTO;
 import br.eng.eliseu.presente.model.dto.EventoEscolhaDTO;
+import br.eng.eliseu.presente.model.dto.EventoPessoaDTO;
+import br.eng.eliseu.presente.model.dto.EventoProdutoDTO;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
+import br.eng.eliseu.presente.model.mapper.EventoMapper;
+import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
+import br.eng.eliseu.presente.model.mapper.EventoProdutoMapper;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
+import br.eng.eliseu.presente.repository.EventoPessoaRepository;
+import br.eng.eliseu.presente.repository.EventoProdutoRepository;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,8 +33,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventoController {
 
+    @Autowired private EventoMapper eventoMapper;
+    @Autowired private EventoPessoaMapper eventoPessoaMapper;
+    @Autowired private EventoProdutoMapper eventoProdutoMapper;
+
     private final EventoService eventoService;
     private final EventoEscolhaRepository eventoEscolhaRepository;
+    private final EventoPessoaRepository eventoPessoaRepository;
+    private final EventoProdutoRepository eventoProdutoRepository;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or (#filtro != null and #filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
@@ -56,12 +68,12 @@ public class EventoController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<EventoDTO> atualizar(@PathVariable Long id, @RequestBody EventoDTO evento) {
+    public ResponseEntity<EventoDTO> atualizar(@PathVariable Long id, @RequestBody EventoDTO dto) {
         try {
-            EventoDTO atualizado = eventoService.atualizarDTO(id, evento);
-            return ResponseEntity.ok(atualizado);
-        } catch (RuntimeException e) {
-            // Não fazer upsert aqui: comportamento correto é retornar 404 quando não encontrado
+            Evento atualizado = eventoService.atualizarEvento(id, eventoMapper.fromDTO(dto));
+            return ResponseEntity.ok(eventoMapper.toDTO(atualizado));
+        }
+        catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -192,5 +204,31 @@ public class EventoController {
 
         return ResponseEntity.ok(anteriores);
     }
+
+    @GetMapping("/{id}/pessoas/list")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<EventoPessoaDTO>> getEventoPessoa(@PathVariable("id") Long eventoId) {
+
+        List<EventoPessoa> entidade = eventoPessoaRepository.findByEvento_Id(eventoId);
+
+        List<EventoPessoaDTO> dto = eventoPessoaMapper.toDtoList(entidade);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/produtos/list")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<EventoProdutoDTO>> getEventoProduto(@PathVariable("id") Long eventoId) {
+
+        List<EventoProduto> entidade = eventoProdutoRepository.findByEvento_Id(eventoId);
+
+        List<EventoProdutoDTO> dto = eventoProdutoMapper.toDtoList(entidade);
+
+        return ResponseEntity.ok(dto);
+    }
+
+
 
 }

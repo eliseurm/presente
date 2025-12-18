@@ -21,4 +21,8 @@ export class Pessoa {
 
     criadoEm?: string;
     alteradoEm?: string;
+
+    constructor(init?: Partial<Pessoa>) {
+        Object.assign(this, init);
+    }
 }

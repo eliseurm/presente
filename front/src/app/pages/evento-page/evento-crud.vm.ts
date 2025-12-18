@@ -4,27 +4,30 @@ import {AbstractCrud} from '@/shared/crud/abstract.crud';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {EventoService} from '@/services/evento.service';
-import {map, Observable} from 'rxjs';
+import {forkJoin, map, Observable, of, switchMap} from 'rxjs';
 import {StatusEnum} from '@/shared/model/enum/status.enum';
 import {EventoDTO} from "@/shared/model/dto/evento-dto";
 import {PageResponse} from "@/shared/model/page-response";
-import {EventoMapper} from "@/shared/model/dto/evento-mapper";
-import {catchError, filter, tap} from "rxjs/operators";
+import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
+import {catchError, tap} from "rxjs/operators";
 import {Mode} from "@/shared/crud/crud.mode";
-import {Cliente} from "@/shared/model/cliente";
 
 @Injectable()
 export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
+
     constructor(
         port: EventoService,
         route: ActivatedRoute,
-        router: Router,
+        router: Router
     ) {
         super(port, route, router);
         this.model = this.newModel();
         this.filter = this.newFilter();
     }
 
+    protected get eventoService(): EventoService {
+        return this.port as EventoService;
+    }
 
     protected newModel(): Evento {
         return new Evento();
@@ -40,9 +43,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         const filtroComExpand = this.attachExpandToFilterIfNeeded();
         return this.port.listar(filtroComExpand).pipe(
             map((page) => {
-                const eventos: Evento[] = (page.content as EventoDTO[]) // 1. Garante que é EventoDTO[]
-                    .map(EventoMapper.fromDTO)                          // 2. Transforma cada EventoDTO em Evento | undefined
-                    .filter((e): e is Evento => !!e);   // 3. Filtra os undefined e garante o tipo Evento[]
+                const  eventos = EventoMapper.fromDtoList(page.content as EventoDTO[]);
                 return {
                     ...page,
                     content: eventos
@@ -59,9 +60,22 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
 
     override onRowOpen(row: Evento): void {
         // aqui vou fazer diferente do abstract que vai no back, vou tentar aproveitar a informacao que ja esta aqui no row
-        this.model = row as Evento;
         this.mode = Mode.Edit;
-        this.refreshModel.next();
+        this.model = row as Evento;
+
+        // Busca as listas eventoPessoas e eventoProdutos
+        if (this.model?.id != null) {
+            this.preencherDetalhes(this.model).subscribe({
+                next: (modelAtualizado) => {
+                    this.model = modelAtualizado;
+                    this.refreshModel.next();
+                },
+                error: (err) => this.messageToastShow(err)
+            });
+        }
+        else {
+            this.refreshModel.next();
+        }
     }
 
     override canDoSave(): boolean {
@@ -86,23 +100,44 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
 
     // Normaliza payload antes de salvar (status enum e cliente id)
     override doSave(): Observable<Evento> {
-
         const eventoDTO = EventoMapper.toDTO(this.model);
 
         return (this.port.salvar(eventoDTO as Evento) as Observable<EventoDTO>).pipe(
+            // 1. Converte o DTO recebido para o Modelo
             map((savedDTO: EventoDTO) => {
-                // Mapeia o DTO retornado pela API para o seu modelo local (Evento)
                 const eventoModel = EventoMapper.fromDTO(savedDTO);
                 if (!eventoModel) {
                     throw new Error('Falha crítica de mapeamento: DTO retornado é inválido.');
                 }
                 return eventoModel;
             }),
-            tap((saved) => {
-                this.model = saved;
+            tap((modelCompleto) => {
+                // Aqui nem precisa setar o model, porque vai voltar para a tela de list
+                // this.model = modelCompleto;
                 this.onSaveSuccess();
             }),
+            // 4. Tratamento de erro centralizado para ambas as chamadas
             catchError((err) => this.handleError<Evento>(err, 'Falha ao salvar registro'))
+        );
+    }
+
+    private preencherDetalhes(evento: Evento): Observable<Evento> {
+        if (!evento?.id) return of(evento);
+
+        // Se as listas já estiverem preenchidas, não busca novamente
+        if (evento.eventoPessoas && evento.eventoPessoas?.length > 0 && evento.eventoProdutos && evento.eventoProdutos?.length > 0) {
+            return of(evento);
+        }
+
+        return forkJoin({
+            pessoas: this.eventoService.getEventoPessoa(evento.id),
+            produtos: this.eventoService.getEventoProduto(evento.id)
+        }).pipe(
+            map(result => {
+                evento.eventoPessoas = result.pessoas;
+                evento.eventoProdutos = result.produtos;
+                return evento;
+            })
         );
     }
 
@@ -120,7 +155,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         return undefined;
     }
 
-    private getClienteId(): number | undefined {
+    getClienteId(): number | undefined {
         const c: any = this.model?.cliente;
         if (!c) return undefined;
         if (typeof c === 'object') return c.id ?? undefined;

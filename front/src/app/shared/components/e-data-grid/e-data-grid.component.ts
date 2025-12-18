@@ -236,8 +236,8 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         this.messageService.add({
             severity: 'success',
-            summary: 'Sucesso',
-            detail: 'Registro excluído com sucesso!'
+            summary: 'DataGrid',
+            detail: 'Registro retirado com sucesso!'
         });
     }
 
@@ -277,7 +277,7 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         this.messageService.add({
             severity: 'success',
-            summary: 'Sucesso',
+            summary: 'DataGrid',
             detail: `Registro ${this.isNewRow ? 'criado' : 'atualizado'} com sucesso!`
         });
 

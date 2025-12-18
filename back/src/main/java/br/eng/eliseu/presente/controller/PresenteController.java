@@ -158,7 +158,7 @@ public class PresenteController {
         }
 
         // Validar produto pertence ao evento
-        boolean produtoPermitido = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
+        boolean produtoPermitido = Optional.ofNullable(evento.getEventoProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
                 .anyMatch(evProd -> evProd.getProduto() != null && Objects.equals(evProd.getProduto().getId(), req.produtoId()));
         if (!produtoPermitido) {
@@ -213,7 +213,7 @@ public class PresenteController {
 
         // Carrega entidades gerenciadas
         Evento evento = eventoRepository.findByIdExpandedAll(escolha.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento inexistente"));
-        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId()).flatMap(id -> Optional.ofNullable(evento.getPessoas()).orElseGet(java.util.List::of).stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
+        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId()).flatMap(id -> Optional.ofNullable(evento.getEventoPessoas()).orElseGet(java.util.List::of).stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
         Produto produto = produtoRepository.findById(escolha.getProduto().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
         Tamanho tamanho = tamanhoRepository.findById(escolha.getTamanho().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inexistente"));
         Cor cor = corRepository.findById(escolha.getCor().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
@@ -222,7 +222,7 @@ public class PresenteController {
         if (evento.getFimPrevisto() != null && LocalDateTime.now().isAfter(evento.getFimPrevisto())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O tempo para escolha expirou");
         }
-        boolean produtoPermitido = Optional.ofNullable(evento.getProdutos()).orElseGet(Set::of).stream()
+        boolean produtoPermitido = Optional.ofNullable(evento.getEventoProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
                 .anyMatch(evProd -> evProd.getProduto() != null && Objects.equals(evProd.getProduto().getId(), produto.getId()));
         if (!produtoPermitido) {

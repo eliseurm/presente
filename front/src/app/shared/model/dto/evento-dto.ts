@@ -19,8 +19,8 @@ export class EventoDTO {
     fimPrevisto?: Date;
     fim?: Date;
 
-    pessoas?: EventoPessoaDTO[];
-    produtos?: EventoProdutoDTO[];
+    eventoPessoas?: EventoPessoaDTO[];
+    eventoProdutos?: EventoProdutoDTO[];
 
     version?: number | undefined;
 

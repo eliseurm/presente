@@ -3,9 +3,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BaseCrudService } from '../shared/services/base-crud.service';
 import { PessoaFilter } from '../shared/model/filter/pessoa-filter';
-import { Observable } from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {Pessoa} from "@/shared/model/pessoa";
 import { HttpParams } from '@angular/common/http';
+import {PessoaDTO} from "@/shared/model/dto/pessoa-dto";
+import {PessoaMapper} from "@/shared/model/mapper/pessoa-mapper";
 
 @Injectable({
     providedIn: 'root'
@@ -22,11 +24,17 @@ export class PessoaService extends BaseCrudService<Pessoa, PessoaFilter> {
         return this.http.get<Pessoa[]>(`${this.apiUrl}/status/${status}`);
     }
 
-    // Lookup leve de pessoas (ADMIN global; CLIENTE restrito ao(s) seus clientes)
-    lookup(q?: string, clienteId?: number): Observable<Pessoa[]> {
+    // pesquisa leve de pessoas (ADMIN global; CLIENTE restrito ao(s) seus clientes)
+    pessoaPorCliente(clienteId: number, query?: string): Observable<Pessoa[]> {
+
         let params = new HttpParams();
-        if (q && q.trim().length > 0) params = params.set('q', q.trim());
+        if (query && query.trim().length > 0) params = params.set('query', query.trim());
         if (clienteId != null) params = params.set('clienteId', String(clienteId));
-        return this.http.get<Pessoa[]>(`${this.apiUrl}/lookup`, { params });
+
+        return this.http.get<PessoaDTO[]>(`${this.apiUrl}/pesquisa`, { params })
+            .pipe(
+                map((dtos: PessoaDTO[]) => PessoaMapper.listFromDto(dtos))
+            );
+
     }
 }

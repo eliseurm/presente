@@ -1,7 +1,8 @@
-import { EventoPessoaDTO } from './evento-pessoa-dto'; // Arquivo evento-pessoa-dto.ts
+import { EventoPessoaDTO } from '../dto/evento-pessoa-dto'; // Arquivo evento-pessoa-dto.ts
 import { StatusEnum } from "@/shared/model/enum/status.enum";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
-import {Pessoa} from "@/shared/model/pessoa"; // Assumindo o caminho
+import {Pessoa} from "@/shared/model/pessoa";
+import {PessoaDTO} from "@/shared/model/dto/pessoa-dto"; // Assumindo o caminho
 
 export class EventoPessoaMapper {
 
@@ -14,7 +15,7 @@ export class EventoPessoaMapper {
         if (!dto) return undefined;
 
         const pessoa = new Pessoa()
-        pessoa.id = dto.id;
+        pessoa.id = dto.pessoaId;
         pessoa.nome = dto.pessoaNome;
 
         return {
@@ -40,12 +41,24 @@ export class EventoPessoaMapper {
         const pessoaNome = model.pessoa && 'nome' in model.pessoa ? (model.pessoa as any).nome : undefined;
 
         return {
+            id: model.id,
             pessoaId: pessoaId,
             pessoaNome: pessoaNome,
             status: model.status as StatusEnum,
             nomeMagicNumber: model.nomeMagicNumber,
             jaEscolheu: model.jaEscolheu,
         };
+    }
+
+    static toDtoList(entities: any[]): EventoPessoaDTO[] {
+        if (!entities) return [];
+        return entities.map(entity => this.toDTO(entity))
+            .filter(dto => !!dto) as EventoPessoaDTO[];
+    }
+
+    static listFromDto(dtos: EventoPessoaDTO[]): EventoPessoa[] {
+        if (!dtos) return [];
+        return dtos.map(dto => this.fromDTO(dto)).filter(dto => !!dto) as EventoPessoa[];
     }
 
 }
