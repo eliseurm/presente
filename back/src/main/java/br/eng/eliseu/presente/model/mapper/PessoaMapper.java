@@ -2,8 +2,7 @@ package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.Cliente;
-import br.eng.eliseu.presente.model.StatusEnum;
-import br.eng.eliseu.presente.model.dto.PessoaDTO;
+import br.eng.eliseu.presente.model.dto.PessoaDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,10 +14,10 @@ public class PessoaMapper {
     /**
      * Entidade -> DTO
      */
-    public PessoaDTO toDto(Pessoa pessoa) {
+    public PessoaDto toDto(Pessoa pessoa) {
         if (pessoa == null) return null;
 
-        return new PessoaDTO(
+        return new PessoaDto(
                 pessoa.getId(),
                 pessoa.getCliente() != null ? pessoa.getCliente().getId() : null,
                 pessoa.getNome(),
@@ -40,7 +39,7 @@ public class PessoaMapper {
     /**
      * DTO -> Entidade
      */
-    public Pessoa fromDto(PessoaDTO dto) {
+    public Pessoa fromDto(PessoaDto dto) {
         if (dto == null) return null;
 
         Pessoa pessoa = new Pessoa();
@@ -73,7 +72,7 @@ public class PessoaMapper {
     /**
      * Lista de Entidades -> Lista de DTOs
      */
-    public List<PessoaDTO> toDtoList(List<Pessoa> pessoas) {
+    public List<PessoaDto> toDtoList(List<Pessoa> pessoas) {
         if (pessoas == null) return List.of();
         return pessoas.stream()
                 .map(this::toDto)

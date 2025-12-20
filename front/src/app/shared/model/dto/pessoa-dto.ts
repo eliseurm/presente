@@ -2,7 +2,7 @@
 
 import {StatusEnum} from "@/shared/model/enum/status.enum";
 
-export interface PessoaDTO {
+export interface PessoaDto {
 
     id?: number;
     clienteId?: number;

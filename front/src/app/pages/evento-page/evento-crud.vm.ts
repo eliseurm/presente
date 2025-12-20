@@ -6,7 +6,7 @@ import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {EventoService} from '@/services/evento.service';
 import {forkJoin, map, Observable, of, switchMap} from 'rxjs';
 import {StatusEnum} from '@/shared/model/enum/status.enum';
-import {EventoDTO} from "@/shared/model/dto/evento-dto";
+import {EventoDto} from "@/shared/model/dto/evento-dto";
 import {PageResponse} from "@/shared/model/page-response";
 import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
 import {catchError, tap} from "rxjs/operators";
@@ -43,7 +43,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         const filtroComExpand = this.attachExpandToFilterIfNeeded();
         return this.port.listar(filtroComExpand).pipe(
             map((page) => {
-                const  eventos = EventoMapper.fromDtoList(page.content as EventoDTO[]);
+                const  eventos = EventoMapper.fromDtoList(page.content as EventoDto[]);
                 return {
                     ...page,
                     content: eventos
@@ -102,9 +102,9 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
     override doSave(): Observable<Evento> {
         const eventoDTO = EventoMapper.toDTO(this.model);
 
-        return (this.port.salvar(eventoDTO as Evento) as Observable<EventoDTO>).pipe(
+        return (this.port.salvar(eventoDTO as Evento) as Observable<EventoDto>).pipe(
             // 1. Converte o DTO recebido para o Modelo
-            map((savedDTO: EventoDTO) => {
+            map((savedDTO: EventoDto) => {
                 const eventoModel = EventoMapper.fromDTO(savedDTO);
                 if (!eventoModel) {
                     throw new Error('Falha crítica de mapeamento: DTO retornado é inválido.');
@@ -121,7 +121,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         );
     }
 
-    private preencherDetalhes(evento: Evento): Observable<Evento> {
+    preencherDetalhes(evento: Evento): Observable<Evento> {
         if (!evento?.id) return of(evento);
 
         // Se as listas já estiverem preenchidas, não busca novamente

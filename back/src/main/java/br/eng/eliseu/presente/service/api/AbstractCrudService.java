@@ -61,9 +61,10 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
                 sort = sort.and(Sort.by(direction, field));
             }
 
-        } else {
+        }
+        else {
             // Default caso nenhum sort seja enviado
-            sort = Sort.by(Sort.Direction.DESC, "id");
+            sort = Sort.by(Sort.Direction.ASC, "id");
         }
 
         Pageable pageable = PageRequest.of(

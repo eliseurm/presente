@@ -12,6 +12,7 @@ import br.eng.eliseu.presente.repository.TamanhoRepository;
 import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
@@ -43,11 +44,15 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
 
     @Override
     protected Specification<Produto> buildSpecification(ProdutoFilter filtro) {
+
         return (root, query, cb) -> {
+
             List<Predicate> predicates = new ArrayList<>();
+
             if (filtro.getNome() != null && !filtro.getNome().trim().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("nome")), "%" + filtro.getNome().toLowerCase() + "%"));
             }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -55,7 +60,7 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
     // Garante inicialização das coleções com Open-Session-In-View desabilitado
     @Override
     @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Produto> listar(ProdutoFilter filtro) {
+    public Page<Produto> listar(ProdutoFilter filtro) {
         var page = super.listar(filtro);
         page.getContent().forEach(p -> {
             if (p.getCores() != null) p.getCores().size();

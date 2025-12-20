@@ -10,12 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventoProdutoDTO {
+public class EventoProdutoDto {
 
     private Long id;
 
-    private Long produtoId;
-    private String produtoNome;
+//    private Long produtoId;
+//    private String produtoNome;
+    private ProdutoDto produto;
 
     private StatusEnum status;
 }

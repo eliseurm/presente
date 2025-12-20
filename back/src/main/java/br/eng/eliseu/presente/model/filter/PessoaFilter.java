@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.model.filter;
 
+import br.eng.eliseu.presente.model.StatusEnum;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,6 @@ public class PessoaFilter extends BaseFilter {
     private String nome;
     private String email;
     private String telefone;
-    private String status;
+    private StatusEnum status;
 
 }

@@ -1,11 +1,11 @@
 import {StatusEnum} from "@/shared/model/enum/status.enum";
+import {ProdutoDto} from "@/shared/model/dto/produto-dto";
 
-export class EventoProdutoDTO {
+export class EventoProdutoDto {
 
     id?: number;
 
-    produtoId?: number;
-    produtoNome?: string;
+    produto?: ProdutoDto | undefined;
 
     status?: StatusEnum;
 

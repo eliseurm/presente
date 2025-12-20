@@ -1,9 +1,9 @@
 package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.*;
-import br.eng.eliseu.presente.model.dto.EventoDTO;
-import br.eng.eliseu.presente.model.dto.EventoPessoaDTO;
-import br.eng.eliseu.presente.model.dto.EventoProdutoDTO;
+import br.eng.eliseu.presente.model.dto.EventoDto;
+import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
+import br.eng.eliseu.presente.model.dto.EventoProdutoDto;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -35,7 +35,7 @@ public class EventoMapper {
     }
 
     // Método para converter Entidade Evento para DTO
-    public EventoDTO toDTO(Evento e) {
+    public EventoDto toDTO(Evento e) {
         if (e == null) return null;
 
         // Lógica de Negócio: Carrega em lote as escolhas ATIVAS para este evento
@@ -48,9 +48,9 @@ public class EventoMapper {
                 .collect(Collectors.toSet());
 
         // Mapeamento de Pessoas (usando a lógica de negócio acima)
-        List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
+        List<EventoPessoaDto> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
                 .filter(Objects::nonNull)
-                .map(ep -> EventoPessoaDTO.builder()
+                .map(ep -> EventoPessoaDto.builder()
                         .pessoaId(ep.getPessoa() != null ? ep.getPessoa().getId() : null)
                         .pessoaNome(ep.getPessoa() != null ? ep.getPessoa().getNome() : null)
                         .status(ep.getStatus())
@@ -60,17 +60,16 @@ public class EventoMapper {
                 .collect(Collectors.toList());
 
         // Mapeamento de Produtos
-        List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
+        List<EventoProdutoDto> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
-                .map(evPr -> EventoProdutoDTO.builder()
-                        .produtoId(evPr.getProduto() != null ? evPr.getProduto().getId() : null)
-                        .produtoNome(evPr.getProduto() != null ? evPr.getProduto().getNome() : null)
+                .map(evPr -> EventoProdutoDto.builder()
+                        .produto(ProdutoMapper.toDto(evPr.getProduto()))
                         .status(evPr.getStatus())
                         .build())
                 .collect(Collectors.toList());
 
         // Construção do DTO principal
-        return EventoDTO.builder()
+        return EventoDto.builder()
                 .id(e.getId())
                 .nome(e.getNome())
                 .descricao(e.getDescricao())
@@ -88,7 +87,7 @@ public class EventoMapper {
     }
 
     // Método para converter DTO para Entidade Evento (com acesso a repositórios)
-    public Evento fromDTO(EventoDTO dto) {
+    public Evento fromDTO(EventoDto dto) {
         if (dto == null) return null;
         Evento.EventoBuilder builder = Evento.builder()
                 .id(dto.getId())
@@ -113,7 +112,7 @@ public class EventoMapper {
         // Pessoas (requer acesso ao pessoaRepository)
         if (dto.getEventoPessoas() != null) {
             List<EventoPessoa> pessoas = new ArrayList<>();
-            for (EventoPessoaDTO pDto : dto.getEventoPessoas()) {
+            for (EventoPessoaDto pDto : dto.getEventoPessoas()) {
                 if (pDto == null || pDto.getPessoaId() == null) continue;
                 Pessoa pessoa = pessoaRepository.findById(pDto.getPessoaId()).orElse(null);
                 if (pessoa == null) continue;
@@ -132,9 +131,9 @@ public class EventoMapper {
         // Produtos (requer acesso ao produtoRepository)
         if (dto.getEventoProdutos() != null) {
             Set<EventoProduto> set = new HashSet<>();
-            for (EventoProdutoDTO prDto : dto.getEventoProdutos()) {
-                if (prDto == null || prDto.getProdutoId() == null) continue;
-                Produto pr = produtoRepository.findById(prDto.getProdutoId()).orElse(null);
+            for (EventoProdutoDto prDto : dto.getEventoProdutos()) {
+                if (prDto == null || prDto.getProduto() == null) continue;
+                Produto pr = produtoRepository.findById(prDto.getProduto().id()).orElse(null);
                 if (pr == null) continue;
                 EventoProduto evp = EventoProduto.builder()
                         .id(prDto.getId())

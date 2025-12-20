@@ -87,6 +87,8 @@ select * from tamanho ;
 
 select * from imagem ;
 
+select * from produto ;
+
 select * from usuario ;
 
 select * from pessoa ;
@@ -113,3 +115,19 @@ select * from evento_produto ;
 select * from evento_escolha ;
 
 update evento_escolha set status = 'PAUSADO' where status = 'ENCERRADO' ;
+
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 005', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 005', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 005', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 005', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 005', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 006', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 006', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 006', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 006', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 006', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 007', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 007', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 007', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 007', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
+INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 007', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');

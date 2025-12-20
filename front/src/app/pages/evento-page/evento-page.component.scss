@@ -1,0 +1,11 @@
+:host ::ng-deep .p-paginator-sm {
+    padding: 0;
+    justify-content: center;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+:host ::ng-deep .p-paginator-sm .p-paginator-element {
+    min-width: 2rem;
+    height: 2rem;
+}

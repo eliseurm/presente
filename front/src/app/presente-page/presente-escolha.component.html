@@ -5,14 +5,25 @@
     <main class="content">
         <div class="container">
 
-            @if (carregando) {
+            @if (expirado){
+                <div class="msg-container-central">
+                    <div class="msg-expirado-card">
+                        <i class="pi pi-clock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <div class="msg-texto">
+                            {{ resumo?.mensagem || 'O tempo para escolha expirou.' }}
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!expirado && carregando) {
                 <section class="status">
                     <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
                     <p>Validando seu link…</p>
                 </section>
             }
 
-            @if (!carregando && !valido) {
+            @if (!expirado && !carregando && !valido) {
                 <section class="status">
                     <h2>Ops…</h2>
                     <p>{{ erroMsg }}</p>
@@ -20,7 +31,7 @@
                 </section>
             }
 
-            @if (!carregando && valido) {
+            @if (!expirado && !carregando && valido) {
                 <section>
                     @if (!detailMode) {
                         <div class="produtos-grid">
@@ -81,9 +92,6 @@
                             <div class="detalhe-acoes">
                                 <div class="msg-inline error" *ngIf="confirmError">{{ confirmError }}</div>
                                 <div class="msg-inline success" *ngIf="confirmSuccess">{{ confirmSuccess }}</div>
-                                <div class="msg-expirado" *ngIf="expirado">
-                                    {{ resumo?.mensagem || 'O tempo para escolha expirou.' }}
-                                </div>
                             </div>
                         </div>
 

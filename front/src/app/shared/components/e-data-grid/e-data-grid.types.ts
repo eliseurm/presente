@@ -51,4 +51,5 @@ export interface IEFormConfig {
 export interface IEDataGridEvent {
     data?: any;
     isNew?: boolean;
+    cancel?: boolean;
 }

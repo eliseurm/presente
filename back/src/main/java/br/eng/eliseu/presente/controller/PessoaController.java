@@ -2,13 +2,12 @@ package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.Cliente;
-import br.eng.eliseu.presente.model.dto.PessoaDTO;
+import br.eng.eliseu.presente.model.dto.PessoaDto;
 import br.eng.eliseu.presente.model.filter.PessoaFilter;
 import br.eng.eliseu.presente.model.mapper.PessoaMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
 import br.eng.eliseu.presente.repository.UsuarioRepository;
-import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.service.PessoaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +110,7 @@ public class PessoaController {
     // pesquisa leve de pessoas (ADMIN: geral; CLIENTE: restrito ao(s) seu(s) cliente(s))
     @GetMapping("/pesquisa")
     @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
-    public ResponseEntity<List<PessoaDTO>> pesquisa(@RequestParam(name = "query", required = false) String query, @RequestParam(name = "clienteId", required = false) Long clienteId) {
+    public ResponseEntity<List<PessoaDto>> pesquisa(@RequestParam(name = "clienteId", required = false) Long clienteId, @RequestParam(name = "query", required = false) String query) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
@@ -155,8 +153,9 @@ public class PessoaController {
         }
 
         // Mapear para payload leve
-        List<PessoaDTO> payload = pessoaMapper.toDtoList(pessoaList);
+        List<PessoaDto> payload = pessoaMapper.toDtoList(pessoaList);
 
         return ResponseEntity.ok(payload);
     }
+
 }

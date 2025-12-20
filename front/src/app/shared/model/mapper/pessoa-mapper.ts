@@ -1,6 +1,6 @@
 // pessoa.mapper.ts
 
-import {PessoaDTO} from "@/shared/model/dto/pessoa-dto";
+import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
 import {Pessoa} from "@/shared/model/pessoa";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 
@@ -9,7 +9,7 @@ export class PessoaMapper {
     /**
      * Entidade -> DTO (Prepara dados vindo da API para o componente)
      */
-    static toDTO(entity: any): PessoaDTO | undefined{
+    static toDTO(entity: any): PessoaDto | undefined{
         if (!entity) return undefined;
 
         return {
@@ -32,7 +32,7 @@ export class PessoaMapper {
     /**
      * DTO -> Entidade (Prepara dados do formulário para enviar à API)
      */
-    static fromDTO(dto: PessoaDTO): Pessoa | undefined {
+    static fromDTO(dto: PessoaDto): Pessoa | undefined {
         if (!dto) return undefined;
 
         const pessoa = new Pessoa();
@@ -51,13 +51,13 @@ export class PessoaMapper {
         return pessoa;
     }
 
-    static toDtoList(entities: any[]): PessoaDTO[] {
+    static toDtoList(entities: any[]): PessoaDto[] {
         if (!entities) return [];
         return entities.map(entity => this.toDTO(entity))
-            .filter(dto => !!dto) as PessoaDTO[];
+            .filter(dto => !!dto) as PessoaDto[];
     }
 
-    static listFromDto(dtos: PessoaDTO[]): Pessoa[] {
+    static listFromDto(dtos: PessoaDto[]): Pessoa[] {
         if (!dtos) return [];
         return dtos.map(dto => this.fromDTO(dto)).filter(dto => !!dto) as Pessoa[];
     }

@@ -1,5 +1,5 @@
 import {Evento} from "@/shared/model/evento";
-import {EventoDTO} from "@/shared/model/dto/evento-dto";
+import {EventoDto} from "@/shared/model/dto/evento-dto";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {EventoProduto} from "@/shared/model/evento-produto";
 import {Cliente} from "@/shared/model/cliente";
@@ -8,7 +8,7 @@ import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 
 export class EventoMapper {
 
-    public static fromDTO(dto: EventoDTO): Evento | undefined {
+    public static fromDTO(dto: EventoDto): Evento | undefined {
         if (!dto) return undefined;
 
         const cliente = new Cliente()
@@ -47,7 +47,7 @@ export class EventoMapper {
         return evento;
     }
 
-    public static toDTO(evento: Evento): EventoDTO | undefined{
+    public static toDTO(evento: Evento): EventoDto | undefined{
         if (!evento) return undefined;
 
         return {
@@ -67,23 +67,19 @@ export class EventoMapper {
             fim: evento.fim as Date,
 
             // Mapeamento das listas aninhadas
-            eventoPessoas: evento.eventoPessoas?.filter(p => !!p)
-                .map(EventoPessoaMapper.toDTO)
-                .filter((p): p is EventoPessoa => !!p),
-            eventoProdutos: evento.eventoProdutos?.filter(p => !!p)
-                .map(EventoProdutoMapper.toDTO)
-                .filter((p): p is EventoProduto => !!p)
+            eventoPessoas: EventoPessoaMapper.toDtoList(evento.eventoPessoas),
+            eventoProdutos: EventoProdutoMapper.toDtoList(evento.eventoProdutos)
         };
 
     }
 
-    static toDtoList(entities: any[]): EventoDTO[] {
+    static toDtoList(entities: any[]): EventoDto[] {
         if (!entities) return [];
         return entities.map(entity => this.toDTO(entity))
-            .filter(dto => !!dto) as EventoDTO[];
+            .filter(dto => !!dto) as EventoDto[];
     }
 
-    static fromDtoList(dtos: EventoDTO[]): Evento[] {
+    static fromDtoList(dtos: EventoDto[]): Evento[] {
         if (!dtos) return [];
         return dtos.map(dto => this.fromDTO(dto))
             .filter(dto => !!dto) as Evento[];

@@ -1,6 +1,6 @@
 import {StatusEnum} from "@/shared/model/enum/status.enum";
 
-export class EventoPessoaDTO {
+export class EventoPessoaDto {
 
     id?: number;
 

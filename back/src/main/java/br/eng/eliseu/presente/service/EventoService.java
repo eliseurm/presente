@@ -2,6 +2,7 @@ package br.eng.eliseu.presente.service;
 
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
+import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -290,8 +291,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             if (filtro.getClienteId() != null) {
                 predicates.add(cb.equal(root.get("cliente").get("id"), filtro.getClienteId()));
             }
-            if (filtro.getStatus() != null && !filtro.getStatus().isBlank()) {
-                predicates.add(cb.equal(root.get("status"), StatusEnum.valueOf(filtro.getStatus())));
+            if (filtro.getStatus() != null) {
+                predicates.add(cb.equal(root.get("status"), filtro.getStatus()));
             }
 
             // Suporte condicional a expand na listagem
@@ -361,7 +362,10 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 e.getEventoEscolhas().size();
             }
             // Inicializa cliente (caso esteja lazy)
-            try { if (e.getCliente() != null) e.getCliente().getId(); } catch (Exception ignore) {}
+            try {
+                if (e.getCliente() != null) e.getCliente().getId();
+            }
+            catch (Exception ignore) {}
         });
         return page;
     }
@@ -466,7 +470,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
     // ===================== MAPEAMENTO DTO =====================
 
-    private EventoDTO toDTO(Evento e) {
+    private EventoDto toDTO(Evento e) {
         if (e == null) return null;
 //        IdNomeDTO clienteDTO = null;
 //        if (e.getCliente() != null) {
@@ -482,9 +486,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        List<EventoPessoaDTO> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
+        List<EventoPessoaDto> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
                 .filter(Objects::nonNull)
-                .map(ep -> EventoPessoaDTO.builder()
+                .map(ep -> EventoPessoaDto.builder()
                         .pessoaId(ep.getPessoa() != null ? ep.getPessoa().getId() : null)
                         .pessoaNome(ep.getPessoa() != null ? ep.getPessoa().getNome() : null)
                         .status(ep.getStatus())
@@ -493,16 +497,15 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                         .build())
                 .collect(Collectors.toList());
 
-        List<EventoProdutoDTO> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
+        List<EventoProdutoDto> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
                 .filter(Objects::nonNull)
-                .map(evPr -> EventoProdutoDTO.builder()
-                        .produtoId(evPr.getProduto() != null ? evPr.getProduto().getId() : null)
-                        .produtoNome(evPr.getProduto() != null ? evPr.getProduto().getNome() : null)
+                .map(evPr -> EventoProdutoDto.builder()
+                        .produto(ProdutoMapper.toDto(evPr.getProduto()))
                         .status(evPr.getStatus())
                         .build())
                 .collect(Collectors.toList());
 
-        return EventoDTO.builder()
+        return EventoDto.builder()
                 .id(e.getId())
                 .nome(e.getNome())
                 .descricao(e.getDescricao())
@@ -519,7 +522,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .build();
     }
 
-    private Evento fromDTO(EventoDTO dto) {
+    private Evento fromDTO(EventoDto dto) {
         if (dto == null) return null;
         Evento.EventoBuilder builder = Evento.builder()
                 .id(dto.getId())
@@ -544,7 +547,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         // Pessoas
         if (dto.getEventoPessoas() != null) {
             List<EventoPessoa> pessoas = new ArrayList<>();
-            for (EventoPessoaDTO pDto : dto.getEventoPessoas()) {
+            for (EventoPessoaDto pDto : dto.getEventoPessoas()) {
                 if (pDto == null || pDto.getPessoaId() == null) continue;
                 Pessoa pessoa = pessoaRepository.findById(pDto.getPessoaId()).orElse(null);
                 if (pessoa == null) continue;
@@ -562,9 +565,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         // Produtos
         if (dto.getEventoProdutos() != null) {
             Set<EventoProduto> set = new HashSet<>();
-            for (EventoProdutoDTO prDto : dto.getEventoProdutos()) {
-                if (prDto == null || prDto.getProdutoId() == null) continue;
-                Produto pr = produtoRepository.findById(prDto.getProdutoId()).orElse(null);
+            for (EventoProdutoDto prDto : dto.getEventoProdutos()) {
+                if (prDto == null || prDto.getProduto() == null) continue;
+                Produto pr = produtoRepository.findById(prDto.getId()).orElse(null);
                 if (pr == null) continue;
                 EventoProduto evp = EventoProduto.builder()
                         .evento(entidade)
@@ -580,18 +583,18 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     }
 
     @Transactional(readOnly = true)
-    public Page<EventoDTO> listarDTO(EventoFilter filtro) {
+    public Page<EventoDto> listarDTO(EventoFilter filtro) {
         Page<Evento> page = listar(filtro);
         return page.map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
-    public Optional<EventoDTO> buscarPorIdDTO(Long id, String expand) {
+    public Optional<EventoDto> buscarPorIdDTO(Long id, String expand) {
         return buscarPorIdComExpand(id, expand).map(this::toDTO);
     }
 
     @Transactional
-    public EventoDTO criarDTO(EventoDTO dto) {
+    public EventoDto criarDTO(EventoDto dto) {
         Evento e = fromDTO(dto);
         Evento salvo = criar(e);
         return toDTO(salvo);

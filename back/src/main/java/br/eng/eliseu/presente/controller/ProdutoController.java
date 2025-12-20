@@ -1,11 +1,15 @@
 package br.eng.eliseu.presente.controller;
 
+import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.Produto;
+import br.eng.eliseu.presente.model.dto.ProdutoDto;
 import br.eng.eliseu.presente.model.filter.ProdutoFilter;
+import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
 import br.eng.eliseu.presente.service.ProdutoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +23,14 @@ public class ProdutoController {
     private final ProdutoService produtoService;
 
     @GetMapping
-    public ResponseEntity<Page<Produto>> listar(ProdutoFilter filtro) {
-        return ResponseEntity.ok(produtoService.listar(filtro));
+    public ResponseEntity<Page<ProdutoDto>> listar(ProdutoFilter filtro) {
+
+        Page<Produto> pageEntity = produtoService.listar(filtro);
+
+        Page<ProdutoDto> pageDto = pageEntity.map(ProdutoMapper::toDto);
+
+        return ResponseEntity.ok(pageDto);
+
     }
 
     @GetMapping("/{id}")
@@ -63,4 +73,5 @@ public class ProdutoController {
                 "deletados", deletados
         ));
     }
+
 }

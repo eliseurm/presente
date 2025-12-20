@@ -65,6 +65,12 @@ export class PresenteEscolhaComponent implements OnInit {
     // mensagens de feedback na tela de detalhe
     confirmError = '';
     confirmSuccess = '';
+    message = "Http failure during parsing for http://localhost:8080/presente/eliseu_WPZ4FZQ5"
+
+    get selectedProduct(): Produto | null {
+        if (this.selectedProductId == null) return null;
+        return this.produtos.find(p => p.id === this.selectedProductId) || null;
+    }
 
     ngOnInit() {
         // A rota pública deve ser /presente/:token (mantém compatibilidade com :keyMagico)
@@ -134,7 +140,7 @@ export class PresenteEscolhaComponent implements OnInit {
     isDesabilitado(p: Produto) {
         return this.selectedProductId !== null && this.selectedProductId !== p.id;
     }
-    message = "Http failure during parsing for http://localhost:8080/presente/eliseu_WPZ4FZQ5"
+
     async alternarSelecao(p: Produto) {
         // Exigir seleção explícita de tamanho/cor quando houver opções
         const precisaTam = Array.isArray(p.tamanhos) && p.tamanhos.length > 0;
@@ -256,8 +262,4 @@ export class PresenteEscolhaComponent implements OnInit {
         return raw;
     }
 
-    get selectedProduct(): Produto | null {
-        if (this.selectedProductId == null) return null;
-        return this.produtos.find(p => p.id === this.selectedProductId) || null;
-    }
 }

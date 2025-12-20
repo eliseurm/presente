@@ -1,8 +1,7 @@
 package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.EventoProduto;
-import br.eng.eliseu.presente.model.Produto;
-import br.eng.eliseu.presente.model.dto.EventoProdutoDTO;
+import br.eng.eliseu.presente.model.dto.EventoProdutoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,15 +15,14 @@ public class EventoProdutoMapper {
     /**
      * Converte de Entidade para DTO (Back -> Front)
      */
-    public EventoProdutoDTO toDto(EventoProduto entity) {
+    public EventoProdutoDto toDto(EventoProduto entity) {
         if (entity == null) {
             return null;
         }
 
-        return EventoProdutoDTO.builder()
+        return EventoProdutoDto.builder()
                 .id(entity.getId())
-                .produtoId(entity.getProduto() != null ? entity.getProduto().getId() : null)
-                .produtoNome(entity.getProduto() != null ? entity.getProduto().getNome() : null)
+                .produto(ProdutoMapper.toDto(entity.getProduto()))
                 .status(entity.getStatus())
                 .build();
     }
@@ -32,7 +30,7 @@ public class EventoProdutoMapper {
     /**
      * Converte de DTO para Entidade (Front -> Back)
      */
-    public EventoProduto fromDto(EventoProdutoDTO dto) {
+    public EventoProduto fromDto(EventoProdutoDto dto) {
         if (dto == null) {
             return null;
         }
@@ -40,14 +38,7 @@ public class EventoProdutoMapper {
         EventoProduto entity = new EventoProduto();
 
         entity.setId(dto.getId());
-
-        // Mapeia o ID do produto para uma instância de Produto
-        if (dto.getProdutoId() != null) {
-            Produto produto = new Produto();
-            produto.setId(dto.getProdutoId());
-            entity.setProduto(produto);
-        }
-
+        entity.setProduto(ProdutoMapper.fromDto(dto.getProduto()));
         entity.setStatus(dto.getStatus());
 
         // Nota: O campo 'evento' e o 'id' da própria relação
@@ -59,7 +50,7 @@ public class EventoProdutoMapper {
     /**
      * Converte lista de Entidades para lista de DTOs
      */
-    public List<EventoProdutoDTO> toDtoList(List<EventoProduto> entities) {
+    public List<EventoProdutoDto> toDtoList(List<EventoProduto> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
@@ -71,7 +62,7 @@ public class EventoProdutoMapper {
     /**
      * Converte lista de DTOs para lista de Entidades
      */
-    public List<EventoProduto> fromDtoList(List<EventoProdutoDTO> dtos) {
+    public List<EventoProduto> fromDtoList(List<EventoProdutoDto> dtos) {
         if (dtos == null || dtos.isEmpty()) {
             return new ArrayList<>();
         }

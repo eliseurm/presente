@@ -5,7 +5,7 @@ import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
  * Interface que representa o DTO de Escolha de Evento
  * (Correspondente a EventoEscolhaDTO.java)
  */
-export interface EventoEscolhaDTO {
+export interface EventoEscolhaDto {
     // --- Campos de EventoEscolha ---
     id: number;
     dataEscolha: string; // LocalDateTime é serializado como String (ISO 8601)

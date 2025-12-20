@@ -133,7 +133,7 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
         return true;
     }
 
-    // Rotas / Edição por ID
+    // // Rotas / Edição por ID
     onIdParam(id: string | number): void {
         this.callGetByIdService(id).subscribe({
             next: (m) => {
@@ -157,27 +157,27 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
     // Permite ao componente chamar abertura de linha de forma uniforme e com suporte a expand
     onRowOpen(row: T): void {
         const id = row && (row as any).id;
-        if (id != null) {
-            this.port.getById(id, this.getExpandParam()).subscribe({
-                next: (m) => {
-                    this.verifyAndLockRegistry(m).subscribe({
-                        next: (locked) => {
-                            this.model = locked;
-                            this.mode = Mode.Edit;
-                            this.refreshModel.next();
-                        },
-                        error: (e) => this.handleError(e, 'Falha ao bloquear registro')
-                    });
-                },
-                error: (e) => this.handleError(e, 'Falha ao carregar registro')
-            });
-        }
-        else {
-            // fallback: sem ID, usa o próprio objeto
-            this.model = row;
-            this.mode = Mode.Edit;
-            this.refreshModel.next();
-        }
+        this.mode = Mode.Edit;
+        this.model = row;
+        this.refreshModel.next();
+
+        // if (id != null) {
+        //     this.port.getById(id, this.getExpandParam()).subscribe({
+        //         next: (m) => {
+        //             this.verifyAndLockRegistry(m).subscribe({
+        //                 next: (locked) => {
+        //                     this.model = locked;
+        //                     this.refreshModel.next();
+        //                 },
+        //                 error: (e) => this.handleError(e, 'Falha ao bloquear registro')
+        //             });
+        //         },
+        //         error: (e) => this.handleError(e, 'Falha ao carregar registro')
+        //     });
+        // }
+        // else {
+        //     // fallback: sem ID, usa o próprio objeto
+        // }
     }
 
     // Substitua (overload) este metodo caso precise checar alguma coisa antes, coisas como, bloquear se um cliente nao puder editar/ver

@@ -4,15 +4,15 @@ import {BaseCrudService} from '@/shared/services/base-crud.service';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {map, Observable} from 'rxjs';
-import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
-import {EventoDTO} from "@/shared/model/dto/evento-dto";
-import {EventoPessoaDTO} from "@/shared/model/dto/evento-pessoa-dto";
-import {PessoaDTO} from "@/shared/model/dto/pessoa-dto";
+import {EventoEscolhaDto} from "@/shared/model/dto/evento-escolha-dto";
+import {EventoDto} from "@/shared/model/dto/evento-dto";
+import {EventoPessoaDto} from "@/shared/model/dto/evento-pessoa-dto";
+import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
 import {PessoaMapper} from "@/shared/model/mapper/pessoa-mapper";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
 import {EventoProduto} from "@/shared/model/evento-produto";
-import {EventoProdutoDTO} from "@/shared/model/dto/evento-produto-dto";
+import {EventoProdutoDto} from "@/shared/model/dto/evento-produto-dto";
 import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 
 @Injectable({providedIn: 'root'})
@@ -43,21 +43,21 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`);
     }
 
-    getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<EventoEscolhaDTO[]> {
-        return this.http.get<EventoEscolhaDTO[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
+    getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<EventoEscolhaDto[]> {
+        return this.http.get<EventoEscolhaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
     }
 
     getEventoPessoa(eventoId: number): Observable<EventoPessoa[]> {
-        return this.http.get<EventoPessoaDTO[]>(`${this.apiUrl}/${eventoId}/pessoas/list`)
+        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`)
             .pipe(
-                map((dtos: EventoPessoaDTO[]) => EventoPessoaMapper.listFromDto(dtos))
+                map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos))
             );
     }
 
     getEventoProduto(eventoId: number): Observable<EventoProduto[]> {
-        return this.http.get<EventoProdutoDTO[]>(`${this.apiUrl}/${eventoId}/produtos/list`)
+        return this.http.get<EventoProdutoDto[]>(`${this.apiUrl}/${eventoId}/produtos/list`)
             .pipe(
-                map((dtos: EventoProdutoDTO[]) => EventoProdutoMapper.listFromDto(dtos))
+                map((dtos: EventoProdutoDto[]) => EventoProdutoMapper.listFromDto(dtos))
             );
     }
 

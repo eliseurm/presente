@@ -1,10 +1,10 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
-import br.eng.eliseu.presente.model.dto.EventoDTO;
-import br.eng.eliseu.presente.model.dto.EventoEscolhaDTO;
-import br.eng.eliseu.presente.model.dto.EventoPessoaDTO;
-import br.eng.eliseu.presente.model.dto.EventoProdutoDTO;
+import br.eng.eliseu.presente.model.dto.EventoDto;
+import br.eng.eliseu.presente.model.dto.EventoEscolhaDto;
+import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
+import br.eng.eliseu.presente.model.dto.EventoProdutoDto;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
@@ -44,7 +44,7 @@ public class EventoController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or (#filtro != null and #filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
-    public ResponseEntity<Page<EventoDTO>> listar(@ModelAttribute EventoFilter filtro) {
+    public ResponseEntity<Page<EventoDto>> listar(@ModelAttribute EventoFilter filtro) {
         // Garante instância não nula para evitar 500 por causa de SpEL/binding
         if (filtro == null) {
             filtro = new EventoFilter();
@@ -54,7 +54,7 @@ public class EventoController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<EventoDTO> buscarPorId(@PathVariable Long id, @RequestParam(value = "expand", required = false) String expand) {
+    public ResponseEntity<EventoDto> buscarPorId(@PathVariable Long id, @RequestParam(value = "expand", required = false) String expand) {
         return eventoService.buscarPorIdDTO(id, expand)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -62,18 +62,19 @@ public class EventoController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or ( #evento != null and #evento.cliente != null and @authService.isLinkedToClient(#evento.cliente.id) )")
-    public ResponseEntity<EventoDTO> criar(@RequestBody EventoDTO evento) {
+    public ResponseEntity<EventoDto> criar(@RequestBody EventoDto evento) {
         return ResponseEntity.ok(eventoService.criarDTO(evento));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<EventoDTO> atualizar(@PathVariable Long id, @RequestBody EventoDTO dto) {
+    public ResponseEntity<EventoDto> atualizar(@PathVariable Long id, @RequestBody EventoDto dto) {
         try {
             Evento atualizado = eventoService.atualizarEvento(id, eventoMapper.fromDTO(dto));
             return ResponseEntity.ok(eventoMapper.toDTO(atualizado));
         }
         catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -191,15 +192,15 @@ public class EventoController {
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/historico")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<List<EventoEscolhaDTO>> obterHistoricoAnterior(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
+    public ResponseEntity<List<EventoEscolhaDto>> obterHistoricoAnterior(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
 
         List<EventoEscolha> encerradas = eventoEscolhaRepository.findByEvento_IdAndPessoa_IdAndStatusOrderByDataEscolhaDesc(eventoId, pessoaId, StatusEnum.PAUSADO);
 
-        List<EventoEscolhaDTO> anteriores = Optional.ofNullable(encerradas)
+        List<EventoEscolhaDto> anteriores = Optional.ofNullable(encerradas)
                 // Se 'encerradas' não for nula, cria um Stream a partir dela.
                 .orElseGet(Collections::emptyList) // Se 'escolhas' for nula, retorna uma lista vazia imutável.
                 .stream()
-                .map(EventoEscolhaDTO::fromEntity)
+                .map(EventoEscolhaDto::fromEntity)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(anteriores);
@@ -208,11 +209,11 @@ public class EventoController {
     @GetMapping("/{id}/pessoas/list")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<EventoPessoaDTO>> getEventoPessoa(@PathVariable("id") Long eventoId) {
+    public ResponseEntity<List<EventoPessoaDto>> getEventoPessoa(@PathVariable("id") Long eventoId) {
 
         List<EventoPessoa> entidade = eventoPessoaRepository.findByEvento_Id(eventoId);
 
-        List<EventoPessoaDTO> dto = eventoPessoaMapper.toDtoList(entidade);
+        List<EventoPessoaDto> dto = eventoPessoaMapper.toDtoList(entidade);
 
         return ResponseEntity.ok(dto);
     }
@@ -220,11 +221,11 @@ public class EventoController {
     @GetMapping("/{id}/produtos/list")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<EventoProdutoDTO>> getEventoProduto(@PathVariable("id") Long eventoId) {
+    public ResponseEntity<List<EventoProdutoDto>> getEventoProduto(@PathVariable("id") Long eventoId) {
 
         List<EventoProduto> entidade = eventoProdutoRepository.findByEvento_Id(eventoId);
 
-        List<EventoProdutoDTO> dto = eventoProdutoMapper.toDtoList(entidade);
+        List<EventoProdutoDto> dto = eventoProdutoMapper.toDtoList(entidade);
 
         return ResponseEntity.ok(dto);
     }

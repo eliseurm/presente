@@ -24,7 +24,12 @@ public class Produto {
 
     private BigDecimal preco;
 
-    private Boolean status;
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
+
+    private LocalDateTime criadoEm;
+    private LocalDateTime alteradoEm;
+
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
@@ -57,8 +62,7 @@ public class Produto {
     private List<Imagem> imagens;
 
 
-    private LocalDateTime criadoEm;
-    private LocalDateTime alteradoEm;
+
 
     @PrePersist
     public void prePersist(){

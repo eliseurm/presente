@@ -2,7 +2,7 @@ import {Cliente} from '@/shared/model/cliente';
 import {EventoPessoa} from '@/shared/model/evento-pessoa';
 import {EventoProduto} from '@/shared/model/evento-produto';
 import {StatusEnum} from "@/shared/model/enum/status.enum";
-import {EventoEscolhaDTO} from "@/shared/model/dto/evento-escolha-dto";
+import {EventoEscolhaDto} from "@/shared/model/dto/evento-escolha-dto";
 import {EventoEscolha} from "@/shared/model/evento-escolha";
 
 export class Evento {

@@ -63,7 +63,7 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
                 ));
             }
 
-            if (filtro.getStatus() != null && !filtro.getStatus().trim().isEmpty()) {
+            if (filtro.getStatus() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), filtro.getStatus()));
             }
 

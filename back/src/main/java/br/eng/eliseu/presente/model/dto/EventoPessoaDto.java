@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventoPessoaDTO {
+public class EventoPessoaDto {
 
     private Long id;
 

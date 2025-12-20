@@ -68,7 +68,7 @@ public class PresenteController {
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
         List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
-        List<ProdutoDto> produtosDto = ProdutoMapper.toDtoList(produtos);
+        List<ProdutoDto> produtosDto = ProdutoMapper.toDtoListCompleto(produtos);
 
         // Última escolha
         EventoEscolha ultima = eventoEscolhaRepository

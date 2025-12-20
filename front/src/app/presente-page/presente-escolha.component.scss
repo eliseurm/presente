@@ -124,30 +124,44 @@
     }
 }
 
-.detalhe-acoes {
+.msg-container-central {
     display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    flex-wrap: wrap; /* Responsividade para botões */
+    align-items: center;
+    justify-content: center;
+    min-height: 300px; /* Garante espaço se a tela estiver vazia */
+    width: 100%;
+    padding: 2rem;
+    box-sizing: border-box;
 
-    .msg-inline {
-        padding: 0.75rem 1rem;
-        border-radius: var(--border-radius);
-        flex-grow: 1;
-        &.error {
-            background-color: #ffe0b2; /* Laranja suave */
-            color: #e65100;
-        }
-        &.success {
-            background-color: #c8e6c9; /* Verde suave */
-            color: #2e7d32;
-        }
-    }
-    .msg-expirado {
-        padding: 0.75rem 1rem;
-        border-radius: var(--border-radius);
-        background-color: #ffcdd2; /* Vermelho suave */
+    .msg-expirado-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+
+        /* Estilo da Caixa */
+        background-color: #fff5f5; /* Fundo levemente avermelhado */
+        border: 2px solid #ffcdd2;
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        max-width: 500px;
+        width: 100%;
+
+        /* Sombra para destaque */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+        /* Tipografia */
         color: #c62828;
-        font-weight: 600;
+
+        .msg-texto {
+            font-size: 1.5rem; /* Fonte maior */
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        /* Ícone opcional (se usar PrimeIcons) */
+        i {
+            color: #ef5350;
+        }
     }
 }

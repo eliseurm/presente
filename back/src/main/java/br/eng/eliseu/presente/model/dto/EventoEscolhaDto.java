@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventoEscolhaDTO {
+public class EventoEscolhaDto {
 
     private Long id;
 
@@ -34,7 +34,7 @@ public class EventoEscolhaDTO {
     private Long produtoId;
     private String produtoNome;
     private String produtoDescricao;
-    private Boolean produtoStatus;
+    private StatusEnum produtoStatus;
 
     // --- Informações de Cor ---
     private Long corId;
@@ -47,10 +47,10 @@ public class EventoEscolhaDTO {
     private String tamanhoTipoProduto;
 
     // Método Estático de Fábrica
-    public static EventoEscolhaDTO fromEntity(EventoEscolha escolha) {
+    public static EventoEscolhaDto fromEntity(EventoEscolha escolha) {
         if (escolha == null) return null;
 
-        return EventoEscolhaDTO.builder()
+        return EventoEscolhaDto.builder()
                 // Campos de EventoEscolha
                 .id(escolha.getId())
                 .dataEscolha(escolha.getDataEscolha())

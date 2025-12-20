@@ -257,10 +257,15 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         const event: IEDataGridEvent = {
             data: this.editingRow,
-            isNew: this.isNewRow
+            isNew: this.isNewRow,
+            cancel: false
         };
 
         this.onSaving.emit(event);
+
+        if (event.cancel) {
+            return; // Não fecha o dialog e não altera o dataSource
+        }
 
         if (this.isNewRow) {
             this.dataSource.push({ ...this.editingRow });

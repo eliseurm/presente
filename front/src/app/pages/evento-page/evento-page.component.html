@@ -47,16 +47,16 @@
 
     <!-- Formulário de edição com abas -->
     <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-        <p-tabs value="0" class="w-full">
+        <p-tabs value="geral" class="w-full" (valueChange)="onTabChangePrincipal($event)">
             <p-tablist>
-                <p-tab value="0">Geral</p-tab>
-                <p-tab value="1">Pessoas</p-tab>
-                <p-tab value="2">Produtos</p-tab>
+                <p-tab value="geral">Geral</p-tab>
+                <p-tab value="pessoa">Pessoas</p-tab>
+                <p-tab value="produto">Produtos</p-tab>
             </p-tablist>
 
             <p-tabpanels>
 
-                <p-tabpanel value="0">
+                <p-tabpanel value="geral">
                     <!-- Ações de controle do evento: Iniciar / Parar -->
                     <div class="flex gap-2 items-center mb-2" *ngIf="vm.model?.id">
                         <button pButton type="button" label="Iniciar"
@@ -67,8 +67,10 @@
                                 icon="pi pi-pause"
                                 class="p-button-warning"
                                 (click)="onPararEvento()"></button>
-                        <span class="text-sm opacity-70" *ngIf="vm.model?.inicio">Iniciado: {{ vm.model.inicio | date:'short' }}</span>
-                        <span class="text-sm opacity-70" *ngIf="vm.model?.fim">• Fim: {{ vm.model.fim | date:'short' }}</span>
+                        <span class="text-sm opacity-70"
+                              *ngIf="vm.model?.inicio">Iniciado: {{ vm.model.inicio | date:'short' }}</span>
+                        <span class="text-sm opacity-70"
+                              *ngIf="vm.model?.fim">• Fim: {{ vm.model.fim | date:'short' }}</span>
                     </div>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="flex flex-col gap-2 w-full md:w-3/4">
@@ -97,80 +99,79 @@
                         <div class="flex flex-col gap-2 w-full md:w-1/2">
                             <label class="block">Início</label>
                             <p-datepicker class="w-full"
-                                         [(ngModel)]="vm.model.inicio"
-                                         name="inicio"
-                                         inputId="inicio"
-                                         [showClear]="true"
-                                         [showTime]="true"
-                                         hourFormat="24"
-                                         [showIcon]="true"
-                                         iconDisplay="input"
-                                         [touchUI]="false"
-                                         appendTo="body"
-                                         [baseZIndex]="9999"></p-datepicker>
+                                          [(ngModel)]="vm.model.inicio"
+                                          name="inicio"
+                                          inputId="inicio"
+                                          [showClear]="true"
+                                          [showTime]="true"
+                                          hourFormat="24"
+                                          [showIcon]="true"
+                                          iconDisplay="input"
+                                          [touchUI]="false"
+                                          appendTo="body"
+                                          [baseZIndex]="9999"></p-datepicker>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:w-1/2">
                             <label class="block">Fim Previsto</label>
                             <p-datepicker class="w-full"
-                                         [(ngModel)]="vm.model.fimPrevisto"
-                                         name="fimPrevisto"
-                                         inputId="fimPrevisto"
-                                         [showClear]="true"
-                                         [showTime]="true"
-                                         hourFormat="24"
-                                         [showIcon]="true"
-                                         iconDisplay="input"
-                                         [touchUI]="false"
-                                         appendTo="body"
-                                         [baseZIndex]="9999"></p-datepicker>
+                                          [(ngModel)]="vm.model.fimPrevisto"
+                                          name="fimPrevisto"
+                                          inputId="fimPrevisto"
+                                          [showClear]="true"
+                                          [showTime]="true"
+                                          hourFormat="24"
+                                          [showIcon]="true"
+                                          iconDisplay="input"
+                                          [touchUI]="false"
+                                          appendTo="body"
+                                          [baseZIndex]="9999"></p-datepicker>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:w-1/2">
                             <label class="block">Fim</label>
                             <p-datepicker class="w-full"
-                                         [(ngModel)]="vm.model.fim"
-                                         name="fim"
-                                         inputId="fim"
-                                         [showClear]="true"
-                                         [showTime]="true"
-                                         hourFormat="24"
-                                         [showIcon]="true"
-                                         iconDisplay="input"
-                                         [touchUI]="false"
-                                         appendTo="body"
-                                         [baseZIndex]="9999"></p-datepicker>
+                                          [(ngModel)]="vm.model.fim"
+                                          name="fim"
+                                          inputId="fim"
+                                          [showClear]="true"
+                                          [showTime]="true"
+                                          hourFormat="24"
+                                          [showIcon]="true"
+                                          iconDisplay="input"
+                                          [touchUI]="false"
+                                          appendTo="body"
+                                          [baseZIndex]="9999"></p-datepicker>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:col-span-2">
                             <label class="block">Descrição</label>
-                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao"
+                                      name="descricao"></textarea>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:col-span-2">
                             <label class="block">Anotações</label>
-                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.anotacoes" name="anotacoes"></textarea>
+                            <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.anotacoes"
+                                      name="anotacoes"></textarea>
                         </div>
                     </div>
                 </p-tabpanel>
 
-                <p-tabpanel value="1">
+                <p-tabpanel value="pessoa">
                     <div class="flex items-center gap-2 mb-2">
-                        <button pButton type="button" label="Refresh" icon="pi pi-refresh" (click)="onRefreshGridPessoas()"></button>
-                        <button pButton type="button" label="Adicionar" icon="pi pi-plus" class="p-button-success" (click)="onOpenAddPessoas()"></button>
+                        <button pButton type="button" label="Refresh" icon="pi pi-refresh"
+                                (click)="onRefreshGridPessoas()"></button>
+                        <button pButton type="button" label="Adicionar" icon="pi pi-plus" class="p-button-success"
+                                (click)="onOpenAddPessoas()"></button>
                     </div>
 
                     <e-data-grid #gridPessoas
-                        [dataSource]="vm.model.eventoPessoas || []"
-                        [loading]="false"
-                        [summaryDataSource]="vm.model.eventoPessoas || []"
-                        (onInitNewRow)="onInitNewPessoa($event)"
-                        (onEditDialogOpen)="onEditingStartPessoa($event)"
-                        (onSaving)="onSavingPessoa($event)"
-                        (onDeleting)="onDeletingPessoa($event)">
+                                 [dataSource]="vm.model.eventoPessoas || []"
+                                 [loading]="false"
+                                 [summaryDataSource]="vm.model.eventoPessoas || []"
+                                 (onEditDialogOpen)="onEditingStartPessoa($event)"
+                                 (onSaving)="onSavingPessoa($event)"
+                                 (onDeleting)="onDeletingPessoa($event)">
 
-                        <eo-editing
-                            mode="popup"
-                            [allowAdding]="false"
-                            [allowUpdating]="true"
-                            [allowDeleting]="true"
-                            [confirmDelete]="true">
+                        <eo-editing mode="popup" [allowAdding]="false" [allowUpdating]="true" [allowDeleting]="true"
+                                    [confirmDelete]="true">
 
                             <e-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></e-popup>
 
@@ -193,24 +194,36 @@
 
                                         <p-tabpanel value="1">
                                             <div class="grid gap-2">
-                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}</div>
-                                                <div><b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</div>
-                                                <div><b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}</div>
-                                                <div><b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}</div>
+                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}
+                                                </div>
+                                                <div>
+                                                    <b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}
+                                                </div>
+                                                <div>
+                                                    <b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}
+                                                </div>
+                                                <div>
+                                                    <b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}
+                                                </div>
                                             </div>
                                         </p-tabpanel>
 
                                         <p-tabpanel value="2">
-                                            <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true" scrollHeight="400px">
+                                            <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true"
+                                                         scrollHeight="400px">
 
-                                                <ei-column dataField="dataEscolha" caption="Escolha" cellTemplate="dataTemplate"></ei-column>
-                                                <ei-column dataField="alteradoEm" caption="Alterado em" cellTemplate="dataTemplate"></ei-column>
+                                                <ei-column dataField="dataEscolha" caption="Escolha"
+                                                           cellTemplate="dataTemplate"></ei-column>
+                                                <ei-column dataField="alteradoEm" caption="Alterado em"
+                                                           cellTemplate="dataTemplate"></ei-column>
                                                 <ei-column dataField="eventoNome" caption="Evento"></ei-column>
                                                 <ei-column dataField="produtoNome" caption="Produto"></ei-column>
                                                 <ei-column dataField="corNome" caption="Cor"></ei-column>
                                                 <ei-column dataField="tamanhoDescricao" caption="Tamanho"></ei-column>
 
-                                                <ng-template eTemplate="dataTemplate" let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}</ng-template>
+                                                <ng-template eTemplate="dataTemplate"
+                                                             let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}
+                                                </ng-template>
 
 
                                             </e-data-grid>
@@ -224,22 +237,20 @@
                         </eo-editing>
 
                         <!-- Colunas -->
-                        <!-- Mantém dataField = pessoa para que o editor por template seja aplicado corretamente -->
-                        <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
                         <ei-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></ei-column>
                         <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
                         <ei-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></ei-column>
                         <ei-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></ei-column>
-                        <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesCellTemplate"></ei-column>
+                        <ei-column dataField="nomeMagicNumber" caption="Ações" cellTemplate="acoesCellTemplate"></ei-column>
 
                         <ng-template eTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
-                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}
+                        </ng-template>
                         <ng-template eTemplate="jaEscolheuTpl" let-data let-row="row">
                             <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
                         </ng-template>
 
                         <ng-template eTemplate="pessoaEditCellTemplate" let-row>
-                            {{ row.pessoa | chaveValorPipe}}
                             <p-select class="w-full"
                                       [(ngModel)]="row.pessoa"
                                       [options]="pessoasSugestoes"
@@ -265,33 +276,31 @@
                             ></enum-select>
                         </ng-template>
 
-                        <ng-template eTemplate="magicLinkCell" let-row="row">
-                            <ng-container *ngIf="row?.nomeMagicNumber; else semToken">
-                                <a [href]="buildTokenLink(row?.nomeMagicNumber)" target="_blank" rel="noopener">
-                                    {{ row?.nomeMagicNumber }}
-                                </a>
+                        <ng-template eTemplate="magicLinkCell" let-data='data'>
+                            <ng-container *ngIf="data; else semToken">
+                                <a [href]="buildTokenLink(data)" target="_blank" rel="noopener">{{ data }}</a>
                             </ng-container>
                             <ng-template #semToken>
                                 <span class="text-xs opacity-60">—</span>
                             </ng-template>
                         </ng-template>
 
-                        <ng-template eTemplate="acoesCellTemplate" let-row="row">
+                        <ng-template eTemplate="acoesCellTemplate" let-data='data'>
                             <button pButton type="button"
                                     icon="pi pi-external-link"
                                     class="p-button-text p-button-sm"
                                     pTooltip="Abrir Presente"
                                     tooltipPosition="top"
-                                    [disabled]="!row?.nomeMagicNumber"
-                                    (click)="abrirPresente(row?.nomeMagicNumber)"
+                                    [disabled]="!data"
+                                    (click)="abrirPresente(data)"
                             ></button>
                             <button pButton type="button"
                                     icon="pi pi-copy"
                                     class="p-button-text p-button-sm"
                                     pTooltip="Copiar Link"
                                     tooltipPosition="top"
-                                    [disabled]="!row?.nomeMagicNumber"
-                                    (click)="copiarLink(row?.nomeMagicNumber)"
+                                    [disabled]="!data"
+                                    (click)="copiarLink(data)"
                             ></button>
                         </ng-template>
 
@@ -304,8 +313,10 @@
                     </e-data-grid>
 
                     <!-- Popup custom de Adição de Pessoas -->
-                    <p-dialog [(visible)]="addPessoasDialogVisible" [modal]="true" [dismissableMask]="false" [closable]="true"
-                              header="Adicionar Pessoas" [style]="{width: '900px'}" [breakpoints]="{'960px':'95vw','640px':'95vw'}">
+                    <p-dialog [(visible)]="addPessoasDialogVisible" [modal]="true" [dismissableMask]="false"
+                              [closable]="true"
+                              header="Adicionar Pessoas" [style]="{width: '900px'}"
+                              [breakpoints]="{'960px':'95vw','640px':'95vw'}">
                         <!-- Layout responsivo: 1 coluna no mobile, 2 colunas no desktop -->
                         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Lado esquerdo: Select com filtro e múltipla seleção -->
@@ -321,7 +332,8 @@
                                            [(ngModel)]="pessoasSelecionadas"
                                            name="pessoasSelecionadas">
                                 </p-listbox>
-                                <small class="opacity-70">Somente pessoas que ainda não estão na lista do evento são exibidas.</small>
+                                <small class="opacity-70">Somente pessoas que ainda não estão na lista do evento são
+                                    exibidas.</small>
                             </div>
 
                             <!-- Lado direito: Enum de Status -->
@@ -337,8 +349,10 @@
 
                         <ng-template pTemplate="footer">
                             <div class="flex w-full gap-2 justify-end flex-col sm:flex-row">
-                                <button pButton type="button" label="Cancelar" class="p-button-text" (click)="onCancelAddPessoas()"></button>
-                                <button pButton type="button" label="Adicionar Selecionados" icon="pi pi-check" class="p-button-success"
+                                <button pButton type="button" label="Cancelar" class="p-button-text"
+                                        (click)="onCancelAddPessoas()"></button>
+                                <button pButton type="button" label="Adicionar Selecionados" icon="pi pi-check"
+                                        class="p-button-success"
                                         [disabled]="pessoasSelecionadas.length === 0 || !statusSelecionado"
                                         (click)="onConfirmAddPessoas()"></button>
                             </div>
@@ -347,70 +361,72 @@
 
                 </p-tabpanel>
 
-                <p-tabpanel value="2">
+                <p-tabpanel value="produto">
+
                     <e-data-grid
                         [dataSource]="vm.model.eventoProdutos || []"
                         [loading]="false"
-                        (onInitNewRow)="onInitNewProduto($event)"
                         (onEditDialogOpen)="onEditingStartProduto($event)"
                         (onSaving)="onSavingProduto($event)"
                         (onDeleting)="onDeletingProduto($event)">
 
-                        <eo-editing
-                            mode="popup"
-                            [allowAdding]="true"
-                            [allowUpdating]="true"
-                            [allowDeleting]="true"
-                            [confirmDelete]="true">
+                        <eo-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true"
+                                    [confirmDelete]="true">
 
                             <e-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></e-popup>
 
                             <eo-form [colCount]="2">
                                 <ei-item dataField="produto" label="Produto" editorType="template">
-                                    <ei-validation-rule type="required" message="Produto é obrigatório"></ei-validation-rule>
+                                    <ei-validation-rule type="required"
+                                                        message="Produto é obrigatório"></ei-validation-rule>
                                 </ei-item>
                                 <ei-item dataField="status" label="Status" editorType="template">
-                                    <ei-validation-rule type="required" message="Status é obrigatório"></ei-validation-rule>
+                                    <ei-validation-rule type="required"
+                                                        message="Status é obrigatório"></ei-validation-rule>
                                 </ei-item>
                             </eo-form>
 
                         </eo-editing>
 
-                        <!-- Colunas -->
-                        <!-- Mantém dataField = produto para que o editor por template seja aplicado corretamente -->
-                        <!-- Usa cellTemplate para exibir o nome ao invés de [object Object]/ID -->
-                        <ei-column dataField="produtoNome" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></ei-column>
+                        <ei-column dataField="produto" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></ei-column>
                         <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
 
-                        <ng-template eTemplate="produtoCellTemplate" let-data="data">{{ data }}</ng-template>
-                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
+                        <ng-template eTemplate="produtoCellTemplate" let-data="data">{{ data.nome }}</ng-template>
+                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ data.descricao }} </ng-template>
 
                         <ng-template eTemplate="produtoEditCellTemplate" let-row>
-                            <p-autoComplete class="w-full"
-                                            [(ngModel)]="row._produtoObj"
-                                            [ngModelOptions]="{standalone:true}"
-                                            [suggestions]="produtosSugestoes"
-                                            (completeMethod)="searchProdutos($event)"
-                                            (onSelect)="onProdutoSelecionado(row, $event)"
-                                            (onClear)="onProdutoLimpar(row)"
-                                            (onBlur)="onProdutoSelecionado(row, { value: row._produtoObj })"
-                                            optionLabel="nome"
-                                            [dropdown]="true"
-                                            [forceSelection]="true"
-                                            placeholder="Buscar produto por nome">
-                                <ng-template pTemplate="item" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                                <ng-template pTemplate="selectedItem" let-item>
-                                    {{ item?.nome }}
-                                </ng-template>
-                            </p-autoComplete>
+                            <p-select class="w-full"
+                                      [(ngModel)]="row.produto"
+                                      [options]="produtosSugestoes"
+                                      optionLabel="nome"
+                                      filterBy="nome"
+                                      [filter]="true"
+                                      (onFilter)="onFilterProdutoSelect($event)"
+                                      [loading]="loading"
+                                      placeholder="Selecione um Produto"
+                                      appendTo="body"> <ng-template #footer>
+                                <div (click)="$event.stopPropagation()" class="p-2 border-top-1 surface-border">
+                                    <p-paginator
+                                        [first]="filtroProduto.page * filtroProduto.size"
+                                        [rows]="filtroProduto.size"
+                                        [totalRecords]="filtroProduto.totalItens"
+                                        (onPageChange)="onPageChangeProdutoPaginator($event)"
+                                        [showFirstLastIcon]="false"
+                                        [showPageLinks]="true"
+                                        [pageLinkSize]="2"
+                                        styleClass="p-paginator-sm border-none">
+                                    </p-paginator>
+                                </div>
+                            </ng-template>
+                            </p-select>
+
                         </ng-template>
 
-                        <ng-template eTemplate="statusEditCellTemplate" let-row>
+                        <ng-template eTemplate="statusEditCellTemplate" let-data="data">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
-                                         [(ngModel)]="row.status"
+                                         [ngModel]="data.status"
+                                         (ngModelChange)="data.status = $event"
                                          [ngModelOptions]="{standalone:true}"
                             ></enum-select>
                         </ng-template>

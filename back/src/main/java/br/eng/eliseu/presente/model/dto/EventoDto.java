@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventoDTO {
+public class EventoDto {
 
     private Long id;
 
@@ -32,10 +32,10 @@ public class EventoDTO {
 
     // Access.WRITE_ONLY: O campo só pode ser escrito (do Front para o Back). Ele será ignorado quando o Back enviar para o Front.
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private List<EventoPessoaDTO> eventoPessoas;
+    private List<EventoPessoaDto> eventoPessoas;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private List<EventoProdutoDTO> eventoProdutos;
+    private List<EventoProdutoDto> eventoProdutos;
 
     private Long version;
 

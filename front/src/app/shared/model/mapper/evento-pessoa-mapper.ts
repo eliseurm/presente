@@ -1,8 +1,8 @@
-import { EventoPessoaDTO } from '../dto/evento-pessoa-dto'; // Arquivo evento-pessoa-dto.ts
+import { EventoPessoaDto } from '../dto/evento-pessoa-dto'; // Arquivo evento-pessoa-dto.ts
 import { StatusEnum } from "@/shared/model/enum/status.enum";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {Pessoa} from "@/shared/model/pessoa";
-import {PessoaDTO} from "@/shared/model/dto/pessoa-dto"; // Assumindo o caminho
+import {PessoaDto} from "@/shared/model/dto/pessoa-dto"; // Assumindo o caminho
 
 export class EventoPessoaMapper {
 
@@ -11,7 +11,7 @@ export class EventoPessoaMapper {
      * @param dto O DTO recebido da API.
      * @returns O modelo EventoPessoa.
      */
-    public static fromDTO(dto: EventoPessoaDTO): EventoPessoa | undefined{
+    public static fromDTO(dto: EventoPessoaDto): EventoPessoa | undefined{
         if (!dto) return undefined;
 
         const pessoa = new Pessoa()
@@ -32,7 +32,7 @@ export class EventoPessoaMapper {
      * @param model O modelo EventoPessoa local.
      * @returns O DTO a ser enviado para a API.
      */
-    public static toDTO(model: EventoPessoa): EventoPessoaDTO | undefined{
+    public static toDTO(model: EventoPessoa): EventoPessoaDto | undefined{
         if (!model) return undefined;
 
         // Assume que 'pessoa' pode ser um objeto parcial { id: number }
@@ -50,13 +50,13 @@ export class EventoPessoaMapper {
         };
     }
 
-    static toDtoList(entities: any[]): EventoPessoaDTO[] {
+    static toDtoList(entities: any[] | undefined): EventoPessoaDto[] {
         if (!entities) return [];
         return entities.map(entity => this.toDTO(entity))
-            .filter(dto => !!dto) as EventoPessoaDTO[];
+            .filter(dto => !!dto) as EventoPessoaDto[];
     }
 
-    static listFromDto(dtos: EventoPessoaDTO[]): EventoPessoa[] {
+    static listFromDto(dtos: EventoPessoaDto[]): EventoPessoa[] {
         if (!dtos) return [];
         return dtos.map(dto => this.fromDTO(dto)).filter(dto => !!dto) as EventoPessoa[];
     }
