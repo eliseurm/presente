@@ -14,7 +14,7 @@ public class PessoaMapper {
     /**
      * Entidade -> DTO
      */
-    public PessoaDto toDto(Pessoa pessoa) {
+    public static PessoaDto toDto(Pessoa pessoa) {
         if (pessoa == null) return null;
 
         return new PessoaDto(
@@ -39,7 +39,7 @@ public class PessoaMapper {
     /**
      * DTO -> Entidade
      */
-    public Pessoa fromDto(PessoaDto dto) {
+    public static Pessoa fromDto(PessoaDto dto) {
         if (dto == null) return null;
 
         Pessoa pessoa = new Pessoa();
@@ -72,10 +72,10 @@ public class PessoaMapper {
     /**
      * Lista de Entidades -> Lista de DTOs
      */
-    public List<PessoaDto> toDtoList(List<Pessoa> pessoas) {
+    public static List<PessoaDto> toDtoList(List<Pessoa> pessoas) {
         if (pessoas == null) return List.of();
         return pessoas.stream()
-                .map(this::toDto)
+                .map(PessoaMapper::toDto)
                 .collect(Collectors.toList());
     }
 }

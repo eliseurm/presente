@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,7 +30,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventoController {
 
-    @Autowired private EventoMapper eventoMapper;
     @Autowired private EventoPessoaMapper eventoPessoaMapper;
     @Autowired private EventoProdutoMapper eventoProdutoMapper;
 
@@ -70,8 +66,8 @@ public class EventoController {
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<EventoDto> atualizar(@PathVariable Long id, @RequestBody EventoDto dto) {
         try {
-            Evento atualizado = eventoService.atualizarEvento(id, eventoMapper.fromDTO(dto));
-            return ResponseEntity.ok(eventoMapper.toDTO(atualizado));
+            Evento atualizado = eventoService.atualizarEvento(id, EventoMapper.fromDTO(dto));
+            return ResponseEntity.ok(EventoMapper.toDTO(atualizado));
         }
         catch (RuntimeException e) {
             e.printStackTrace();
@@ -173,9 +169,15 @@ public class EventoController {
         return ResponseEntity.ok(eventoService.iniciarEvento(id, baseUrl));
     }
 
+    @PostMapping("/{id}/pausar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> pausar(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(eventoService.pausarEvento(id));
+    }
+
     @PostMapping("/{id}/parar")
-    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Map<String, Object>> parar(@PathVariable("id") Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventoDto> parar(@PathVariable("id") Long id) {
         return ResponseEntity.ok(eventoService.pararEvento(id));
     }
 
@@ -213,7 +215,15 @@ public class EventoController {
 
         List<EventoPessoa> entidade = eventoPessoaRepository.findByEvento_Id(eventoId);
 
-        List<EventoPessoaDto> dto = eventoPessoaMapper.toDtoList(entidade);
+        Set<Long> pessoasQueJaEscolheram = Optional
+                .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO))
+                .orElseGet(List::of)
+                .stream()
+                .map(ev -> ev.getPessoa() != null ? ev.getPessoa().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        List<EventoPessoaDto> dto = eventoPessoaMapper.toDtoList(entidade, pessoasQueJaEscolheram);
 
         return ResponseEntity.ok(dto);
     }

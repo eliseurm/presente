@@ -9,13 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class EventoPessoaDto {
 
     private Long id;
 
-    private Long pessoaId;
-    private String pessoaNome;
+    private PessoaDto pessoa;
 
     private StatusEnum status;
     private String nomeMagicNumber; // token

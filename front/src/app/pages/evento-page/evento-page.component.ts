@@ -353,10 +353,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         });
     }
 
-    onPararEvento() {
+    onPausarEvento() {
         const id = this.vm.model?.id;
         if (!id) return;
-        this.eventoService.pararEvento(id as number).subscribe({
+        this.eventoService.pausarEvento(id as number).subscribe({
             next: (res) => {
                 const n = res?.pausados ?? 0;
                 this.messageService.add({
@@ -369,9 +369,35 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             error: () => this.messageService.add({
                 severity: 'error',
                 summary: 'Erro',
-                detail: 'Falha ao parar o evento.'
+                detail: 'Falha ao pausar o evento.'
             })
         });
+    }
+
+    onPararEvento(): void {
+        const id = this.vm.model?.id;
+        if (!id) return;
+        this.eventoService.pausarEvento(id as number).subscribe({
+                next: (eventoAtualizado) => {
+                    this.vm.model = {
+                        ...this.vm.model,
+                        ...eventoAtualizado
+                    };
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Sucesso',
+                        detail: 'Evento parado com sucesso!'
+                    });
+                },
+                error: (err) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Erro',
+                        detail: 'Não foi possível parar o evento.'
+                    });
+                    console.error(err);
+                }
+            });
     }
 
     buildTokenLink(token?: string): string {
@@ -445,12 +471,39 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             row.status = (row.status as any).key ?? (row.status as any).name ?? row.status;
         }
         // Evita duplicidade
-        const duplicate = this.vm.model.eventoPessoas.some((p: any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
-        if (duplicate) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Essa pessoa já está na lista.'});
-            event.cancel = true;
+        // const duplicate = this.vm.model.eventoPessoas.some((p: any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
+        // if (duplicate) {
+        //     this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Essa pessoa já está na lista.'});
+        //     event.cancel = true;
+        //     return;
+        // }
+        const duplicateIndex = this.vm.model.eventoPessoas.findIndex((p: any) =>
+            (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row
+        );
+
+        if (duplicateIndex !== -1) {
+            // 1. Sobrepõe as informações: Mescla os dados da linha atual no registro que já existia
+            this.vm.model.eventoPessoas[duplicateIndex] = {
+                ...this.vm.model.eventoPessoas[duplicateIndex],
+                ...row, // 'row' contém as alterações recentes
+                pessoa: row.pessoa // Garante que o objeto pessoa seja preservado corretamente
+            };
+
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Atualizado',
+                detail: 'As informações da pessoa foram sobrepostas no registro existente.'
+            });
+
+            // 2. Como já atualizamos o registro antigo, cancelamos a criação/edição desta linha atual
+            // para evitar que fiquem dois registros iguais na lista
+            // event.cancel = true;
+
+            // Se estiver usando um componente de tabela que exige refresh manual:
+            this.vm.model.eventoPessoas = [...this.vm.model.eventoPessoas];
             return;
         }
+
         // Normaliza campos para exibição/persistência
         this.messageService.add({
             severity: 'success',

@@ -1,4 +1,4 @@
-import {NgModule, Pipe, PipeTransform} from "@angular/core";
+import {Pipe, PipeTransform} from "@angular/core";
 
 @Pipe({ name: "chaveValorPipe" })
 export class ChaveValorPipe implements PipeTransform {

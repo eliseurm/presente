@@ -15,88 +15,99 @@
                     </div>
                 </div>
             }
-
-            @if (!expirado && carregando) {
-                <section class="status">
-                    <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
-                    <p>Validando seu link…</p>
-                </section>
+            @else if (status !== 'ATIVO'){
+                <div class="msg-container-central">
+                    <div class="msg-expirado-card">
+                        <i class="pi pi-clock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <div class="msg-texto">O seu evento encontra-se '{{status | enumDescricao : statusEnumType}}'</div>
+                    </div>
+                </div>
             }
+            @else {
 
-            @if (!expirado && !carregando && !valido) {
-                <section class="status">
-                    <h2>Ops…</h2>
-                    <p>{{ erroMsg }}</p>
-                    <p class="hint">Mantenha este endereço: /presente/{{ keyMagico }}</p>
-                </section>
-            }
+                @if (carregando) {
+                    <section class="status">
+                        <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
+                        <p>Validando seu link…</p>
+                    </section>
+                }
 
-            @if (!expirado && !carregando && valido) {
-                <section>
-                    @if (!detailMode) {
-                        <div class="produtos-grid">
-                            @let produtosFatiados = produtos.slice(0, 10);
-                            @for (p of produtosFatiados; track p.id) {
-                                <app-produto
-                                    [produto]="p"
-                                    [selected]="isSelecionado(p)"
-                                    [disabled]="isDesabilitado(p)"
-                                    (onClickSelecionaProduto)="alternarSelecao(p)"
-                                ></app-produto>
-                            }
-                        </div>
-                    }
+                @if (!carregando && !valido) {
+                    <section class="status">
+                        <h2>Ops…</h2>
+                        <p>{{ erroMsg }}</p>
+                        <p class="hint">Mantenha este endereço: /presente/{{ keyMagico }}</p>
+                    </section>
+                }
 
-                    @if (detailMode && selectedProduct) {
+                @if (!carregando && valido) {
+                    <section>
+                        @if (!detailMode) {
+                            <div class="produtos-grid">
+                                @let produtosFatiados = produtos.slice(0, 10);
+                                @for (p of produtosFatiados; track p.id) {
+                                    <app-produto
+                                        [produto]="p"
+                                        [selected]="isSelecionado(p)"
+                                        [disabled]="isDesabilitado(p)"
+                                        (onClickSelecionaProduto)="alternarSelecao(p)"
+                                    ></app-produto>
+                                }
+                            </div>
+                        }
 
-                        <div class="detalhe-wrapper">
+                        @if (detailMode && selectedProduct) {
 
-                            <div class="detalhe-grid">
+                            <div class="detalhe-wrapper">
 
-                                <div class="info-box evento-box">
-                                    <h3>Informações do Evento</h3>
-                                    <div class="text-sm">
-                                        <div><b>Link de Acesso:</b> <code>/presente/{{ keyMagico }}</code></div>
-                                        <div><b>Prazo para Escolha:</b>
-                                            @if (resumo?.dataPrevista) {
-                                                {{ resumo?.dataPrevista | date:'longDate' }}
-                                            } @else {
-                                                Não Definido
-                                            }
+                                <div class="detalhe-grid">
+
+                                    <div class="info-box evento-box">
+                                        <h3>Informações do Evento</h3>
+                                        <div class="text-sm">
+                                            <div><b>Link de Acesso:</b> <code>/presente/{{ keyMagico }}</code></div>
+                                            <div><b>Prazo para Escolha:</b>
+                                                @if (resumo?.dataPrevista) {
+                                                    {{ resumo?.dataPrevista | date:'longDate' }}
+                                                } @else {
+                                                    Não Definido
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="info-box pessoa-box">
-                                    <h3>Seus Dados Cadastrais</h3>
-                                    <div class="grid gap-1 text-sm">
-                                        <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
-                                        <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
-                                        <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
-                                        <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+                                    <div class="info-box pessoa-box">
+                                        <h3>Seus Dados Cadastrais</h3>
+                                        <div class="grid gap-1 text-sm">
+                                            <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
+                                            <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
+                                            <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
+                                            <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-box produto-box">
+                                        <h3>Produto Escolhido</h3>
+                                        <app-produto
+                                            [produto]="selectedProduct!"
+                                            [selected]="true"
+                                            [disabled]="true"
+                                            [compact]="true"
+                                            (onClickSelecionaProduto)="voltarParaLista()"
+                                        ></app-produto>
                                     </div>
                                 </div>
 
-                                <div class="info-box produto-box">
-                                    <h3>Produto Escolhido</h3>
-                                    <app-produto
-                                        [produto]="selectedProduct!"
-                                        [selected]="true"
-                                        [disabled]="true"
-                                        [compact]="true"
-                                        (onClickSelecionaProduto)="voltarParaLista()"
-                                    ></app-produto>
+                                <div class="detalhe-acoes">
+                                    <div class="msg-inline error" *ngIf="confirmError">{{ confirmError }}</div>
+                                    <div class="msg-inline success" *ngIf="confirmSuccess">{{ confirmSuccess }}</div>
                                 </div>
                             </div>
 
-                            <div class="detalhe-acoes">
-                                <div class="msg-inline error" *ngIf="confirmError">{{ confirmError }}</div>
-                                <div class="msg-inline success" *ngIf="confirmSuccess">{{ confirmSuccess }}</div>
-                            </div>
-                        </div>
+                        }
+                    </section>
+                }
 
-                    }
-                </section>
             }
 
         </div>

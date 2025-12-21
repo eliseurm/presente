@@ -63,9 +63,13 @@
                                 icon="pi pi-play"
                                 class="p-button-success"
                                 (click)="onIniciarEvento()"></button>
-                        <button pButton type="button" label="Parar"
+                        <button pButton type="button" label="Pausar"
                                 icon="pi pi-pause"
                                 class="p-button-warning"
+                                (click)="onPausarEvento()"></button>
+                        <button pButton type="button" label="Parar"
+                                icon="pi pi-stop"
+                                class="p-button-danger"
                                 (click)="onPararEvento()"></button>
                         <span class="text-sm opacity-70"
                               *ngIf="vm.model?.inicio">Iniciado: {{ vm.model.inicio | date:'short' }}</span>
@@ -200,16 +204,17 @@
                                                     <b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}
                                                 </div>
                                                 <div>
-                                                    <b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.descricao || pessoaUltimaEscolha?.tamanho?.id }}
+                                                    <b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.tamanho || pessoaUltimaEscolha?.tamanho?.id }}
                                                 </div>
                                                 <div>
-                                                    <b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.descricao || pessoaUltimaEscolha?.cor?.id }}
+                                                    <b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.nome || pessoaUltimaEscolha?.cor?.id }}
                                                 </div>
                                             </div>
                                         </p-tabpanel>
 
                                         <p-tabpanel value="2">
-                                            <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true"
+                                            <e-data-grid [dataSource]="pessoaHistorico"
+                                                         [scrollable]="true"
                                                          scrollHeight="400px">
 
                                                 <ei-column dataField="dataEscolha" caption="Escolha"
@@ -246,8 +251,8 @@
                         <ng-template eTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
                         <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}
                         </ng-template>
-                        <ng-template eTemplate="jaEscolheuTpl" let-data let-row="row">
-                            <span [title]="row?.jaEscolheu ? 'Já escolheu' : 'Ainda não'">{{ row?.jaEscolheu ? '✔' : '✖' }}</span>
+                        <ng-template eTemplate="jaEscolheuTpl" let-data="data">
+                            <span [title]="data ? 'Já escolheu' : 'Ainda não'">{{ data ? '✔' : '✖' }}</span>
                         </ng-template>
 
                         <ng-template eTemplate="pessoaEditCellTemplate" let-row>

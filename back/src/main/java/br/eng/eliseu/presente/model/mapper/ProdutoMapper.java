@@ -4,10 +4,7 @@ import br.eng.eliseu.presente.model.Cor;
 import br.eng.eliseu.presente.model.Imagem;
 import br.eng.eliseu.presente.model.Produto;
 import br.eng.eliseu.presente.model.Tamanho;
-import br.eng.eliseu.presente.model.dto.CorDto;
-import br.eng.eliseu.presente.model.dto.ImagemDto;
-import br.eng.eliseu.presente.model.dto.ProdutoDto;
-import br.eng.eliseu.presente.model.dto.TamanhoDto;
+import br.eng.eliseu.presente.model.dto.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +27,7 @@ public class ProdutoMapper {
         );
     }
 
-    public static ProdutoDto toDtoCompleto(Produto produto) {
+    public static ProdutoCompletoDto toDtoCompleto(Produto produto) {
 
         // Mapeamento manual das coleções internas (essencial para carregar os LAZY)
         List<CorDto> coresDto = produto.getCores().stream()
@@ -64,7 +61,7 @@ public class ProdutoMapper {
                 .collect(Collectors.toList());
 
         // Criação do ProdutoDto principal
-        return new ProdutoDto(
+        return new ProdutoCompletoDto(
                 produto.getId(),
                 produto.getNome(),
                 produto.getDescricao(),
@@ -145,7 +142,7 @@ public class ProdutoMapper {
                 .collect(Collectors.toList());
     }
 
-    public static List<ProdutoDto> toDtoListCompleto(List<Produto> produtos) {
+    public static List<ProdutoCompletoDto> toDtoListCompleto(List<Produto> produtos) {
         return produtos.stream()
                 .map(ProdutoMapper::toDtoCompleto)
                 .collect(Collectors.toList());

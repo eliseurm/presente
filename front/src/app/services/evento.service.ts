@@ -14,6 +14,8 @@ import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
 import {EventoProduto} from "@/shared/model/evento-produto";
 import {EventoProdutoDto} from "@/shared/model/dto/evento-produto-dto";
 import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
+import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
+import {filter} from "rxjs/operators";
 
 @Injectable({providedIn: 'root'})
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -35,8 +37,16 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.post<{ gerados: number; links: string[] }>(`${this.apiUrl}/${eventoId}/iniciar`, body);
     }
 
-    pararEvento(eventoId: number): Observable<{ pausados: number }> {
-        return this.http.post<{ pausados: number }>(`${this.apiUrl}/${eventoId}/parar`, {});
+    pausarEvento(eventoId: number): Observable<{ pausados: number }> {
+        return this.http.post<{ pausados: number }>(`${this.apiUrl}/${eventoId}/pausar`, {});
+    }
+
+    pararEvento(eventoId: number): Observable<Evento> {
+        return this.http.post<EventoDto>(`${this.apiUrl}/${eventoId}/parar`, {})
+            .pipe(
+                map((dto: EventoDto) => EventoMapper.fromDto(dto)),
+                filter((evento): evento is Evento => !!evento)
+        );
     }
 
     getUltimaEscolha(eventoId: number, pessoaId: number): Observable<any> {

@@ -1,7 +1,12 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
+import br.eng.eliseu.presente.model.dto.PessoaDto;
+import br.eng.eliseu.presente.model.dto.ProdutoCompletoDto;
 import br.eng.eliseu.presente.model.dto.ProdutoDto;
+import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
+import br.eng.eliseu.presente.model.mapper.PessoaMapper;
 import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
 import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.repository.*;
@@ -42,12 +47,8 @@ public class PresenteController {
             Long eventoId,
             String eventoNome,
             LocalDateTime dataPrevista,
-            Long pessoaId,
-            String pessoaNome,
-            String pessoaEmail,
-            String pessoaTelefone,
-            String pessoaEndereco,
-            List<ProdutoDto> produtos,
+            EventoPessoaDto eventoPessoa,
+            List<ProdutoCompletoDto> produtos,
             EventoEscolha ultimaEscolha,
             boolean podeRefazer,
             boolean expirado,
@@ -68,7 +69,7 @@ public class PresenteController {
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
         List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
-        List<ProdutoDto> produtosDto = ProdutoMapper.toDtoListCompleto(produtos);
+        List<ProdutoCompletoDto> produtosDto = ProdutoMapper.toDtoListCompleto(produtos);
 
         // Última escolha
         EventoEscolha ultima = eventoEscolhaRepository
@@ -83,25 +84,23 @@ public class PresenteController {
         }
 
         // Dados adicionais da pessoa
-        Pessoa pessoa = ep.getPessoa();
-        String email = null;
-        String telefone = null;
-        String endereco = null;
-        if (pessoa != null) {
-            try { email = pessoa.getEmail(); } catch (Exception ignore) {}
-            try { telefone = pessoa.getTelefone(); } catch (Exception ignore) {}
-            try { endereco = pessoa.getEndereco(); } catch (Exception ignore) {}
-        }
+//        Pessoa pessoa = ep.getPessoa();
+//        String email = null;
+//        String telefone = null;
+//        String endereco = null;
+//        if (pessoa != null) {
+//            try { email = pessoa.getEmail(); } catch (Exception ignore) {}
+//            try { telefone = pessoa.getTelefone(); } catch (Exception ignore) {}
+//            try { endereco = pessoa.getEndereco(); } catch (Exception ignore) {}
+//        }
+
+        EventoPessoaDto eventoPessoaDto = EventoPessoaMapper.toDto(ep);
 
         ResumoResponse resp = new ResumoResponse(
                 evento.getId(),
                 evento.getNome(),
                 evento.getFimPrevisto(),
-                ep.getPessoa().getId(),
-                ep.getPessoa().getNome(),
-                email,
-                telefone,
-                endereco,
+                eventoPessoaDto,
                 produtosDto,
                 ultima,
                 podeRefazer,
@@ -208,7 +207,7 @@ public class PresenteController {
 
         // Autorização programática: ADMIN ou usuário vinculado ao cliente do evento
         if (!(authService.isAdmin() || authService.isEscolhaAtiva(escolha))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O Evento esta Encerrado");
         }
 
         // Carrega entidades gerenciadas

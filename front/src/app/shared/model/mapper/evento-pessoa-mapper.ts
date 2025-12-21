@@ -2,7 +2,8 @@ import { EventoPessoaDto } from '../dto/evento-pessoa-dto'; // Arquivo evento-pe
 import { StatusEnum } from "@/shared/model/enum/status.enum";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {Pessoa} from "@/shared/model/pessoa";
-import {PessoaDto} from "@/shared/model/dto/pessoa-dto"; // Assumindo o caminho
+import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
+import {PessoaMapper} from "@/shared/model/mapper/pessoa-mapper"; // Assumindo o caminho
 
 export class EventoPessoaMapper {
 
@@ -14,9 +15,7 @@ export class EventoPessoaMapper {
     public static fromDTO(dto: EventoPessoaDto): EventoPessoa | undefined{
         if (!dto) return undefined;
 
-        const pessoa = new Pessoa()
-        pessoa.id = dto.pessoaId;
-        pessoa.nome = dto.pessoaNome;
+        const pessoa = PessoaMapper.fromDTO(dto.pessoa as PessoaDto) ?? new Pessoa()
 
         return {
             id: dto.id,
@@ -35,15 +34,10 @@ export class EventoPessoaMapper {
     public static toDTO(model: EventoPessoa): EventoPessoaDto | undefined{
         if (!model) return undefined;
 
-        // Assume que 'pessoa' pode ser um objeto parcial { id: number }
-        const pessoaId = model.pessoa && 'id' in model.pessoa ? model.pessoa.id : undefined;
-        // Assume que se o objeto 'pessoa' contiver 'nome', ele deve ser usado.
-        const pessoaNome = model.pessoa && 'nome' in model.pessoa ? (model.pessoa as any).nome : undefined;
 
         return {
             id: model.id,
-            pessoaId: pessoaId,
-            pessoaNome: pessoaNome,
+            pessoa: PessoaMapper.toDTO(model.pessoa),
             status: model.status as StatusEnum,
             nomeMagicNumber: model.nomeMagicNumber,
             jaEscolheu: model.jaEscolheu,

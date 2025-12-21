@@ -2,7 +2,7 @@ package br.eng.eliseu.presente.service;
 
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
-import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
+import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -190,7 +190,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     }
 
     @Transactional
-    public Map<String, Object> pararEvento(Long eventoId) {
+    public Map<String, Object> pausarEvento(Long eventoId) {
+
         Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
 
@@ -209,9 +210,21 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
         }
 
-        evento.setFim(java.time.LocalDateTime.now());
+//        evento.setFim(java.time.LocalDateTime.now());
         eventoRepository.save(evento);
         return Map.of("pausados", pausados);
+    }
+
+    @Transactional
+    public EventoDto pararEvento(Long eventoId) {
+
+        Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
+
+        evento.setFim(java.time.LocalDateTime.now());
+        evento = eventoRepository.save(evento);
+
+        return EventoMapper.toDTO(evento);
     }
 
     private static String gerarNomeMagicNumber(Pessoa pessoa) {
@@ -470,6 +483,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
     // ===================== MAPEAMENTO DTO =====================
 
+/*
     private EventoDto toDTO(Evento e) {
         if (e == null) return null;
 //        IdNomeDTO clienteDTO = null;
@@ -486,24 +500,22 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        List<EventoPessoaDto> pessoasDTO = Optional.ofNullable(e.getEventoPessoas()).orElseGet(List::of).stream()
-                .filter(Objects::nonNull)
-                .map(ep -> EventoPessoaDto.builder()
-                        .pessoaId(ep.getPessoa() != null ? ep.getPessoa().getId() : null)
-                        .pessoaNome(ep.getPessoa() != null ? ep.getPessoa().getNome() : null)
-                        .status(ep.getStatus())
-                        .nomeMagicNumber(ep.getNomeMagicNumber())
-                        .jaEscolheu(ep.getPessoa() != null && pessoasQueJaEscolheram.contains(ep.getPessoa().getId()))
-                        .build())
-                .collect(Collectors.toList());
+        List<EventoPessoaDto> pessoasDTO = EventoPessoaMapper.toDtoList(
+                Optional.ofNullable(e.getEventoPessoas())
+                        .orElseGet(List::of)
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()),
+                pessoasQueJaEscolheram // Passando a lista de IDs para o mapper processar o 'jaEscolheu'
+        );
 
-        List<EventoProdutoDto> produtosDTO = Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream()
-                .filter(Objects::nonNull)
-                .map(evPr -> EventoProdutoDto.builder()
-                        .produto(ProdutoMapper.toDto(evPr.getProduto()))
-                        .status(evPr.getStatus())
-                        .build())
-                .collect(Collectors.toList());
+        List<EventoProdutoDto> produtosDTO = EventoProdutoMapper.toDtoList(
+                Optional.ofNullable(e.getEventoProdutos())
+                        .orElseGet(Set::of)
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList())
+        );
 
         return EventoDto.builder()
                 .id(e.getId())
@@ -581,23 +593,35 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         return entidade;
     }
+*/
 
     @Transactional(readOnly = true)
     public Page<EventoDto> listarDTO(EventoFilter filtro) {
+        // PASSO 1: Busca a página de entidades 'Evento' do banco de dados
         Page<Evento> page = listar(filtro);
-        return page.map(this::toDTO);
+
+        // PASSO 2: Mapeamento de cada entidade para DTO
+        return page.map(evento -> {
+            // A conversão propriamente dita
+            EventoDto dto = EventoMapper.toDTO(evento);
+            return dto;
+        });
     }
+//    public Page<EventoDto> listarDTO(EventoFilter filtro) {
+//        Page<Evento> page = listar(filtro);
+//        return page.map(this::toDTO);
+//    }
 
     @Transactional(readOnly = true)
     public Optional<EventoDto> buscarPorIdDTO(Long id, String expand) {
-        return buscarPorIdComExpand(id, expand).map(this::toDTO);
+        return buscarPorIdComExpand(id, expand).map(EventoMapper::toDTO);
     }
 
     @Transactional
     public EventoDto criarDTO(EventoDto dto) {
-        Evento e = fromDTO(dto);
+        Evento e = EventoMapper.fromDTO(dto);
         Evento salvo = criar(e);
-        return toDTO(salvo);
+        return EventoMapper.toDTO(salvo);
     }
 
     @Transactional

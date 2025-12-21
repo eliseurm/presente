@@ -15,7 +15,7 @@ public class EventoProdutoMapper {
     /**
      * Converte de Entidade para DTO (Back -> Front)
      */
-    public EventoProdutoDto toDto(EventoProduto entity) {
+    public static EventoProdutoDto toDto(EventoProduto entity) {
         if (entity == null) {
             return null;
         }
@@ -30,7 +30,7 @@ public class EventoProdutoMapper {
     /**
      * Converte de DTO para Entidade (Front -> Back)
      */
-    public EventoProduto fromDto(EventoProdutoDto dto) {
+    public static EventoProduto fromDto(EventoProdutoDto dto) {
         if (dto == null) {
             return null;
         }
@@ -50,24 +50,24 @@ public class EventoProdutoMapper {
     /**
      * Converte lista de Entidades para lista de DTOs
      */
-    public List<EventoProdutoDto> toDtoList(List<EventoProduto> entities) {
+    public static List<EventoProdutoDto> toDtoList(List<EventoProduto> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
         return entities.stream()
-                .map(this::toDto)
+                .map(EventoProdutoMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     /**
      * Converte lista de DTOs para lista de Entidades
      */
-    public List<EventoProduto> fromDtoList(List<EventoProdutoDto> dtos) {
+    public static List<EventoProduto> fromDtoList(List<EventoProdutoDto> dtos) {
         if (dtos == null || dtos.isEmpty()) {
             return new ArrayList<>();
         }
         return dtos.stream()
-                .map(this::fromDto)
+                .map(EventoProdutoMapper::fromDto)
                 .collect(Collectors.toList());
     }
 }

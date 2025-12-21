@@ -8,7 +8,7 @@ import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 
 export class EventoMapper {
 
-    public static fromDTO(dto: EventoDto): Evento | undefined {
+    public static fromDto(dto: EventoDto): Evento | undefined {
         if (!dto) return undefined;
 
         const cliente = new Cliente()
@@ -81,7 +81,7 @@ export class EventoMapper {
 
     static fromDtoList(dtos: EventoDto[]): Evento[] {
         if (!dtos) return [];
-        return dtos.map(dto => this.fromDTO(dto))
+        return dtos.map(dto => this.fromDto(dto))
             .filter(dto => !!dto) as Evento[];
     }
 

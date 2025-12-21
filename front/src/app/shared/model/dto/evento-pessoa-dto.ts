@@ -1,11 +1,11 @@
 import {StatusEnum} from "@/shared/model/enum/status.enum";
+import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
 
 export class EventoPessoaDto {
 
     id?: number;
 
-    pessoaId?: number;
-    pessoaNome?: string;
+    pessoa?: PessoaDto;
 
     status?: StatusEnum;
     nomeMagicNumber?: string;

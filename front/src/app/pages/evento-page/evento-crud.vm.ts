@@ -105,7 +105,7 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         return (this.port.salvar(eventoDTO as Evento) as Observable<EventoDto>).pipe(
             // 1. Converte o DTO recebido para o Modelo
             map((savedDTO: EventoDto) => {
-                const eventoModel = EventoMapper.fromDTO(savedDTO);
+                const eventoModel = EventoMapper.fromDto(savedDTO);
                 if (!eventoModel) {
                     throw new Error('Falha crítica de mapeamento: DTO retornado é inválido.');
                 }
