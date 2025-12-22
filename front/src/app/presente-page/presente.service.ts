@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import {Observable, switchMap, timer} from 'rxjs';
 import {environment} from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -26,9 +26,17 @@ export class PresenteService {
         return this.http.get<{ anteriores: any[] }>(url);
     }
 
+    // salvarEscolha(escolha: any): Observable<any> {
+    //     const url = `${this.getBase()}/presente/salvar`;
+    //     return this.http.post<any>(url, escolha);
+    // }
+
     salvarEscolha(escolha: any): Observable<any> {
         const url = `${this.getBase()}/presente/salvar`;
-        return this.http.post<any>(url, escolha);
+        // Adiciona 100ms de espera antes de disparar
+        return timer(100).pipe(
+            switchMap(() => this.http.post<any>(url, escolha))
+        );
     }
 
     limparEscolha(escolha: any): Observable<void> {

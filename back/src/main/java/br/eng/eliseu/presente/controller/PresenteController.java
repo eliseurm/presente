@@ -1,10 +1,8 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
-import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
-import br.eng.eliseu.presente.model.dto.PessoaDto;
-import br.eng.eliseu.presente.model.dto.ProdutoCompletoDto;
-import br.eng.eliseu.presente.model.dto.ProdutoDto;
+import br.eng.eliseu.presente.model.dto.*;
+import br.eng.eliseu.presente.model.mapper.EventoEscolhaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.model.mapper.PessoaMapper;
 import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
@@ -49,7 +47,7 @@ public class PresenteController {
             LocalDateTime dataPrevista,
             EventoPessoaDto eventoPessoa,
             List<ProdutoCompletoDto> produtos,
-            EventoEscolha ultimaEscolha,
+            EventoEscolhaDto ultimaEscolha,
             boolean podeRefazer,
             boolean expirado,
             String mensagem
@@ -69,30 +67,16 @@ public class PresenteController {
         Evento evento = eventoRepository.findByIdExpandedAll(ep.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
         List<Produto> produtos = produtoRepository.findProdutosComColecoesProntas(evento, StatusEnum.ATIVO);
-        List<ProdutoCompletoDto> produtosDto = ProdutoMapper.toDtoListCompleto(produtos);
 
         // Última escolha
-        EventoEscolha ultima = eventoEscolhaRepository
-                .findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(evento.getId(), ep.getPessoa().getId())
-                .orElse(null);
+        EventoEscolha ultimaEscolha = eventoEscolhaRepository.findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(evento.getId(), ep.getPessoa().getId()).orElse(null);
 
         boolean expirado = evento.getFimPrevisto() != null && LocalDateTime.now().isAfter(evento.getFimPrevisto());
         boolean podeRefazer = !expirado; // regra: botão visível somente se não expirado
         String mensagem = null;
-        if (expirado && ultima == null) {
+        if (expirado && ultimaEscolha == null) {
             mensagem = "O tempo para escolha expirou. Nenhuma escolha foi registrada.";
         }
-
-        // Dados adicionais da pessoa
-//        Pessoa pessoa = ep.getPessoa();
-//        String email = null;
-//        String telefone = null;
-//        String endereco = null;
-//        if (pessoa != null) {
-//            try { email = pessoa.getEmail(); } catch (Exception ignore) {}
-//            try { telefone = pessoa.getTelefone(); } catch (Exception ignore) {}
-//            try { endereco = pessoa.getEndereco(); } catch (Exception ignore) {}
-//        }
 
         EventoPessoaDto eventoPessoaDto = EventoPessoaMapper.toDto(ep);
 
@@ -101,8 +85,8 @@ public class PresenteController {
                 evento.getNome(),
                 evento.getFimPrevisto(),
                 eventoPessoaDto,
-                produtosDto,
-                ultima,
+                ProdutoMapper.toDtoListCompleto(produtos),
+                EventoEscolhaMapper.toDto(ultimaEscolha),
                 podeRefazer,
                 expirado,
                 mensagem
@@ -194,7 +178,7 @@ public class PresenteController {
     // POST /presente/salvar (recebe um objeto EventoEscolha "carregado")
     @PostMapping("/salvar")
     @Transactional
-    public ResponseEntity<EventoEscolha> salvarEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
+    public ResponseEntity<EventoEscolhaDto> salvarEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
 
         if (escolha == null
                 || escolha.getEvento() == null || escolha.getEvento().getId() == null
@@ -245,12 +229,13 @@ public class PresenteController {
                 .build();
 
         EventoEscolha salva = eventoEscolhaRepository.save(nova);
-        return ResponseEntity.ok().build();
+        EventoEscolhaDto dto = EventoEscolhaMapper.toDto(salva);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/limpar")
     @Transactional
-    public ResponseEntity limparEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
+    public ResponseEntity limparEscolha(@RequestBody EventoEscolha escolha) {
 
         EventoEscolha entidadeExistente ;
         if (escolha!=null && escolha.getId()!=null) {

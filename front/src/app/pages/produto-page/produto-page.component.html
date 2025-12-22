@@ -1,87 +1,111 @@
 <crud #crudRef [parent]="vm" listToolbarTitle="Produtos" editToolbarTitle="Editar Produto"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-  <!-- Filtros -->
-  <div crud-list-filter-fields class="w-full text-left">
-    <crud-filter
-      [filter]="vm.filter"
-      [fields]="filterFields"
-      [loading]="false"
-      (onSearch)="vm.doFilter().subscribe()"
-      (onClear)="onClearFilters()"
-    ></crud-filter>
-  </div>
-
-  <!-- Grid de listagem -->
-  <div crud-list-grid class="w-full">
-    <e-data-grid
-      [dataSource]="vm.dataSource"
-      [paginator]="true"
-      [rows]="vm.filter.size || 10"
-      [rowsPerPageOptions]="[10,20,50,100]"
-      [totalRecords]="vm.totalRecords"
-      [lazy]="true"
-      (onLazyLoad)="onLazyLoad($event)"
-      (rowDblClick)="crudRef.onRowDblClick($event)">
-
-      <ei-column dataField="nome" caption="Nome"></ei-column>
-      <ei-column dataField="status" caption="Situação" cellTemplate="statusTpl"></ei-column>
-      <ei-column dataField="preco" caption="Preço"></ei-column>
-      <ei-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></ei-column>
-      <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
-
-      <ng-template eTemplate="statusTpl" let-row>
-        {{ row?.status ? 'Ativo' : 'Inativo' }}
-      </ng-template>
-
-      <ng-template eTemplate="imgsTpl" let-row>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <ng-container *ngFor="let img of (row?.imagens || []); let i = index">
-            <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
-          </ng-container>
-        </div>
-      </ng-template>
-
-      <ng-template eTemplate="acoesTpl" let-row>
-        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
-                (click)="crudRef.onRowDblClick(row)"></button>
-      </ng-template>
-
-    </e-data-grid>
-  </div>
-
-  <!-- Formulário de edição -->
-  <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
-      <div class="flex flex-col gap-2 w-full">
-        <label class="block">Nome *</label>
-        <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome" />
-      </div>
-      <div class="flex flex-col gap-2 w-full md:w-1/2">
-        <label class="block">Preço</label>
-        <input class="w-full" pInputText type="number" [(ngModel)]="vm.model.preco" name="preco" min="0" step="0.01"/>
-      </div>
-      <div class="flex items-center gap-2 w-full md:w-1/2" style="margin-top: 28px;">
-        <input type="checkbox" [(ngModel)]="vm.model.status" name="status"/> <label>Ativo</label>
-      </div>
-      <div class="flex flex-col gap-2 w-full md:col-span-2">
-        <label class="block">Descrição</label>
-        <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
-      </div>
-      <div class="flex flex-col gap-2 w-full md:w-1/2">
-        <label class="block">Cores</label>
-        <p-multiSelect [options]="coresOptions" optionLabel="nome" [(ngModel)]="vm.model.cores" name="cores" display="chip" appendTo="body"></p-multiSelect>
-      </div>
-      <div class="flex flex-col gap-2 w-full md:w-1/2">
-        <label class="block">Tamanhos</label>
-        <p-multiSelect [options]="tamanhosOptions" optionLabel="tamanho" [(ngModel)]="vm.model.tamanhos" name="tamanhos" display="chip" appendTo="body"></p-multiSelect>
-      </div>
-      <div class="flex flex-col gap-2 w-full md:col-span-2">
-        <label class="block">Imagens</label>
-        <p-multiSelect [options]="imagensOptions" optionLabel="nome" [(ngModel)]="vm.model.imagens" name="imagens" display="chip" appendTo="body"></p-multiSelect>
-      </div>
+    <!-- Filtros -->
+    <div crud-list-filter-fields class="w-full text-left">
+        <crud-filter
+            [filter]="vm.filter"
+            [fields]="filterFields"
+            [loading]="false"
+            (onSearch)="vm.doFilter().subscribe()"
+            (onClear)="onClearFilters()"
+        ></crud-filter>
     </div>
-  </div>
+
+    <!-- Grid de listagem -->
+    <div crud-list-grid class="w-full">
+        <e-data-grid
+            [dataSource]="vm.dataSource"
+            [paginator]="true"
+            [rows]="vm.filter.size || 10"
+            [rowsPerPageOptions]="[10,20,50,100]"
+            [totalRecords]="vm.totalRecords"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            (rowDblClick)="crudRef.onRowDblClick($event)">
+
+            <ei-column dataField="nome" caption="Nome"></ei-column>
+            <ei-column dataField="status" caption="Situação" cellTemplate="statusTpl"></ei-column>
+            <ei-column dataField="preco" caption="Preço"></ei-column>
+            <ei-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></ei-column>
+            <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
+
+            <ng-template eTemplate="statusTpl" let-row>{{ row?.status ? 'Ativo' : 'Inativo' }}</ng-template>
+
+            <ng-template eTemplate="imgsTpl" let-row>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    @for (img of (row?.imagens || []); track $index) {
+                        <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
+                    }
+                </div>
+            </ng-template>
+
+            <ng-template eTemplate="acoesTpl" let-row>
+                <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
+                        (click)="crudRef.onRowDblClick(row)"></button>
+            </ng-template>
+
+        </e-data-grid>
+    </div>
+
+    <!-- Formulário de edição -->
+    <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Nome *</label>
+                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Preço</label>
+                <input class="w-full" pInputText type="number" [(ngModel)]="vm.model.preco" name="preco" min="0"
+                       step="0.01"/>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-1/2" style="margin-top: 28px;">
+                <input type="checkbox" [(ngModel)]="vm.model.status" name="status"/> <label>Ativo</label>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+                <label class="block">Descrição</label>
+                <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Cores</label>
+                <p-multiSelect [options]="coresOptions"
+                               optionLabel="nome"
+                               [(ngModel)]="vm.model.cores"
+                               name="cores"
+                               display="chip"
+                               appendTo="body"
+                               [showClear]="true"
+                               [maxSelectedLabels]="10"
+                ></p-multiSelect>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+                <label class="block">Tamanhos</label>
+                <p-multiSelect [options]="tamanhosOptions"
+                               optionLabel="tamanho"
+                               [(ngModel)]="vm.model.tamanhos"
+                               name="tamanhos"
+                               display="chip"
+                               appendTo="body"
+                               [showClear]="true"
+                               [maxSelectedLabels]="10"
+                ></p-multiSelect>
+            </div>
+            <div class="flex flex-col gap-2 w-full md:col-span-2">
+                <label class="block">Imagens</label>
+                <p-multiSelect [options]="imagensOptions"
+                               optionLabel="nome"
+                               [(ngModel)]="vm.model.imagens"
+                               name="imagens"
+                               display="chip"
+                               appendTo="body"
+                               [showClear]="true"
+                               [maxSelectedLabels]="4"
+                ></p-multiSelect>
+            </div>
+        </div>
+    </div>
 
 </crud>
 

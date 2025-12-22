@@ -12,6 +12,7 @@ import {PresenteTopbarComponent} from '@/presente-page/presente-top-bar-componen
 import {finalize} from "rxjs";
 import {StatusEnum} from "@/shared/model/enum/status.enum";
 import {EnumDescricaoPipe} from "@/shared/pipe/enum-descricao.pipe";
+import {EventoEscolhaDto} from "@/shared/model/dto/evento-escolha-dto";
 
 type Produto = {
     id: number;
@@ -67,7 +68,7 @@ export class PresenteEscolhaComponent implements OnInit {
     resumo: any = null;
     podeRefazer = false;
     expirado = false;
-    ultimaEscolha: any = null;
+    ultimaEscolha?: EventoEscolhaDto;
     // mensagens de feedback na tela de detalhe
     confirmError = '';
     confirmSuccess = '';
@@ -100,8 +101,8 @@ export class PresenteEscolhaComponent implements OnInit {
                     this.nomeExibicao = res?.pessoaNome || this.nomeExibicao;
                     this.produtos = (res?.produtos || []).map((p: any) => this.mapProduto(p));
 
-                    if (!this.detailMode && this.ultimaEscolha?.produto?.id) {
-                        this.irParaDetalhe(Number(this.ultimaEscolha.produto.id));
+                    if (!this.detailMode && this.ultimaEscolha?.produtoId) {
+                        this.irParaDetalhe(Number(this.ultimaEscolha.produtoId));
                     }
 
                     this.processarSelecaoInicial();
@@ -130,12 +131,12 @@ export class PresenteEscolhaComponent implements OnInit {
                 if (selTam) prod.tamanhoSelecionado = selTam;
                 if (selCor) prod.corSelecionada = selCor;
 
-                if (!selTam && this.ultimaEscolha?.produto?.id === prod.id && this.ultimaEscolha?.tamanho?.id) {
-                    const tid = Number(this.ultimaEscolha.tamanho.id);
+                if (!selTam && this.ultimaEscolha?.produtoId === prod.id && this.ultimaEscolha?.tamanhoId) {
+                    const tid = Number(this.ultimaEscolha.tamanhoId);
                     prod.tamanhoSelecionado = prod.tamanhos?.find(t => t.id === tid) || prod.tamanhos?.[0] || null;
                 }
-                if (!selCor && this.ultimaEscolha?.produto?.id === prod.id && this.ultimaEscolha?.cor?.id) {
-                    const cid = Number(this.ultimaEscolha.cor.id);
+                if (!selCor && this.ultimaEscolha?.produtoId === prod.id && this.ultimaEscolha?.corId) {
+                    const cid = Number(this.ultimaEscolha.corId);
                     prod.corSelecionada = prod.cores?.find(c => c.id === cid) || prod.cores?.[0] || null;
                 }
             }
@@ -162,7 +163,7 @@ export class PresenteEscolhaComponent implements OnInit {
 
         const escolha = {
             evento: { id: this.resumo?.eventoId },
-            pessoa: { id: this.resumo?.pessoaId },
+            pessoa: { id: this.resumo?.eventoPessoa?.pessoa?.id },
             produto: { id: p.id },
             tamanho: { id: p.tamanhoSelecionado?.id || (p.tamanhos?.[0]?.id ?? null) },
             cor: { id: p.corSelecionada?.id || (p.cores?.[0]?.id ?? null) }
@@ -197,7 +198,7 @@ export class PresenteEscolhaComponent implements OnInit {
         const escolha = {
             id: this.resumo?.id,
             evento: { id: this.resumo?.eventoId },
-            pessoa: { id: this.resumo?.pessoaId }
+            pessoa: { id: this.resumo?.eventoPessoa?.pessoa?.id }
         };
 
         this.service.limparEscolha(escolha).subscribe(() => {

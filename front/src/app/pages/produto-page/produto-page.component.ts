@@ -85,21 +85,24 @@ export class ProdutoPageComponent {
 
     loadOptions(): void {
         // Carrega primeiras páginas de opções (poderia ser paginado/filtrado no futuro)
-        const filter = new ProdutoFilter();
-        this.corService.listar(new CorFilter(filter)).subscribe({
+        const filterCor = new CorFilter();
+        this.corService.listar(filterCor).subscribe({
             next: (page) => this.coresOptions = page.content || [],
-            error: () => {
-            }
+            error: () => {}
         });
-        this.tamanhoService.listar(new TamanhoFilter(filter)).subscribe({
+
+        const filterTamanho = new TamanhoFilter();
+        this.tamanhoService.listar(filterTamanho).subscribe({
             next: (page) => this.tamanhosOptions = page.content || [],
-            error: () => {
-            }
+            error: () => {}
         });
-        this.imagemService.listar(new ImagemFilter(filter)).subscribe({
-            next: (page) => this.imagensOptions = page.content || [],
-            error: () => {
-            }
+
+        const filterImagem = new ImagemFilter();
+        this.imagemService.listar(filterImagem).subscribe({
+            next: (page) => {
+                this.imagensOptions = page.content || [];
+            },
+            error: () => {}
         });
     }
 
@@ -152,7 +155,11 @@ export class ProdutoPageComponent {
                 // Após excluir, recarrega a lista usando a ViewModel do CRUD
                 this.vm.doFilter().subscribe();
             },
-            error: () => this.messageService.add({severity: 'error', summary: 'Erro', detail: `Erro ao excluir informações`})
+            error: () => this.messageService.add({
+                severity: 'error',
+                summary: 'Erro',
+                detail: `Erro ao excluir informações`
+            })
         });
     }
 

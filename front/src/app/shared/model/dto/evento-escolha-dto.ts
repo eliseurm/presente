@@ -27,7 +27,7 @@ export interface EventoEscolhaDto {
     produtoId: number;
     produtoNome: string;
     produtoDescricao: string;
-    produtoStatus: boolean;
+    produtoStatus: StatusEnum;
 
     // --- Informações de Cor ---
     corId: number;

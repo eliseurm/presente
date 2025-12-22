@@ -6,6 +6,7 @@ import br.eng.eliseu.presente.model.dto.EventoEscolhaDto;
 import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
 import br.eng.eliseu.presente.model.dto.EventoProdutoDto;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
+import br.eng.eliseu.presente.model.mapper.EventoEscolhaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoProdutoMapper;
@@ -202,7 +203,7 @@ public class EventoController {
                 // Se 'encerradas' não for nula, cria um Stream a partir dela.
                 .orElseGet(Collections::emptyList) // Se 'escolhas' for nula, retorna uma lista vazia imutável.
                 .stream()
-                .map(EventoEscolhaDto::fromEntity)
+                .map(EventoEscolhaMapper::toDto)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(anteriores);
