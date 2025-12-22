@@ -69,8 +69,7 @@ public class ImagemController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Imagem> upload(@RequestPart("file") MultipartFile file,
-                                         @RequestPart(value = "nome", required = false) String nome) throws IOException {
+    public ResponseEntity<Imagem> upload(@RequestPart("file") MultipartFile file, @RequestPart(value = "nome", required = false) String nome) throws IOException {
         Imagem img = Imagem.builder()
                 .nome(nome != null ? nome : file.getOriginalFilename())
                 .arquivo(file.getBytes())
@@ -80,9 +79,7 @@ public class ImagemController {
     }
 
     @PutMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Imagem> uploadToExisting(@PathVariable Long id,
-                                                   @RequestPart("file") MultipartFile file,
-                                                   @RequestPart(value = "nome", required = false) String nome) throws IOException {
+    public ResponseEntity<Imagem> uploadToExisting(@PathVariable Long id, @RequestPart("file") MultipartFile file, @RequestPart(value = "nome", required = false) String nome) throws IOException {
         var opt = imagemService.buscarPorId(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -105,25 +102,37 @@ public class ImagemController {
         return imagemService.buscarPorId(id)
                 .map(img -> {
                     byte[] dados = img.getArquivo();
-                    if (dados == null) {
+                    if (dados == null || dados.length == 0) {
                         return ResponseEntity.notFound().<Resource>build();
                     }
+
                     Resource resource = new ByteArrayResource(dados);
-                    String filename = img.getNome() != null ? img.getNome() : ("imagem-" + id);
-                    MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
-                    try {
-                        // Tenta inferir o content type pelo nome do arquivo
-                        String lowered = filename.toLowerCase();
-                        if (lowered.endsWith(".png")) contentType = MediaType.IMAGE_PNG;
-                        else if (lowered.endsWith(".jpg") || lowered.endsWith(".jpeg")) contentType = MediaType.IMAGE_JPEG;
-                        else if (lowered.endsWith(".gif")) contentType = MediaType.IMAGE_GIF;
-                    } catch (Exception ignored) {}
+
+                    MediaType contentType = determineMediaType(img.getNome());
 
                     return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                             .contentType(contentType)
+                            // "inline" permite exibir no <img>; "filename" ajuda no SEO/Cache
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + img.getNome() + "\"")
+                            // Adicionar Cache-Control ajuda na performance da grid
+                            .header(HttpHeaders.CACHE_CONTROL, "max-age=3600")
                             .body(resource);
                 })
-                .orElse(ResponseEntity.notFound().<Resource>build());
+                .orElse(ResponseEntity.notFound().build());
     }
+
+    /**
+     * Auxiliar para definir o MediaType com base na extensão ou conteúdo
+     */
+    private MediaType determineMediaType(String filename) {
+        if (filename == null) return MediaType.IMAGE_JPEG;
+
+        String fileExtension = filename.toLowerCase();
+        if (fileExtension.endsWith(".png")) return MediaType.IMAGE_PNG;
+        if (fileExtension.endsWith(".gif")) return MediaType.IMAGE_GIF;
+        if (fileExtension.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
+
+        return MediaType.IMAGE_JPEG; // Default comum
+    }
+
 }

@@ -1,6 +1,7 @@
 package br.eng.eliseu.presente.repository;
 
 import br.eng.eliseu.presente.model.Evento;
+import br.eng.eliseu.presente.model.Imagem;
 import br.eng.eliseu.presente.model.Produto;
 import br.eng.eliseu.presente.model.StatusEnum;
 import org.springframework.data.domain.Page;
@@ -32,5 +33,7 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long>, JpaSpec
         """)
     Page<Produto> findProdutosByQuery(@Param("q") String q, Pageable pageable);
 
+    @Query("select p.imagens from Produto p join p.imagens i where p.id = :produtoId")
+    List<Imagem> findImagensByProdutoId(@Param("produtoId") Long produtoId);
 
 }

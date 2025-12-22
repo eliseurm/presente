@@ -4,11 +4,14 @@ import {AbstractCrud} from '@/shared/crud/abstract.crud';
 import {Produto} from '@/shared/model/produto';
 import {ProdutoFilter} from '@/shared/model/filter/produto-filter';
 import {ProdutoService} from '@/services/produto.service';
-import {Observable} from 'rxjs';
+import {forkJoin, map, Observable, of, switchMap} from 'rxjs';
 import {Mode} from "@/shared/crud/crud.mode";
+import {PageResponse} from "@/shared/model/page-response";
+import {catchError, tap} from "rxjs/operators";
 
 @Injectable()
 export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
+
     constructor(
         port: ProdutoService,
         route: ActivatedRoute,
@@ -19,7 +22,11 @@ export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
         this.filter = this.newFilter();
     }
 
-    protected newModel(): Produto {
+    protected get produtoService(): ProdutoService {
+        return this.port as ProdutoService;
+    }
+
+protected newModel(): Produto {
         return {
             id: undefined,
             nome: '',
@@ -36,6 +43,41 @@ export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
     protected newFilter(): ProdutoFilter {
         return new ProdutoFilter();
     }
+
+    override doFilter(): Observable<PageResponse<Produto>> {
+        // aplica expand opcionalmente sem poluir o filtro persistido
+        const filtroComExpand = this.attachExpandToFilterIfNeeded();
+        return this.port.listar(filtroComExpand).pipe(
+            switchMap((page) => {
+                // Se não houver produtos, apenas segue o fluxo
+                if (!page.content || page.content.length === 0) {
+                    return of(page);
+                }
+
+                // Criamos um array de observables (um para cada busca de imagem)
+                const detalheRequests = page.content.map(produto =>
+                    this.produtoService.getProdutoImagem(produto.id as number).pipe(
+                        tap(imagens => produto.imagens = imagens), // Acopla as imagens ao produto
+                        catchError(() => of([])) // Se uma imagem falhar, não trava a lista toda
+                    )
+                );
+
+                // forkJoin executa todas em paralelo e espera o fim de todas
+                return forkJoin(detalheRequests).pipe(
+                    map(() => page) // Retorna a página original, agora com os produtos populados
+                );
+            }),
+            tap((page) => {
+                this.dataSource = page.content;
+                this.totalRecords = page.totalElements;
+                this.saveToStorage();
+            }),
+            catchError((err) => this.handleError<PageResponse<Produto>>(err, 'Falha ao carregar lista'))
+        );
+
+    }
+
+
 
     override onRowOpen(row: Produto): void {
 

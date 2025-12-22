@@ -36,6 +36,12 @@
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     @for (img of (row?.imagens || []); track $index) {
                         <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
+<!--                        <img [src]="getImagemUrl(img)"-->
+<!--                             alt="Imagem do produto"-->
+<!--                             style="width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 3px; border: 1px solid #ddd;"/>-->
+                    }
+                    @empty {
+                        <span>Nenhuma imagem</span>
                     }
                 </div>
             </ng-template>
