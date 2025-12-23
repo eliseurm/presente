@@ -9,15 +9,11 @@ import {Observable, of} from "rxjs";
 import {PageResponse} from "@/shared/model/page-response";
 import {catchError, tap} from "rxjs/operators";
 import {ToastMessageOptions} from "primeng/api";
+import { Usuario } from '@/shared/model/usuario';
 
 @Injectable()
 export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
-
-    constructor(
-        port: PessoaService,
-        route: ActivatedRoute,
-        router: Router,
-    ) {
+    constructor(port: PessoaService, route: ActivatedRoute, router: Router) {
         super(port, route, router);
         this.model = this.newModel();
         this.filter = this.newFilter();
@@ -28,13 +24,13 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
     }
 
     protected newFilter(): PessoaFilter {
-    return new PessoaFilter();
-  }
+        return new PessoaFilter();
+    }
 
     override doFilter(): Observable<PageResponse<Pessoa>> {
         const filtroComExpand = this.attachExpandToFilterIfNeeded();
 
-        if (!filtroComExpand || filtroComExpand && !filtroComExpand.clienteId) {
+        if (!filtroComExpand || (filtroComExpand && !filtroComExpand.clienteId)) {
             this.messageToastShow('Informe um Cliente');
             return of();
         }
@@ -49,9 +45,7 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
         );
     }
 
-
     override canDoSave(): boolean {
-
         this.model.cpf = StringUtils.somenteNumeros(this.model.cpf);
         this.model.cep = StringUtils.somenteNumeros(this.model.cep);
 
@@ -69,5 +63,13 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
         // }
         this.errorsVisible = true;
         return ok;
+    }
+
+    override doSave(): Observable<Pessoa> {
+        const payload: any = { ...this.model } as any;
+        payload.status = (this.model.status as any).key ?? (this.model.status as any).name ?? this.model.status;
+        this.model = payload;
+
+        return super.doSave();
     }
 }

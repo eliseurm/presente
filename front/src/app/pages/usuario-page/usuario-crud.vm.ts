@@ -47,12 +47,8 @@ export class UsuarioCrudVM extends AbstractCrud<Usuario, UsuarioFilter> {
     override doSave(): import('rxjs').Observable<Usuario> {
 
         const payload: any = {...this.model} as any;
-        // papel/status: enviar a descrição (ou key) conforme disponível
-        const papelVal: any = (this.model as any)?.papel;
-        const statusVal: any = (this.model as any)?.status;
-        payload.papel = typeof papelVal === 'object' && papelVal ? (papelVal.descricao || papelVal.key) : papelVal;
-        payload.status = typeof statusVal === 'object' && statusVal ? (statusVal.descricao || statusVal.key) : statusVal;
-        // senha: já vem em model['senha'] quando informada; mantém como está
+        payload.papel = (this.model.papel as any).key ?? (this.model.papel as any).name ?? this.model.papel;
+        payload.status = (this.model.status as any).key ?? (this.model.status as any).name ?? this.model.status;
         this.model = payload;
 
         return super.doSave();

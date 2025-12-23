@@ -29,6 +29,8 @@ import {TamanhoFilter} from '@/shared/model/filter/tamanho-filter';
 import {ImagemFilter} from '@/shared/model/filter/imagem-filter';
 import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
 import {ProdutoCrudVM} from './produto-crud.vm';
+import { StatusEnum } from '@/shared/model/enum/status.enum';
+import { EnumSelectComponent } from '@/shared/components/enum-select/enum-select.component';
 
 @Component({
     selector: 'produto-page',
@@ -48,24 +50,24 @@ import {ProdutoCrudVM} from './produto-crud.vm';
         ETemplateDirective,
         CrudComponent,
         CrudFilterComponent,
+        EnumSelectComponent
     ],
     templateUrl: './produto-page.component.html',
-    styleUrls: [
-        '../../shared/components/crud-base/crud-base.component.scss'
-    ],
+    styleUrls: ['../../shared/components/crud-base/crud-base.component.scss'],
     providers: [MessageService, ProdutoCrudVM]
 })
-@CrudMetadata("ProdutoPageComponent", [Produto, ProdutoFilter])
+@CrudMetadata('ProdutoPageComponent', [Produto, ProdutoFilter])
 export class ProdutoPageComponent {
     @ViewChild('crudRef') crudRef?: CrudComponent<Produto, ProdutoFilter>;
+
+    statusEnumType: any = StatusEnum;
+
     // Opções
     coresOptions: Cor[] = [];
     tamanhosOptions: Tamanho[] = [];
     imagensOptions: Imagem[] = [];
 
-    readonly filterFields: FilterField[] = [
-        {key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome'}
-    ];
+    readonly filterFields: FilterField[] = [{ key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' }];
 
     constructor(
         public vm: ProdutoCrudVM,
@@ -74,9 +76,8 @@ export class ProdutoPageComponent {
         private tamanhoService: TamanhoService,
         private imagemService: ImagemService,
         private messageService: MessageService,
-        private router: Router,
-    ) {
-    }
+        private router: Router
+    ) {}
 
     ngOnInit(): void {
         this.vm.init();
@@ -87,13 +88,13 @@ export class ProdutoPageComponent {
         // Carrega primeiras páginas de opções (poderia ser paginado/filtrado no futuro)
         const filterCor = new CorFilter();
         this.corService.listar(filterCor).subscribe({
-            next: (page) => this.coresOptions = page.content || [],
+            next: (page) => (this.coresOptions = page.content || []),
             error: () => {}
         });
 
         const filterTamanho = new TamanhoFilter();
         this.tamanhoService.listar(filterTamanho).subscribe({
-            next: (page) => this.tamanhosOptions = page.content || [],
+            next: (page) => (this.tamanhosOptions = page.content || []),
             error: () => {}
         });
 
@@ -107,7 +108,7 @@ export class ProdutoPageComponent {
     }
 
     isFormularioValido(): boolean {
-        return !!(this.vm?.model?.nome?.trim());
+        return !!this.vm?.model?.nome?.trim();
     }
 
     // Integração com o contêiner <crud>
@@ -130,7 +131,7 @@ export class ProdutoPageComponent {
     }
 
     onInitNewRow(event: any) {
-        event.data.status = true;
+        event.data.status = StatusEnum.ATIVO;
         event.data.cores = [];
         event.data.tamanhos = [];
         event.data.imagens = [];
@@ -139,7 +140,7 @@ export class ProdutoPageComponent {
     onSavingItem(event: any) {
         const data = event.data as Produto;
         if (!data?.nome?.trim()) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Informe o nome do produto'});
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Informe o nome do produto' });
             return;
         }
 
@@ -151,15 +152,16 @@ export class ProdutoPageComponent {
         if (!id) return;
         this.produtoService.deletar(id).subscribe({
             next: () => {
-                this.messageService.add({severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso`});
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `Dado excluído com sucesso` });
                 // Após excluir, recarrega a lista usando a ViewModel do CRUD
                 this.vm.doFilter().subscribe();
             },
-            error: () => this.messageService.add({
-                severity: 'error',
-                summary: 'Erro',
-                detail: `Erro ao excluir informações`
-            })
+            error: () =>
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erro',
+                    detail: `Erro ao excluir informações`
+                })
         });
     }
 
@@ -169,11 +171,18 @@ export class ProdutoPageComponent {
 
     getCoresTexto(p: any): string {
         const arr = (p?.cores || []) as any[];
-        return arr.map(c => c?.nome).filter(Boolean).join(', ');
+        return arr
+            .map((c) => c?.nome)
+            .filter(Boolean)
+            .join(', ');
     }
 
     getTamanhosTexto(p: any): string {
         const arr = (p?.tamanhos || []) as any[];
-        return arr.map(t => t?.tamanho).filter(Boolean).join(', ');
+        return arr
+            .map((t) => t?.tamanho)
+            .filter(Boolean)
+            .join(', ');
     }
+
 }

@@ -5,6 +5,7 @@ import {EventoProduto} from "@/shared/model/evento-produto";
 import {Cliente} from "@/shared/model/cliente";
 import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
 import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
+import { StatusEnum } from '@/shared/model/enum/status.enum';
 
 export class EventoMapper {
 
@@ -50,11 +51,16 @@ export class EventoMapper {
     public static toDTO(evento: Evento): EventoDto | undefined{
         if (!evento) return undefined;
 
+        let statusFinal: any = evento.status;
+        if (evento.status && typeof evento.status === 'object') {
+            statusFinal = (evento.status as any).key ?? (evento.status as any).name ?? evento.status;
+        }
+
         return {
             id: evento.id,
             nome: evento.nome,
             descricao: evento.descricao,
-            status: evento.status,
+            status: statusFinal,
             anotacoes: evento.anotacoes,
             version: evento.version,
 

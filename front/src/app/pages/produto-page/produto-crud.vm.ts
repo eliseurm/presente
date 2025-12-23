@@ -8,6 +8,7 @@ import {forkJoin, map, Observable, of, switchMap} from 'rxjs';
 import {Mode} from "@/shared/crud/crud.mode";
 import {PageResponse} from "@/shared/model/page-response";
 import {catchError, tap} from "rxjs/operators";
+import { ProdutoMapper } from '@/shared/model/mapper/produto-mapper';
 
 @Injectable()
 export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
@@ -122,8 +123,15 @@ protected newModel(): Produto {
             tamanhos: mapToIds((this.model as any).tamanhos),
             imagens: mapToIds((this.model as any).imagens),
         };
-        this.model = payload;
-        return super.doSave();
+
+        const dto = ProdutoMapper.toDto(payload);
+        return this.port.salvar(dto).pipe(
+            tap((saved) => {
+                this.model = saved;
+                this.onSaveSuccess();
+            }),
+            catchError((err) => this.handleError<Produto>(err, 'Falha ao salvar registro'))
+        );
     }
 
 }
