@@ -2,11 +2,25 @@
 
 # 1) Build stage
 FROM node:20-alpine AS build
-WORKDIR /app
-COPY front /app
-RUN npm ci --no-audit --no-fund && npm run build:prod
 
-# 2) Runtime stage (Nginx)
+# 2) Definir diretório
+WORKDIR /app
+
+# 3) Copiar APENAS os arquivos de pacotes primeiro
+COPY front/package.json front/package-lock.json ./
+
+# 4) Instalar dependências (esta camada será cacheada se os pacotes não mudarem)
+RUN npm ci --no-audit --no-fund
+
+# 5) Só agora copiar o restante do código fonte
+#COPY front .
+COPY front /app
+
+# 6) Rodar o build
+RUN npm run build:prod
+#RUN npm ci --no-audit --no-fund && npm run build:prod
+
+# 7) Runtime stage (Nginx)
 FROM nginx:1.27-alpine
 
 # Install envsubst (gettext) for templating

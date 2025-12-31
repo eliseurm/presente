@@ -49,13 +49,11 @@
 
         <div class="flex flex-col gap-2 w-full md:w-1/2">
             <label class="block">Tipo de Produto</label>
-            <enum-select class="w-full" [enumObject]="tipoProdutoEnumType" [(ngModel)]="vm.model.tipo"
-                         name="tipo"></enum-select>
+            <enum-select class="w-full" [enumObject]="tipoProdutoEnumType" [(ngModel)]="vm.model.tipo" name="tipo"></enum-select>
         </div>
         <div class="flex flex-col gap-2 w-full md:w-1/2">
             <label class="block">Tamanho</label>
-            <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.tamanho" name="tamanho"
-                   placeholder="Informe o tamanho"/>
+            <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.tamanho" name="tamanho" placeholder="Informe o tamanho"/>
         </div>
     </div>
 

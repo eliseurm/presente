@@ -156,11 +156,11 @@ public class PresenteController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
 
         // Validar se tamanho/cor existem no produto
-        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
-        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
-        if (!tamanhoOk || !corOk) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
-        }
+//        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
+//        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
+//        if (!tamanhoOk || !corOk) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
+//        }
 
         EventoEscolha escolha = EventoEscolha.builder()
                 .evento(evento)
@@ -211,11 +211,11 @@ public class PresenteController {
         if (!produtoPermitido) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto não vinculado ao evento");
         }
-        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
-        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
-        if (!tamanhoOk || !corOk) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
-        }
+//        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
+//        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
+//        if (!tamanhoOk || !corOk) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
+//        }
 
         EventoEscolha nova = EventoEscolha.builder()
                 .evento(evento)

@@ -49,6 +49,10 @@ public class EventoEscolha {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
+    @Version
+    private Long version;
+
+
     @PrePersist
     public void prePersist() {
         if (dataEscolha == null) dataEscolha = LocalDateTime.now();

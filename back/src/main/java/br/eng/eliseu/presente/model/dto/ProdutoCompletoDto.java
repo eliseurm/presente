@@ -17,8 +17,6 @@ public record ProdutoCompletoDto(
         LocalDateTime criadoEm,
         LocalDateTime alteradoEm,
 
-        List<TamanhoDto> tamanhos,
-        List<CorDto> cores,
         List<ImagemDto> imagens
 
 ) {}

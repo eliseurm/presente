@@ -1,7 +1,6 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
-import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
 import br.eng.eliseu.presente.model.dto.ProdutoDto;
 import br.eng.eliseu.presente.model.filter.ProdutoFilter;
 import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
@@ -10,12 +9,10 @@ import br.eng.eliseu.presente.service.ProdutoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/produto")
@@ -82,7 +79,7 @@ public class ProdutoController {
 
     @GetMapping("/{id}/imagem/list")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Imagem>> getEventoPessoa(@PathVariable("id") Long produtoId) {
+    public ResponseEntity<List<Imagem>> getProdutoImagem(@PathVariable("id") Long produtoId) {
 
         List<Imagem> imagens = produtoRepository.findImagensByProdutoId(produtoId);
 

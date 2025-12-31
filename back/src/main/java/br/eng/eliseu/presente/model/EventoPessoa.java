@@ -37,6 +37,10 @@ public class EventoPessoa {
     @Column(name = "numero_magico", length = 64)
     private String nomeMagicNumber;
 
+    @Version
+    private Long version;
+
+
     public static EventoPessoa of(Evento evento, Pessoa pessoa) {
         return EventoPessoa.builder()
                 .evento(evento)

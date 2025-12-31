@@ -23,10 +23,10 @@ export class TamanhoCrudVM extends AbstractCrud<Tamanho, TamanhoFilter> {
 
         // Quando entrar em modo de edição (via dblclick ou rota /:id),
         // garanta que o campo 'tipo' esteja no formato esperado pelo enum-select (objeto do enum)
-        this.refreshModel.subscribe(() => {
-            const atual = (this.model as any)?.tipo;
-            (this.model as any).tipo = this.toEnumObject(atual);
-        });
+        // this.refreshModel.subscribe(() => {
+        //     const atual = (this.model as any)?.tipo;
+        //     (this.model as any).tipo = this.toEnumObject(atual);
+        // });
     }
 
     protected newModel(): Tamanho {

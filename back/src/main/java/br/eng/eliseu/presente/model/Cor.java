@@ -19,4 +19,8 @@ public class Cor {
     @Column(name = "cor_rgba", length = 30)
     private String corRgbA;
 
+    @Version
+    private Long version;
+
+
 }

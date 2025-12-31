@@ -94,8 +94,8 @@ gcloud auth configure-docker southamerica-east1-docker.pkg.dev -q
 # Backend
 # Using explicit Dockerfile for backend
 echo "[cloudrun] Buildando backend localmente (docker/Dockerfile.back) e publicando..."
-docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
-docker push "${IMAGE_BACK}"
+#docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
+#docker push "${IMAGE_BACK}"
 
 # Frontend
 # Using explicit Dockerfile for frontend

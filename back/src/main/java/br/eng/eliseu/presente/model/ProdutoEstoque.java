@@ -2,42 +2,43 @@ package br.eng.eliseu.presente.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@Table(name="cliente")
-public class Cliente {
+@Table(name="produto_estoque") // Nome da tabela no banco
+public class ProdutoEstoque {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome;
+    // Relacionamento com o Produto Principal
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "produto_id", nullable = false)
+    private Produto produto;
 
-    private String email;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "tamanho_id", nullable = false)
+    private Tamanho tamanho;
 
-    private String telefone;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "cor_id", nullable = false)
+    private Cor cor;
 
-    @ManyToOne
-    @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
+    private BigDecimal preco;
 
-    private String anotacoes;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal quantidade;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
-    @Column(name = "criado_em")
     private LocalDateTime criadoEm;
-
-    @Column(name = "alterado_em")
     private LocalDateTime alteradoEm;
 
     @Version
     private Long version;
-
-
 
     @PrePersist
     public void prePersist(){
@@ -49,5 +50,4 @@ public class Cliente {
     public void preUpdate(){
         alteradoEm = LocalDateTime.now();
     }
-
 }

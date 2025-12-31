@@ -27,6 +27,10 @@ public class Imagem {
     private LocalDateTime criadoEm;
     private LocalDateTime alteradoEm;
 
+    @Version
+    private Long version;
+
+
     @PrePersist
     public void prePersist(){
         if(criadoEm==null) criadoEm = LocalDateTime.now();

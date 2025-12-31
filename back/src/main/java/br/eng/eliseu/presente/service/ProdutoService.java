@@ -63,8 +63,6 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
     public Page<Produto> listar(ProdutoFilter filtro) {
         var page = super.listar(filtro);
         page.getContent().forEach(p -> {
-            if (p.getCores() != null) p.getCores().size();
-            if (p.getTamanhos() != null) p.getTamanhos().size();
             if (p.getImagens() != null) p.getImagens().size();
         });
         return page;
@@ -75,8 +73,6 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
     public java.util.Optional<Produto> buscarPorId(Long id) {
         var opt = super.buscarPorId(id);
         opt.ifPresent(p -> {
-            if (p.getCores() != null) p.getCores().size();
-            if (p.getTamanhos() != null) p.getTamanhos().size();
             if (p.getImagens() != null) p.getImagens().size();
         });
         return opt;
@@ -85,24 +81,6 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
     private void anexarReferencias(Produto entidade) {
         if (entidade == null) return;
 
-        // Normaliza Cores
-        if (entidade.getCores() != null) {
-            var ids = entidade.getCores().stream()
-                    .map(Cor::getId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            var managed = ids.isEmpty() ? List.<Cor>of() : corRepository.findAllById(ids);
-            entidade.setCores(managed);
-        }
-        // Normaliza Tamanhos
-        if (entidade.getTamanhos() != null) {
-            var ids = entidade.getTamanhos().stream()
-                    .map(Tamanho::getId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            var managed = ids.isEmpty() ? List.<Tamanho>of() : tamanhoRepository.findAllById(ids);
-            entidade.setTamanhos(managed);
-        }
         // Normaliza Imagens
         if (entidade.getImagens() != null) {
             var ids = entidade.getImagens().stream()
@@ -129,8 +107,6 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
         entidadeExistente.setDescricao(entidade.getDescricao());
         entidadeExistente.setPreco(entidade.getPreco());
         entidadeExistente.setStatus(entidade.getStatus());
-        entidadeExistente.setCores(entidade.getCores());
-        entidadeExistente.setTamanhos(entidade.getTamanhos());
         entidadeExistente.setImagens(entidade.getImagens());
     }
 }

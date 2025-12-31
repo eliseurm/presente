@@ -33,6 +33,9 @@ public class EventoProduto {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
+    @Version
+    private Long version;
+
 
     // Fábrica conveniente
     public static EventoProduto of(Evento evento, Produto produto) {

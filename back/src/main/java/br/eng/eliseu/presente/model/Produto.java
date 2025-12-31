@@ -33,26 +33,6 @@ public class Produto {
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
-            name = "produto_tamanho",
-            joinColumns = @JoinColumn(name = "produto_id"),
-            inverseJoinColumns = @JoinColumn(name = "tamanho_id"),
-            uniqueConstraints = @UniqueConstraint(columnNames = {"produto_id", "tamanho_id"})
-    )
-    @Fetch(FetchMode.SUBSELECT)
-    private List<Tamanho> tamanhos;
-
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
-    @JoinTable(
-            name = "produto_cor",
-            joinColumns = @JoinColumn(name = "produto_id"),
-            inverseJoinColumns = @JoinColumn(name = "cor_id"),
-            uniqueConstraints = @UniqueConstraint(columnNames = {"produto_id", "cor_id"})
-    )
-    @Fetch(FetchMode.SUBSELECT)
-    private List<Cor> cores;
-
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
-    @JoinTable(
             name = "produto_imagem",
             joinColumns = @JoinColumn(name = "produto_id"),
             inverseJoinColumns = @JoinColumn(name = "imagem_id"),
@@ -60,6 +40,9 @@ public class Produto {
     )
     @Fetch(FetchMode.SUBSELECT)
     private List<Imagem> imagens;
+
+    @Version
+    private Long version;
 
 
 

@@ -30,24 +30,6 @@ public class ProdutoMapper {
     public static ProdutoCompletoDto toDtoCompleto(Produto produto) {
 
         // Mapeamento manual das coleções internas (essencial para carregar os LAZY)
-        List<CorDto> coresDto = produto.getCores().stream()
-                .map(cor -> new CorDto(
-                        cor.getId(),
-                        cor.getNome(),
-                        cor.getCorHex(),
-                        cor.getCorRgbA()
-                ))
-                .collect(Collectors.toList());
-
-        List<TamanhoDto> tamanhosDto = produto.getTamanhos().stream()
-                .map(tamanho -> new TamanhoDto(
-                        tamanho.getId(),
-                        tamanho.getTipo(),
-                        tamanho.getTamanho(),
-                        tamanho.getVersion()
-                ))
-                .collect(Collectors.toList());
-
         // Mapeamento manual das imagens
         List<ImagemDto> imagensDto = produto.getImagens().stream()
                 .map(imagem -> new ImagemDto(
@@ -69,8 +51,6 @@ public class ProdutoMapper {
                 produto.getStatus(),
                 produto.getCriadoEm(),
                 produto.getAlteradoEm(),
-                tamanhosDto,
-                coresDto,
                 imagensDto
         );
     }
@@ -88,33 +68,6 @@ public class ProdutoMapper {
         produto.setAlteradoEm(dto.alteradoEm());
 
         // Mapeamento das Cores
-        if (dto.cores() != null) {
-            List<Cor> cores = dto.cores().stream()
-                    .map(corDto -> {
-                        Cor cor = new Cor();
-                        cor.setId(corDto.id());
-                        cor.setNome(corDto.nome());
-                        cor.setCorHex(corDto.corHex());
-                        cor.setCorRgbA(corDto.corRgbA());
-                        return cor;
-                    }).collect(Collectors.toList());
-            produto.setCores(cores);
-        }
-
-        // Mapeamento dos Tamanhos
-        if (dto.tamanhos() != null) {
-            List<Tamanho> tamanhos = dto.tamanhos().stream()
-                    .map(tamanhoDto -> {
-                        Tamanho tamanho = new Tamanho();
-                        tamanho.setId(tamanhoDto.id());
-                        tamanho.setTipo(tamanhoDto.tipo());
-                        tamanho.setTamanho(tamanhoDto.tamanho());
-                        tamanho.setVersion(tamanhoDto.version());
-                        return tamanho;
-                    }).collect(Collectors.toList());
-            produto.setTamanhos(tamanhos);
-        }
-
         // Mapeamento das Imagens
         if (dto.imagens() != null) {
             List<Imagem> imagens = dto.imagens().stream()

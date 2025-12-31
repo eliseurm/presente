@@ -29,4 +29,7 @@ public class ChaveMagica {
 
     private Integer quantidadeAcesso;
 
+    @Version
+    private Long version;
+
 }
