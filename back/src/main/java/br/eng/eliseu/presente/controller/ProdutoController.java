@@ -1,6 +1,7 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.model.dto.ProdutoCompletoDto;
 import br.eng.eliseu.presente.model.dto.ProdutoDto;
 import br.eng.eliseu.presente.model.filter.ProdutoFilter;
 import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
@@ -34,8 +35,12 @@ public class ProdutoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ProdutoCompletoDto> buscarPorId(@PathVariable Long id) {
         return produtoService.buscarPorId(id)
+                .map(p -> {
+                    ProdutoCompletoDto dto = ProdutoMapper.toDtoCompleto(p);
+                    return dto;
+                }) // Converte a Entidade para o DTO Completo
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -49,10 +54,12 @@ public class ProdutoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto produto) {
+    public ResponseEntity<ProdutoCompletoDto> atualizar(@PathVariable Long id, @RequestBody ProdutoCompletoDto dto) {
         try {
+            Produto produto = ProdutoMapper.fromDtoCompleto(dto);
             Produto atualizado = produtoService.atualizar(id, produto);
-            return ResponseEntity.ok(atualizado);
+            dto = ProdutoMapper.toDtoCompleto(atualizado);
+            return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

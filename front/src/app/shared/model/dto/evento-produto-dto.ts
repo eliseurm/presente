@@ -4,9 +4,8 @@ import {ProdutoDto} from "@/shared/model/dto/produto-dto";
 export class EventoProdutoDto {
 
     id?: number;
-
     produto?: ProdutoDto | undefined;
-
     status?: StatusEnum;
+    version?: number;
 
 }

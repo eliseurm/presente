@@ -19,4 +19,6 @@ public class EventoProdutoDto {
     private ProdutoDto produto;
 
     private StatusEnum status;
+
+    private Long version;
 }

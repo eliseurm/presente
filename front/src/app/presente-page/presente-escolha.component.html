@@ -1,6 +1,6 @@
 <div class="presente-page">
     <p-toast position="top-center" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
-    <app-presente-topbar [nome]="nomeExibicao"></app-presente-topbar>
+    <app-presente-topbar [nome]="pessoaExibicao?.nome"></app-presente-topbar>
 
     <main class="content">
         <div class="container">
@@ -79,10 +79,11 @@
                                     <div class="info-box pessoa-box">
                                         <h3>Seus Dados Cadastrais</h3>
                                         <div class="grid gap-1 text-sm">
-                                            <div><b>Nome:</b> {{ resumo?.pessoaNome }}</div>
-                                            <div><b>E-mail:</b> {{ resumo?.pessoaEmail || '-' }}</div>
-                                            <div><b>Telefone:</b> {{ resumo?.pessoaTelefone || '-' }}</div>
-                                            <div><b>Endereço:</b> {{ resumo?.pessoaEndereco || '-' }}</div>
+                                            <div><b>Nome:</b> {{ pessoaExibicao?.nome }}</div>
+                                            <div><b>CPF:</b> {{ pessoaExibicao?.cpf || '-' }}</div>
+                                            <div><b>E-mail:</b> {{ pessoaExibicao?.email || '-' }}</div>
+                                            <div><b>Telefone:</b> {{ pessoaExibicao?.telefone || '-' }}</div>
+                                            <div><b>Endereço:</b> {{ pessoaExibicao?.endereco || '-' }}</div>
                                         </div>
                                     </div>
 

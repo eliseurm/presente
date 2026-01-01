@@ -46,4 +46,6 @@ public class EventoEscolhaDto {
     private String tamanhoDescricao;
     private String tamanhoTipoProduto;
 
+    private Long version;
+
 }

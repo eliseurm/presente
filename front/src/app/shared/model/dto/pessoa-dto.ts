@@ -3,7 +3,6 @@
 import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 export interface PessoaDto {
-
     id?: number;
     clienteId?: number;
     nome: string;
@@ -19,5 +18,5 @@ export interface PessoaDto {
     senha?: string;
     criadoEm?: Date;
     alteradoEm?: Date;
-
+    version?: number;
 }

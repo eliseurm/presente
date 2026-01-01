@@ -25,6 +25,8 @@ public record PessoaDto(
         String senha,
 
         LocalDateTime criadoEm,
-        LocalDateTime alteradoEm
+        LocalDateTime alteradoEm,
+
+        Long version
 
 ) {}

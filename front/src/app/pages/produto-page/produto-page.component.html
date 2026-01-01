@@ -1,7 +1,6 @@
 <crud #crudRef [parent]="vm" listToolbarTitle="Produtos" editToolbarTitle="Editar Produto"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-    <!-- Filtros -->
     <div crud-list-filter-fields class="w-full text-left">
         <crud-filter
             [filter]="vm.filter"
@@ -12,7 +11,6 @@
         ></crud-filter>
     </div>
 
-    <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
         <e-data-grid
             [dataSource]="vm.dataSource"
@@ -26,98 +24,198 @@
 
             <ei-column dataField="nome" caption="Nome"></ei-column>
             <ei-column dataField="status" caption="Situação" cellTemplate="statusTpl"></ei-column>
-            <ei-column dataField="preco" caption="Preço"></ei-column>
-            <ei-column dataField="imagens" caption="Imagens" cellTemplate="imgsTpl"></ei-column>
+            <ei-column dataField="preco" caption="Preço Base"></ei-column>
             <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
             <ng-template eTemplate="statusTpl" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
-
-            <ng-template eTemplate="imgsTpl" let-row>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    @for (img of (row?.imagens || []); track $index) {
-                        <img [src]="getImagemUrl(img)" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid #ddd;"/>
-<!--                        <img [src]="getImagemUrl(img)"-->
-<!--                             alt="Imagem do produto"-->
-<!--                             style="width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 3px; border: 1px solid #ddd;"/>-->
-                    }
-                    @empty {
-                        <span>Nenhuma imagem</span>
-                    }
-                </div>
-            </ng-template>
 
             <ng-template eTemplate="acoesTpl" let-row>
                 <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" aria-label="Editar"
                         (click)="crudRef.onRowDblClick(row)"></button>
             </ng-template>
-
         </e-data-grid>
     </div>
 
-    <!-- Formulário de edição -->
-    <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
+    <div crud-edit-template class="w-full">
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 w-full">
-            <div class="flex flex-col gap-2 w-full">
-                <label class="block">Nome *</label>
-                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full">
-                <label class="block">Preço</label>
-                <input class="w-full" pInputText type="number" [(ngModel)]="vm.model.preco" name="preco" min="0"
-                       step="0.01"/>
-            </div>
-            <div class="flex flex-col gap-2 w-full">
-                <label class="block">Status</label>
-                <enum-select class="w-full"
-                             [enumObject]="statusEnumType"
-                             [(ngModel)]="vm.model.status"
-                             name="status"
-                ></enum-select>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:col-span-2">
-                <label class="block">Descrição</label>
-                <textarea class="w-full" pInputText rows="4" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
-            </div>
-            <div class="flex flex-col gap-2 w-full">
-                <label class="block">Cores</label>
-                <p-multiSelect [options]="coresOptions"
-                               optionLabel="nome"
-                               [(ngModel)]="vm.model.cores"
-                               name="cores"
-                               display="chip"
-                               appendTo="body"
-                               [showClear]="true"
-                               [maxSelectedLabels]="10"
-                ></p-multiSelect>
-            </div>
-            <div class="flex flex-col gap-2 w-full">
-                <label class="block">Tamanhos</label>
-                <p-multiSelect [options]="tamanhosOptions"
-                               optionLabel="tamanho"
-                               [(ngModel)]="vm.model.tamanhos"
-                               name="tamanhos"
-                               display="chip"
-                               appendTo="body"
-                               [showClear]="true"
-                               [maxSelectedLabels]="10"
-                ></p-multiSelect>
-            </div>
-            <div class="flex flex-col gap-2 w-full md:col-span-2">
-                <label class="block">Imagens</label>
-                <p-multiSelect [options]="imagensOptions"
-                               optionLabel="nome"
-                               [(ngModel)]="vm.model.imagens"
-                               name="imagens"
-                               display="chip"
-                               appendTo="body"
-                               [showClear]="true"
-                               [maxSelectedLabels]="4"
-                ></p-multiSelect>
-            </div>
-        </div>
+        <p-tabs value="0">
+            <p-tablist>
+                <p-tab value="0">Produto</p-tab>
+                <p-tab value="1">Estoque</p-tab>
+            </p-tablist>
+
+            <p-tabpanels>
+
+                <p-tabpanel value="0">
+                    <div class="flex flex-col gap-4 p-2 w-full">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                            <div class="flex flex-col gap-2">
+                                <label class="font-bold">Nome *</label>
+                                <input class="w-full" pInputText type="text" [(ngModel)]="vm.model.nome" name="nome"/>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="font-bold">Preço Base</label>
+                                <p-inputNumber class="w-full" styleClass="w-full" [(ngModel)]="vm.model.preco" name="preco"
+                                               mode="currency" currency="BRL" locale="pt-BR"></p-inputNumber>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="font-bold">Status</label>
+                                <enum-select class="w-full" [enumObject]="statusEnumType" [(ngModel)]="vm.model.status" name="status"></enum-select>
+                            </div>
+                            <div class="flex flex-col gap-2 md:col-span-2">
+                                <label class="font-bold">Descrição</label>
+                                <textarea class="w-full" pInputText rows="3" [(ngModel)]="vm.model.descricao" name="descricao"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="w-full mt-4 border-t pt-4">
+                            <h3 class="text-lg font-bold mb-2">Imagens do Produto (Máx 4)</h3>
+
+                            <div class="flex gap-4 p-4 bg-gray-50 rounded mb-4 min-h-[100px] items-center flex-wrap">
+                                <div *ngIf="!vm.model.imagens?.length" class="text-gray-400 italic">Nenhuma imagem selecionada</div>
+                                <div *ngFor="let img of vm.model.imagens" class="relative group cursor-pointer" (click)="toggleImagem(img)">
+                                    <img [src]="getImagemUrl(img)" class="w-24 h-24 object-cover rounded border-2 border-blue-500 shadow-sm hover:opacity-75 transition"/>
+                                    <div class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow">X</div>
+                                </div>
+                            </div>
+
+                            <h4 class="font-bold mb-2">Galeria Disponível (Clique para adicionar)</h4>
+                            <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+                                <div *ngFor="let img of imagensDisponiveis"
+                                     class="relative cursor-pointer transition transform hover:scale-105"
+                                     [class.opacity-40]="isImagemSelecionada(img)"
+                                     (click)="toggleImagem(img)">
+                                    <img [src]="getImagemUrl(img)" class="w-full aspect-square object-cover rounded border border-gray-200"/>
+                                    <div *ngIf="isImagemSelecionada(img)" class="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                                        <i class="pi pi-check text-white font-bold text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel>
+
+                <p-tabpanel value="1">
+                    <div class="flex flex-col gap-4 p-2 w-full">
+
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end p-4 border rounded bg-gray-50 w-full">
+
+                            <div class="flex flex-col gap-1 w-full">
+                                <label class="text-sm font-bold">Cor</label>
+                                <p-select
+                                    [options]="coresOptions"
+                                    [(ngModel)]="estoqueTemp.cor"
+                                    optionLabel="nome"
+                                    placeholder="Selecione..."
+                                    appendTo="body"
+                                    class="w-full"
+                                    [style]="{'width':'100%'}"
+                                    containerStyleClass="w-full">
+                                    <ng-template let-item pTemplate="item">
+                                        <div class="flex items-center gap-2">
+                                            <div [style.background]="item.corHex" class="w-4 h-4 rounded-full border"></div>
+                                            <span>{{ item.nome }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-select>
+                            </div>
+
+                            <div class="flex flex-col gap-1 w-full">
+                                <label class="text-sm font-bold">Tamanho</label>
+                                <p-select
+                                    [options]="tamanhosOptions"
+                                    [(ngModel)]="estoqueTemp.tamanho"
+                                    optionLabel="tamanho"
+                                    placeholder="Selecione..."
+                                    appendTo="body"
+                                    class="w-full"
+                                    [style]="{'width':'100%'}"
+                                    containerStyleClass="w-full">
+                                </p-select>
+                            </div>
+
+                            <div class="flex flex-col gap-1 w-full">
+                                <label class="text-sm font-bold">Qtd</label>
+                                <p-inputNumber
+                                    [(ngModel)]="estoqueTemp.quantidade"
+                                    mode="decimal"
+                                    locale="pt-BR"
+                                    [minFractionDigits]="2"
+                                    [maxFractionDigits]="2"
+                                    [min]="0"
+                                    class="w-full"
+                                    styleClass="w-full"
+                                    inputStyleClass="text-right w-full">
+                                </p-inputNumber>
+                            </div>
+
+                            <div class="flex flex-col gap-1 w-full">
+                                <label class="text-sm font-bold">Preço Unit.</label>
+                                <p-inputNumber
+                                    [(ngModel)]="estoqueTemp.preco"
+                                    mode="currency"
+                                    currency="BRL"
+                                    locale="pt-BR"
+                                    [min]="0"
+                                    class="w-full"
+                                    styleClass="w-full"
+                                    inputStyleClass="text-right w-full">
+                                </p-inputNumber>
+                            </div>
+
+                            <div class="flex w-full">
+                                <button
+                                    pButton
+                                    icon="pi pi-plus"
+                                    label="Adicionar"
+                                    class="p-button-primary w-full"
+                                    (click)="adicionarEstoque()">
+                                </button>
+                            </div>
+                        </div>
+
+                        <p-table [value]="vm.model.estoques || []" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Cor</th>
+                                    <th>Tamanho</th>
+                                    <th class="text-right">Quantidade</th>
+                                    <th class="text-right">Preço</th>
+                                    <th class="text-center w-24">Ações</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-item let-i="rowIndex">
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <div [style.background]="item.cor?.corHex" class="w-4 h-4 rounded-full border"></div>
+                                            {{ item.cor?.nome }}
+                                        </div>
+                                    </td>
+                                    <td>{{ item.tamanho?.tamanho }}</td>
+                                    <td class="text-right">{{ item.quantidade | number:'1.2-2':'pt-BR' }}</td>
+                                    <td class="text-right">{{ item.preco | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                                    <td class="text-center">
+                                        <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm"
+                                                (click)="removerEstoque(i)" pTooltip="Remover"></button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="5" class="text-center p-4">Nenhum item adicionado ao estoque.</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+
+                    </div>
+                </p-tabpanel>
+
+            </p-tabpanels>
+        </p-tabs>
+
     </div>
-
 </crud>
 
 <p-toast position="top-right" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>

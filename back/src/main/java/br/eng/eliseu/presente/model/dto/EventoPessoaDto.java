@@ -21,4 +21,6 @@ public class EventoPessoaDto {
 
     // Somente leitura: indica se a pessoa já possui uma escolha ATIVA neste evento
     private Boolean jaEscolheu;
+
+    private Long version;
 }

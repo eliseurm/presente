@@ -3,4 +3,5 @@ export interface CorDto {
     nome?: string;
     corHex?: string;
     corRgbA?: string;
+    version?: number;
 }

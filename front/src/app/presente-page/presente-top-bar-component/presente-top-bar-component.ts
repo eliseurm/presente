@@ -15,7 +15,7 @@ import { LayoutService } from '@/layout/service/layout.service';
     styleUrl: './presente-top-bar-component.scss'
 })
 export class PresenteTopbarComponent {
-    @Input() nome: string | null = null;
+    @Input() nome: string | undefined = undefined;
 
     constructor(public layoutService: LayoutService) {}
 

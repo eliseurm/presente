@@ -27,23 +27,31 @@
             <p class="descricao">{{ produto.descricao }}</p>
 
             <div class="acoes">
+
                 <div class="tamanho tamanho-selector">
                     <span [attr.id]="'lbl-tam-' + produto.id">Tamanho:</span>
                     <p-selectButton
                         [attr.aria-labelledby]="'lbl-tam-' + produto.id"
-                        [options]="tamanhoOptions"
+                        [options]="tamanhosDisponiveis"
                         [(ngModel)]="produto.tamanhoSelecionado"
+                        (ngModelChange)="onTamanhoChange()"
                         [disabled]="disabled"
+                        optionLabel="label"
+                        optionValue="value"
                     ></p-selectButton>
+                    <small *ngIf="tamanhosDisponiveis.length === 0 && !disabled" class="text-red-500">Esgotado</small>
                 </div>
 
-                <div class="cor" *ngIf="corOptions?.length">
+                <div class="cor" *ngIf="coresDisponiveis?.length || produto.corSelecionada">
                     <span [attr.id]="'lbl-cor-' + produto.id">Cor:</span>
                     <p-selectButton
                         [attr.aria-labelledby]="'lbl-cor-' + produto.id"
-                        [options]="corOptions"
+                        [options]="coresDisponiveis"
                         [(ngModel)]="produto.corSelecionada"
+                        (ngModelChange)="onCorChange()"
                         [disabled]="disabled"
+                        optionLabel="label"
+                        optionValue="value"
                     ></p-selectButton>
                 </div>
 
@@ -53,7 +61,7 @@
                     class="p-button-rounded p-button-lg selecionar-btn"
                     [severity]="selected ? 'success' : 'primary'"
                     (click)="onToggleClick()"
-                    [disabled]="false"
+                    [disabled]="(!selected && disabled) || (!selected && tamanhosDisponiveis.length === 0 && coresDisponiveis.length === 0)"
                     [attr.aria-pressed]="selected ? 'true' : 'false'"
                 >
                     @if (selected) {
@@ -74,5 +82,4 @@
             </div>
         </div>
     </div>
-
 </p-card>

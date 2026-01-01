@@ -9,7 +9,7 @@ export interface EventoEscolhaDto {
     // --- Campos de EventoEscolha ---
     id: number;
     dataEscolha: string; // LocalDateTime é serializado como String (ISO 8601)
-    alteradoEm: string;   // LocalDateTime é serializado como String (ISO 8601)
+    alteradoEm: string; // LocalDateTime é serializado como String (ISO 8601)
     status: StatusEnum; // Exemplo de StatusEnum
 
     // --- Informações de Evento ---
@@ -38,4 +38,6 @@ export interface EventoEscolhaDto {
     tamanhoId: number;
     tamanhoDescricao: string;
     tamanhoTipoProduto: ProdutoTipoEnum; // Mapeado de ProdutoTipoEnum
+
+    version?: number;
 }

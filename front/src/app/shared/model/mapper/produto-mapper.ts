@@ -1,26 +1,18 @@
-import {Produto} from "@/shared/model/produto";
-import {ProdutoDto} from "@/shared/model/dto/produto-dto";
-import {CorMapper} from "@/shared/model/mapper/cor-mapper";
-import {TamanhoMapper} from "@/shared/model/mapper/tamanho-mapper";
-import {ImagemMapper} from "@/shared/model/mapper/imagem-mapper";
-import {StatusEnum} from "@/shared/model/enum/status.enum";
+import { Produto } from '@/shared/model/produto';
+import { ProdutoDto } from '@/shared/model/dto/produto-dto';
+import { ImagemMapper } from '@/shared/model/mapper/imagem-mapper';
+import { StatusEnum } from '@/shared/model/enum/status.enum';
+import { ProdutoEstoqueMapper } from '@/shared/model/mapper/produto-estoque-mapper';
 
 export class ProdutoMapper {
-
     static toDto(entity: Produto): ProdutoDto {
         if (!entity) return {} as ProdutoDto;
 
-        let statusFinal: any = entity.status;
-        if (entity.status && typeof entity.status === 'object') {
-            statusFinal = (entity.status as any).key ?? (entity.status as any).name ?? entity.status;
-        }
-
-        entity.status = statusFinal as StatusEnum;
+        entity.status = StatusEnum.toKey(entity.status);
 
         return {
             ...entity,
-            cores: CorMapper.toDtoList(entity.cores || []),
-            tamanhos: TamanhoMapper.toDtoList(entity.tamanhos || []),
+            estoques: ProdutoEstoqueMapper.toDtoList(entity.estoques || []),
             imagens: ImagemMapper.toDtoList(entity.imagens || [])
         };
     }
@@ -39,9 +31,9 @@ export class ProdutoMapper {
         entity.descricao = dto.descricao;
         entity.preco = dto.preco;
         entity.status = statusEnum as StatusEnum;
-        entity.cores = CorMapper.fromDtoList(dto.cores || []);
-        entity.tamanhos = TamanhoMapper.fromDtoList(dto.tamanhos || []);
+        entity.estoques = ProdutoEstoqueMapper.fromDtoList(dto.estoques || []);
         entity.imagens = ImagemMapper.fromDtoList(dto.imagens || []);
+        entity.version = dto.version;
         return entity;
     }
 

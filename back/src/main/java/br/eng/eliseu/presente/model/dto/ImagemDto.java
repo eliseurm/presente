@@ -8,6 +8,8 @@ public record ImagemDto(
         String url,
         byte[] arquivo,
         LocalDateTime criadoEm,
-        LocalDateTime alteradoEm
+        LocalDateTime alteradoEm,
+
+        Long version
 
 ) {}

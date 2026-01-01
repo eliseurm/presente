@@ -6,5 +6,8 @@ public record CorDto(
         Long id,
         String nome,
         String corHex,
-        String corRgbA
+        String corRgbA,
+
+        Long version
+
 ) {}

@@ -88,6 +88,7 @@ select * from tamanho ;
 select * from imagem ;
 
 select * from produto ;
+select * from produto_estoque ;
 
 select * from usuario ;
 

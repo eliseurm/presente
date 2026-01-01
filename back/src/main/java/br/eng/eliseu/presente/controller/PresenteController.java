@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.parameters.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -180,6 +181,15 @@ public class PresenteController {
     @Transactional
     public ResponseEntity<EventoEscolhaDto> salvarEscolha(@P("escolha") @RequestBody EventoEscolha escolha) {
 
+        try {
+            return processarSalvarEscolha(escolha);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            // Tratamento de Concorrência
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Infelizmente este item acabou de ser escolhido por outra pessoa. Por favor, recarregue a página.");
+        }
+    }
+
+    private ResponseEntity<EventoEscolhaDto> processarSalvarEscolha(EventoEscolha escolha) {
         if (escolha == null
                 || escolha.getEvento() == null || escolha.getEvento().getId() == null
                 || escolha.getPessoa() == null || escolha.getPessoa().getId() == null
@@ -189,46 +199,57 @@ public class PresenteController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados incompletos para a escolha");
         }
 
-        // Autorização programática: ADMIN ou usuário vinculado ao cliente do evento
         if (!(authService.isAdmin() || authService.isEscolhaAtiva(escolha))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O Evento esta Encerrado");
         }
 
-        // Carrega entidades gerenciadas
         Evento evento = eventoRepository.findByIdExpandedAll(escolha.getEvento().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento inexistente"));
-        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId()).flatMap(id -> Optional.ofNullable(evento.getEventoPessoas()).orElseGet(java.util.List::of).stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
-        Produto produto = produtoRepository.findById(escolha.getProduto().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
-        Tamanho tamanho = tamanhoRepository.findById(escolha.getTamanho().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inexistente"));
-        Cor cor = corRepository.findById(escolha.getCor().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inexistente"));
 
-        // Regras
+        // Regra de data
         if (evento.getFimPrevisto() != null && LocalDateTime.now().isAfter(evento.getFimPrevisto())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O tempo para escolha expirou");
         }
-        boolean produtoPermitido = Optional.ofNullable(evento.getEventoProdutos()).orElseGet(Set::of).stream()
-                .filter(Objects::nonNull)
-                .anyMatch(evProd -> evProd.getProduto() != null && Objects.equals(evProd.getProduto().getId(), produto.getId()));
-        if (!produtoPermitido) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto não vinculado ao evento");
+
+        // Carrega Produto com Estoques (Importante: fetch nos estoques)
+        Produto produto = produtoRepository.findById(escolha.getProduto().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto inexistente"));
+
+        // --- LÓGICA DE ESTOQUE ---
+        // Localiza o item de estoque específico para Tamanho e Cor
+        ProdutoEstoque estoqueItem = produto.getEstoques().stream()
+                .filter(e -> Objects.equals(e.getTamanho().getId(), escolha.getTamanho().getId())
+                        && Objects.equals(e.getCor().getId(), escolha.getCor().getId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Combinação de Tamanho e Cor indisponível neste produto."));
+
+        // Verifica quantidade
+        if (estoqueItem.getQuantidade().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Produto esgotado nesta combinação de Cor e Tamanho.");
         }
-//        boolean tamanhoOk = produto.getTamanhos() == null || produto.getTamanhos().stream().anyMatch(t -> Objects.equals(t.getId(), tamanho.getId()));
-//        boolean corOk = produto.getCores() == null || produto.getCores().stream().anyMatch(c -> Objects.equals(c.getId(), cor.getId()));
-//        if (!tamanhoOk || !corOk) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho/Cor não disponíveis para o produto");
-//        }
+
+        // Decrementa Estoque (Concorrência gerida pelo @Version do ProdutoEstoque ao commitar a transação)
+        estoqueItem.setQuantidade(estoqueItem.getQuantidade().subtract(java.math.BigDecimal.ONE));
+        // O JPA detectará a mudança em 'produto' (cascade) ou 'estoqueItem' e tentará atualizar
+
+        // Carrega Pessoa e demais dados para salvar a escolha
+        Pessoa pessoa = Optional.ofNullable(escolha.getPessoa().getId())
+                .flatMap(id -> Optional.ofNullable(evento.getEventoPessoas()).orElseGet(java.util.List::of).stream().map(EventoPessoa::getPessoa).filter(Objects::nonNull).filter(p -> Objects.equals(p.getId(), id)).findFirst())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pessoa não vinculada ao evento"));
 
         EventoEscolha nova = EventoEscolha.builder()
                 .evento(evento)
                 .pessoa(pessoa)
                 .produto(produto)
-                .tamanho(tamanho)
-                .cor(cor)
+                .tamanho(estoqueItem.getTamanho()) // Usa do estoque para garantir consistência
+                .cor(estoqueItem.getCor())
                 .dataEscolha(LocalDateTime.now())
                 .alteradoEm(LocalDateTime.now())
                 .status(StatusEnum.ATIVO)
                 .build();
 
         EventoEscolha salva = eventoEscolhaRepository.save(nova);
+        // O commit da transação aqui disparará a verificação do versionamento do Estoque
+
         EventoEscolhaDto dto = EventoEscolhaMapper.toDto(salva);
         return ResponseEntity.ok(dto);
     }

@@ -1,17 +1,17 @@
 package br.eng.eliseu.presente.model.mapper;
 
-import br.eng.eliseu.presente.model.Cor;
 import br.eng.eliseu.presente.model.Imagem;
 import br.eng.eliseu.presente.model.Produto;
-import br.eng.eliseu.presente.model.Tamanho;
 import br.eng.eliseu.presente.model.dto.*;
+import br.eng.eliseu.presente.model.ProdutoEstoque; // Import necessário
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProdutoMapper {
 
-    // Método principal de conversão de entidade para DTO
+    // Método principal de conversão de entidade para DTO (Resumido/Lista)
     public static ProdutoDto toDto(Produto p) {
         if (p == null) return null;
 
@@ -23,26 +23,31 @@ public class ProdutoMapper {
                 p.getStatus(),
                 p.getCriadoEm(),
                 p.getAlteradoEm(),
-                null, null, null
+                null, // Listas nulas na visualização simples
+                null,
+                p.getVersion()
         );
     }
 
+    // Método Completo (Detalhe)
     public static ProdutoCompletoDto toDtoCompleto(Produto produto) {
+        if (produto == null) return null;
 
-        // Mapeamento manual das coleções internas (essencial para carregar os LAZY)
-        // Mapeamento manual das imagens
-        List<ImagemDto> imagensDto = produto.getImagens().stream()
-                .map(imagem -> new ImagemDto(
-                        imagem.getId(),
-                        imagem.getNome(),
-                        imagem.getUrl(),
-                        imagem.getArquivo(),
-                        imagem.getCriadoEm(),
-                        imagem.getAlteradoEm()
-                ))
-                .collect(Collectors.toList());
+        List<ProdutoEstoqueDto> estoquesDto = ProdutoEstoqueMapper.toDtoList(produto.getEstoques());
 
-        // Criação do ProdutoDto principal
+        List<ImagemDto> imagensDto = produto.getImagens() == null ? Collections.emptyList() :
+                produto.getImagens().stream()
+                        .map(imagem -> new ImagemDto(
+                                imagem.getId(),
+                                imagem.getNome(),
+                                imagem.getUrl(),
+                                imagem.getArquivo(),
+                                imagem.getCriadoEm(),
+                                imagem.getAlteradoEm(),
+                                imagem.getVersion()
+                        ))
+                        .collect(Collectors.toList());
+
         return new ProdutoCompletoDto(
                 produto.getId(),
                 produto.getNome(),
@@ -51,7 +56,9 @@ public class ProdutoMapper {
                 produto.getStatus(),
                 produto.getCriadoEm(),
                 produto.getAlteradoEm(),
-                imagensDto
+                estoquesDto,
+                imagensDto,
+                produto.getVersion()
         );
     }
 
@@ -66,46 +73,77 @@ public class ProdutoMapper {
         produto.setStatus(dto.status());
         produto.setCriadoEm(dto.criadoEm());
         produto.setAlteradoEm(dto.alteradoEm());
+        produto.setVersion(dto.version());
 
-        // Mapeamento das Cores
-        // Mapeamento das Imagens
+        if (dto.estoques() != null) {
+            List<ProdutoEstoque> estoques = ProdutoEstoqueMapper.fromDtoList(dto.estoques());
+            estoques.forEach(e -> e.setProduto(produto));
+            produto.setEstoques(estoques);
+        }
+
         if (dto.imagens() != null) {
-            List<Imagem> imagens = dto.imagens().stream()
-                    .map(imgDto -> {
-                        Imagem imagem = new Imagem();
-                        imagem.setId(imgDto.id());
-                        imagem.setNome(imgDto.nome());
-                        imagem.setUrl(imgDto.url());
-                        imagem.setArquivo(imgDto.arquivo());
-                        imagem.setCriadoEm(imgDto.criadoEm());
-                        imagem.setAlteradoEm(imgDto.alteradoEm());
-                        // Opcional: imagem.setProduto(produto); // Se for bidirecional
-                        return imagem;
-                    }).collect(Collectors.toList());
-            produto.setImagens(imagens);
+            produto.setImagens(mapImagensFromDto(dto.imagens()));
         }
 
         return produto;
     }
 
-    // Método para converter a lista
+    // --- NOVO MÉTODO IMPLEMENTADO ---
+    public static Produto fromDtoCompleto(ProdutoCompletoDto dto) {
+        if (dto == null) return null;
+
+        Produto produto = new Produto();
+        produto.setId(dto.id());
+        produto.setNome(dto.nome());
+        produto.setDescricao(dto.descricao());
+        produto.setPreco(dto.preco());
+        produto.setStatus(dto.status());
+        produto.setCriadoEm(dto.criadoEm());
+        produto.setAlteradoEm(dto.alteradoEm());
+        produto.setVersion(dto.version());
+
+        // 1. Mapeamento de Estoque
+        if (dto.estoques() != null) {
+            List<ProdutoEstoque> estoques = ProdutoEstoqueMapper.fromDtoList(dto.estoques());
+            // CRUCIAL: Vincular o Pai (Produto) aos Filhos (Estoque) para o Cascade funcionar
+            estoques.forEach(e -> e.setProduto(produto));
+            produto.setEstoques(estoques);
+        }
+
+        // 2. Mapeamento das Imagens
+        if (dto.imagens() != null) {
+            produto.setImagens(mapImagensFromDto(dto.imagens()));
+        }
+
+        return produto;
+    }
+
+    // Método auxiliar para evitar duplicação de código no mapeamento de imagens
+    private static List<Imagem> mapImagensFromDto(List<ImagemDto> imagensDto) {
+        return imagensDto.stream()
+                .map(imgDto -> {
+                    Imagem imagem = new Imagem();
+                    imagem.setId(imgDto.id());
+                    imagem.setNome(imgDto.nome());
+                    imagem.setUrl(imgDto.url());
+                    imagem.setArquivo(imgDto.arquivo());
+                    imagem.setCriadoEm(imgDto.criadoEm());
+                    imagem.setAlteradoEm(imgDto.alteradoEm());
+                    return imagem;
+                }).collect(Collectors.toList());
+    }
+
     public static List<ProdutoDto> toDtoList(List<Produto> produtos) {
+        if (produtos == null) return Collections.emptyList();
         return produtos.stream()
                 .map(ProdutoMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public static List<ProdutoCompletoDto> toDtoListCompleto(List<Produto> produtos) {
+        if (produtos == null) return Collections.emptyList();
         return produtos.stream()
                 .map(ProdutoMapper::toDtoCompleto)
                 .collect(Collectors.toList());
     }
-
-    public static List<Produto> fromDtoList(List<ProdutoDto> dtos) {
-        if (dtos == null) return null;
-        return dtos.stream()
-                .map(ProdutoMapper::fromDto)
-                .collect(Collectors.toList());
-    }
-
 }

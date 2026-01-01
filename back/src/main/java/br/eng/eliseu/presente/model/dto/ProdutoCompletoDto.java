@@ -17,6 +17,9 @@ public record ProdutoCompletoDto(
         LocalDateTime criadoEm,
         LocalDateTime alteradoEm,
 
-        List<ImagemDto> imagens
+        List<ProdutoEstoqueDto> estoques,
+        List<ImagemDto> imagens,
+
+        Long version
 
 ) {}

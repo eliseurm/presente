@@ -20,12 +20,11 @@ public record ProdutoDto(
 
         // Access.WRITE_ONLY: O campo só pode ser escrito (do Front para o Back). Ele será ignorado quando o Back enviar para o Front.
         @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        List<TamanhoDto> tamanhos,
+        List<ProdutoEstoqueDto> estoques,
 
         @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        List<CorDto> cores,
+        List<ImagemDto> imagens,
 
-        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        List<ImagemDto> imagens
+        Long version
 
 ) {}

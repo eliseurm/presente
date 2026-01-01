@@ -25,7 +25,8 @@ export class PessoaMapper {
             cidade: entity.cidade,
             estado: entity.estado,
             cep: entity.cep,
-            senha: entity.senha
+            senha: entity.senha,
+            version: entity.version
         };
     }
 

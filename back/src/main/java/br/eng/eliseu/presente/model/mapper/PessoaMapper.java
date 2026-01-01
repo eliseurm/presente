@@ -32,7 +32,8 @@ public class PessoaMapper {
                 pessoa.getCep(),
                 pessoa.getSenha(),
                 pessoa.getCriadoEm(),
-                pessoa.getAlteradoEm()
+                pessoa.getAlteradoEm(),
+                pessoa.getVersion()
         );
     }
 
