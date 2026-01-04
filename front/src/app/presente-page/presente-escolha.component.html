@@ -1,11 +1,13 @@
 <div class="presente-page">
-    <p-toast position="top-center" [breakpoints]="{'920px': {width: '100%', right: '0', left: '0'}}"></p-toast>
+
+    <p-toast position="top-center"></p-toast>
+
     <app-presente-topbar [nome]="pessoaExibicao?.nome"></app-presente-topbar>
 
     <main class="content">
         <div class="container">
 
-            @if (expirado){
+            @if (expirado && !ultimaEscolha){
                 <div class="msg-container-central">
                     <div class="msg-expirado-card">
                         <i class="pi pi-clock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
@@ -15,16 +17,15 @@
                     </div>
                 </div>
             }
-            @else if (status !== 'ATIVO'){
+            @else if (status !== 'ATIVO' && !ultimaEscolha){
                 <div class="msg-container-central">
                     <div class="msg-expirado-card">
-                        <i class="pi pi-clock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <i class="pi pi-lock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                         <div class="msg-texto">O seu evento encontra-se '{{status | enumDescricao : statusEnumType}}'</div>
                     </div>
                 </div>
             }
             @else {
-
                 @if (carregando) {
                     <section class="status">
                         <p-progressSpinner strokeWidth="4" styleClass="spinner"></p-progressSpinner>
@@ -42,7 +43,7 @@
 
                 @if (!carregando && valido) {
                     <section>
-                        @if (!detailMode) {
+                        @if (!detailMode && !expirado && status === 'ATIVO') {
                             <div class="produtos-grid">
                                 @let produtosFatiados = produtos.slice(0, 10);
                                 @for (p of produtosFatiados; track p.id) {
@@ -65,20 +66,33 @@
                                     <div class="info-box evento-box">
                                         <h3>Informações do Evento</h3>
                                         <div class="text-sm">
-                                            <div><b>Link de Acesso:</b> <code>/presente/{{ keyMagico }}</code></div>
-                                            <div><b>Prazo para Escolha:</b>
+                                            <div class="mb-2"><b>Link de Acesso:</b> <div style="word-break: break-all;">/presente/{{ keyMagico }}</div></div>
+                                            <div class="mb-2"><b>Prazo para Escolha:</b>
                                                 @if (resumo?.dataPrevista) {
                                                     {{ resumo?.dataPrevista | date:'longDate' }}
                                                 } @else {
                                                     Não Definido
                                                 }
                                             </div>
+
+                                            @if (expirado) {
+                                                <div class="mt-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 font-bold text-center">
+                                                    <i class="pi pi-exclamation-triangle mr-2"></i>
+                                                    O prazo para alteração já expirou.
+                                                </div>
+                                            }
+                                            @else if (status !== 'ATIVO') {
+                                                <div class="mt-3 p-2 bg-orange-100 border border-orange-300 rounded text-orange-800 font-bold text-center">
+                                                    <i class="pi pi-lock mr-2"></i>
+                                                    Sua escolha está confirmada, mas alterações estão temporariamente suspensas (Status: {{ status | enumDescricao : statusEnumType }}).
+                                                </div>
+                                            }
                                         </div>
                                     </div>
 
                                     <div class="info-box pessoa-box">
                                         <h3>Seus Dados Cadastrais</h3>
-                                        <div class="grid gap-1 text-sm">
+                                        <div class="grid gap-2 text-sm">
                                             <div><b>Nome:</b> {{ pessoaExibicao?.nome }}</div>
                                             <div><b>CPF:</b> {{ pessoaExibicao?.cpf || '-' }}</div>
                                             <div><b>E-mail:</b> {{ pessoaExibicao?.email || '-' }}</div>
@@ -89,14 +103,17 @@
 
                                     <div class="info-box produto-box">
                                         <h3>Produto Escolhido</h3>
+
                                         <app-produto
                                             [produto]="selectedProduct!"
                                             [selected]="true"
                                             [disabled]="true"
+                                            [locked]="isBloqueado"
                                             [compact]="true"
                                             (onClickSelecionaProduto)="voltarParaLista()"
                                         ></app-produto>
                                     </div>
+                                    
                                 </div>
 
                                 <div class="detalhe-acoes">
@@ -109,9 +126,7 @@
 
                     </section>
                 }
-
             }
-
         </div>
     </main>
 </div>

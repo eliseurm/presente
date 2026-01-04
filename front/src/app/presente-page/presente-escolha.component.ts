@@ -70,6 +70,11 @@ export class PresenteEscolhaComponent implements OnInit {
         return this.produtos.find((p) => p.id === this.selectedProductId) || null;
     }
 
+    get isBloqueado(): boolean {
+        // Bloqueia se estiver expirado OU se o status não for ATIVO (ex: PAUSADO, ENCERRADO, BLOQUEADO)
+        return this.expirado || (this.status && this.status !== 'ATIVO') || false;
+    }
+
     ngOnInit() {
         this.keyMagico = this.route.snapshot.paramMap.get('token') ?? this.route.snapshot.paramMap.get('keyMagico') ?? '';
         const produtoIdParam = this.route.snapshot.paramMap.get('produtoId');
@@ -230,6 +235,16 @@ export class PresenteEscolhaComponent implements OnInit {
     }
 
     voltarParaLista() {
+        // ATUALIZADO: Usa a nova propriedade isBloqueado
+        if (this.isBloqueado) {
+            let msg = 'O prazo expirou.';
+            if (!this.expirado && this.status === 'PAUSADO') {
+                msg = 'O evento está pausado.';
+            }
+            this.messageService.add({ severity: 'warn', summary: 'Ação Bloqueada', detail: `Não é possível alterar a escolha: ${msg}` });
+            return;
+        }
+
         const escolha = {
             id: this.resumo?.id,
             evento: { id: this.resumo?.eventoId },
@@ -242,6 +257,7 @@ export class PresenteEscolhaComponent implements OnInit {
         this.detailMode = false;
         this.selectedProductId = null;
     }
+
 
     async confirmarEscolha() {
         this.messageService.add({ severity: 'info', summary: 'Informação', detail: 'Sua escolha já foi salva ao selecionar o presente.', life: 3000 });

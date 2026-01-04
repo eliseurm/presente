@@ -61,7 +61,7 @@
                     class="p-button-rounded p-button-lg selecionar-btn"
                     [severity]="selected ? 'success' : 'primary'"
                     (click)="onToggleClick()"
-                    [disabled]="(!selected && disabled) || (!selected && tamanhosDisponiveis.length === 0 && coresDisponiveis.length === 0)"
+                    [disabled]="locked || (!selected && disabled) || (!selected && tamanhosDisponiveis.length === 0 && coresDisponiveis.length === 0)"
                     [attr.aria-pressed]="selected ? 'true' : 'false'"
                 >
                     @if (selected) {
@@ -73,6 +73,7 @@
                         Selecionar
                     }
                 </button>
+
             </div>
 
             <div class="inline-errors" *ngIf="errors?.length">

@@ -40,6 +40,7 @@ export class ProdutoComponent implements OnChanges {
     @Input() selected = false;
     @Input() disabled = false;
     @Input() compact = false;
+    @Input() locked = false;
     @Input() errors: string[] = [];
 
     @Output() onClickSelecionaProduto = new EventEmitter<void>();
@@ -59,9 +60,7 @@ export class ProdutoComponent implements OnChanges {
         // Se mudou o tamanho, verifica se a cor selecionada ainda é válida para este tamanho
         if (this.produto.corSelecionada && this.produto.tamanhoSelecionado) {
             const existeCombinacao = this.produto.estoques.some((e) => {
-                return e.tamanho && e.tamanho.id === this.produto.tamanhoSelecionado!.id &&
-                    e.cor && e.cor.id === this.produto.corSelecionada!.id &&
-                    e.quantidade && e.quantidade > 0;
+                return e.tamanho && e.tamanho.id === this.produto.tamanhoSelecionado!.id && e.cor && e.cor.id === this.produto.corSelecionada!.id && e.quantidade && e.quantidade > 0;
             });
 
             if (!existeCombinacao) {
@@ -75,9 +74,7 @@ export class ProdutoComponent implements OnChanges {
         // Lógica inversa: se mudou a cor, valida o tamanho
         if (this.produto.tamanhoSelecionado && this.produto.corSelecionada) {
             const existeCombinacao = this.produto.estoques.some((e) => {
-                return e.tamanho && e.tamanho.id === this.produto.tamanhoSelecionado!.id &&
-                    e.cor && e.cor.id === this.produto.corSelecionada!.id &&
-                    e.quantidade && e.quantidade > 0;
+                return e.tamanho && e.tamanho.id === this.produto.tamanhoSelecionado!.id && e.cor && e.cor.id === this.produto.corSelecionada!.id && e.quantidade && e.quantidade > 0;
             });
 
             if (!existeCombinacao) {

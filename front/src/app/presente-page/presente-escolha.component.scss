@@ -1,7 +1,7 @@
 /* Layout base com topbar + conteúdo */
 .presente-page {
     min-height: 100vh;
-    background: #f6f7f9; /* cinza clarinho nas laterais */
+    background: #f6f7f9;
     display: flex;
     flex-direction: column;
 }
@@ -9,22 +9,29 @@
 .content {
     flex: 1;
     display: flex;
+    flex-direction: column; /* Garante fluxo vertical */
 }
 
 .container {
     width: 100%;
-    max-width: 1200px; /* largura máxima centralizada */
+    max-width: 1200px;
     margin: 0 auto;
     padding: 1rem;
+
+    /* Ajuste para mobile: menos padding lateral */
+    @media (max-width: 640px) {
+        padding: 0.75rem;
+    }
 }
 
-/* Estados */
+/* Estados (Loading, Erro) */
 .status {
     display: grid;
     justify-items: center;
     align-items: center;
     gap: 0.75rem;
     padding: 3rem 0;
+    text-align: center; /* Centraliza texto em mobile */
 
     .spinner {
         width: 44px;
@@ -33,22 +40,8 @@
 
     .hint {
         opacity: 0.8;
-    }
-}
-
-/* Cabeçalho da página */
-.page-header {
-    margin: 0 0 1rem 0;
-
-    h1 {
-        margin: 0 0 0.25rem 0;
-        font-size: 1.5rem;
-        line-height: 1.2;
-    }
-
-    .sub {
-        margin: 0;
-        opacity: 0.85;
+        font-size: 0.9rem;
+        word-break: break-all; /* Evita que URL longa quebre o layout */
     }
 }
 
@@ -56,7 +49,6 @@
 .produtos-grid {
     display: grid;
     gap: 1rem;
-
     grid-template-columns: 1fr; /* mobile */
 
     @media (min-width: 640px) {
@@ -68,46 +60,34 @@
     }
 }
 
-/* NOVO: Layout de Detalhe com 3 Caixas (Responsivo) */
+/* --- Layout de Detalhe --- */
 .detalhe-wrapper {
-    /* Adiciona padding se necessário, mas o container já tem 1rem */
-}
-
-.banner-selecionado {
-    padding: 1rem;
-    border-radius: var(--content-border-radius);
-    background-color: var(--surface-hover); /* Fundo suave */
-    border-left: 5px solid var(--primary-color);
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
+    width: 100%;
 }
 
 .detalhe-grid {
     display: grid;
     gap: 1rem;
-    margin-bottom: 1.5rem; /* Espaçamento abaixo do grid */
+    margin-bottom: 1.5rem;
+    grid-template-columns: 1fr; /* Mobile: empilhado */
 
-    /* Mobile: uma coluna */
-    grid-template-columns: 1fr;
-
-    /* Tablet: duas colunas */
-    @media (min-width: 640px) {
+    @media (min-width: 768px) {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    /* Desktop: três colunas iguais */
-    @media (min-width: 992px) {
+    @media (min-width: 1100px) {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 .info-box {
     padding: 1.5rem;
-    background: var(--surface-card); /* Fundo branco/claro */
-    border-radius: var(--border-radius); /* Arredondamento */
-    box-shadow: var(--shadow-2); /* Sombra suave para destacar */
+    background: var(--surface-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-2);
     display: flex;
     flex-direction: column;
+    height: 100%; /* Faz as caixas terem altura igual na mesma linha */
 
     h3 {
         margin-top: 0;
@@ -118,19 +98,31 @@
         padding-bottom: 0.5rem;
     }
 
-    /* Estilo para a box de produto, garantindo que ocupe todo o espaço necessário */
-    &.produto-box {
-        /* A regra 'grid-column: 1 / -1;' foi removida */
+    .text-sm {
+        font-size: 0.95rem;
+        line-height: 1.6;
+
+        /* IMPORTANTE: Garante que emails/endereços longos quebrem linha */
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Ajuste interno para dados cadastrais em mobile */
+    .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
 
+/* --- Card de Expirado / Mensagens Centrais --- */
 .msg-container-central {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 300px; /* Garante espaço se a tela estiver vazia */
+    min-height: 60vh; /* Centraliza verticalmente melhor */
     width: 100%;
-    padding: 2rem;
+    padding: 1rem; /* Padding reduzido para mobile */
     box-sizing: border-box;
 
     .msg-expirado-card {
@@ -138,30 +130,59 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-
-        /* Estilo da Caixa */
-        background-color: #fff5f5; /* Fundo levemente avermelhado */
+        background-color: #fff5f5;
         border: 2px solid #ffcdd2;
         border-radius: 12px;
-        padding: 3rem 2rem;
-        max-width: 500px;
+
+        /* Responsividade do card interno */
+        padding: 2rem 1.5rem;
         width: 100%;
+        max-width: 500px;
 
-        /* Sombra para destaque */
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-        /* Tipografia */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         color: #c62828;
 
         .msg-texto {
-            font-size: 1.5rem; /* Fonte maior */
+            font-size: 1.25rem; /* Fonte um pouco menor em mobile */
             font-weight: 700;
             line-height: 1.4;
+
+            @media (min-width: 640px) {
+                font-size: 1.5rem; /* Fonte maior em desktop */
+            }
         }
 
-        /* Ícone opcional (se usar PrimeIcons) */
         i {
             color: #ef5350;
+        }
+    }
+}
+
+/* --- CORREÇÃO DO TOAST (Responsivo) --- */
+::ng-deep {
+    .p-toast {
+        opacity: 0.95;
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            width: 90vw !important; /* Ocupa 90% da largura */
+            left: 5vw !important;   /* Centraliza (5% esq + 90% largura + 5% dir) */
+            top: 20px !important;
+            transform: none !important;
+        }
+
+        /* Ajuste do conteúdo da mensagem */
+        .p-toast-message-content {
+            align-items: flex-start; /* Alinha ícone e texto no topo caso quebre linha */
+
+            .p-toast-message-text {
+                margin-left: 0.5rem;
+                word-break: break-word; /* Quebra palavras longas */
+            }
+
+            .p-toast-detail {
+                white-space: normal; /* Permite quebra de linha na descrição */
+            }
         }
     }
 }
