@@ -17,9 +17,8 @@ import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
 import {filter} from "rxjs/operators";
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
-
     protected apiUrl = '/api/evento';
 
     constructor(http: HttpClient) {
@@ -42,10 +41,9 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
     }
 
     pararEvento(eventoId: number): Observable<Evento> {
-        return this.http.post<EventoDto>(`${this.apiUrl}/${eventoId}/parar`, {})
-            .pipe(
-                map((dto: EventoDto) => EventoMapper.fromDto(dto)),
-                filter((evento): evento is Evento => !!evento)
+        return this.http.post<EventoDto>(`${this.apiUrl}/${eventoId}/parar`, {}).pipe(
+            map((dto: EventoDto) => EventoMapper.fromDto(dto)),
+            filter((evento): evento is Evento => !!evento)
         );
     }
 
@@ -58,17 +56,18 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
     }
 
     getEventoPessoa(eventoId: number): Observable<EventoPessoa[]> {
-        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`)
-            .pipe(
-                map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos))
-            );
+        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`).pipe(map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos)));
     }
 
     getEventoProduto(eventoId: number): Observable<EventoProduto[]> {
-        return this.http.get<EventoProdutoDto[]>(`${this.apiUrl}/${eventoId}/produtos/list`)
-            .pipe(
-                map((dtos: EventoProdutoDto[]) => EventoProdutoMapper.listFromDto(dtos))
-            );
+        return this.http.get<EventoProdutoDto[]>(`${this.apiUrl}/${eventoId}/produtos/list`).pipe(map((dtos: EventoProdutoDto[]) => EventoProdutoMapper.listFromDto(dtos)));
+    }
+
+    importarPessoasCsv(eventoId: number, file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        // O endpoint conforme EventoController: POST /evento/{id}/pessoas/import
+        return this.http.post(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
     }
 
 }

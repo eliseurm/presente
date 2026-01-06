@@ -32,4 +32,6 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecif
         and (:q is null or :q = '' or lower(p.nome) like concat('%', lower(:q), '%') or lower(p.email) like concat('%', lower(:q), '%') or p.telefone like concat('%', :q, '%'))
         """)
     List<Pessoa> pesquisaByCliente(@Param("clienteId") Long clienteId, @Param("q") String q);
+
+    Optional<Pessoa> findByCpf(String cpf);
 }

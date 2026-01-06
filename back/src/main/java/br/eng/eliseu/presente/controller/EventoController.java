@@ -1,10 +1,7 @@
 package br.eng.eliseu.presente.controller;
 
 import br.eng.eliseu.presente.model.*;
-import br.eng.eliseu.presente.model.dto.EventoDto;
-import br.eng.eliseu.presente.model.dto.EventoEscolhaDto;
-import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
-import br.eng.eliseu.presente.model.dto.EventoProdutoDto;
+import br.eng.eliseu.presente.model.dto.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.model.mapper.EventoEscolhaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
@@ -97,11 +94,18 @@ public class EventoController {
         ));
     }
 
+//    @PostMapping("/{id}/pessoas/import")
+//    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+//    public ResponseEntity<Map<String, Object>> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+//        int adicionados = eventoService.importarPessoasCsv(id, file);
+//        return ResponseEntity.ok(Map.of("adicionados", adicionados));
+//    }
+
     @PostMapping("/{id}/pessoas/import")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Map<String, Object>> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        int adicionados = eventoService.importarPessoasCsv(id, file);
-        return ResponseEntity.ok(Map.of("adicionados", adicionados));
+    public ResponseEntity<ImportacaoResultadoDto> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        ImportacaoResultadoDto resultado = eventoService.importarPessoasCsv(id, file);
+        return ResponseEntity.ok(resultado);
     }
 
     // ======= Endpoints de vínculo: Pessoas =======

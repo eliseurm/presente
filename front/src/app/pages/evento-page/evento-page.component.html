@@ -1,7 +1,6 @@
 <crud #crudRef [parent]="vm" listToolbarTitle="Eventos" editToolbarTitle="Editar Evento"
       [collapsibleFilters]="true" [showListCloseButton]="true" (closeButtonAction)="onCloseCrud()">
 
-    <!-- Filtros da lista -->
     <div crud-list-filter-fields class="w-full text-left">
         <crud-filter
             [filter]="vm.filter"
@@ -12,7 +11,6 @@
         ></crud-filter>
     </div>
 
-    <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
         <e-data-grid
             [dataSource]="vm.dataSource"
@@ -32,7 +30,6 @@
             <ei-column dataField="fim" caption="Fim" cellTemplate="dataTpl"></ei-column>
             <ei-column dataField="acoes" caption="Ações" cellTemplate="acoesTpl"></ei-column>
 
-            <!-- Ajuste para novo contrato do e-data-grid: $implicit = valor da célula, linha via alias -->
             <ng-template eTemplate="clienteTpl" let-data="data">{{ data.nome || '-' }}</ng-template>
             <ng-template eTemplate="statusTpl" let-row="row">{{ getStatusDescricao(row?.status) }}</ng-template>
             <ng-template eTemplate="dataTpl" let-data="data">{{ data | date:'short' }}</ng-template>
@@ -45,19 +42,22 @@
         </e-data-grid>
     </div>
 
-    <!-- Formulário de edição com abas -->
     <div crud-edit-template class="grid grid-cols-1 gap-4 text-left justify-items-start w-full">
-        <p-tabs value="geral" class="w-full" (valueChange)="onTabChangePrincipal($event)">
+        <p-tabs [value]="abaAtiva" class="w-full" (valueChange)="onTabChangePrincipal($event)">
             <p-tablist>
                 <p-tab value="geral">Geral</p-tab>
                 <p-tab value="pessoa">Pessoas</p-tab>
                 <p-tab value="produto">Produtos</p-tab>
+                <p-tab value="log" *ngIf="importacaoLogs.length > 0">
+                    <span class="text-red-500 font-bold flex items-center gap-2">
+                        <i class="pi pi-exclamation-triangle"></i> Log Erros ({{importacaoLogs.length}})
+                    </span>
+                </p-tab>
             </p-tablist>
 
             <p-tabpanels>
 
                 <p-tabpanel value="geral">
-                    <!-- Ações de controle do evento: Iniciar / Parar -->
                     <div class="flex gap-2 items-center mb-2" *ngIf="vm.model?.id">
                         <button pButton type="button" label="Iniciar"
                                 icon="pi pi-play"
@@ -160,17 +160,54 @@
                 </p-tabpanel>
 
                 <p-tabpanel value="pessoa">
-                    <div class="flex items-center gap-2 mb-2">
-                        <button pButton type="button" label="Refresh" icon="pi pi-refresh"
-                                (click)="onRefreshGridPessoas()"></button>
-                        <button pButton type="button" label="Adicionar" icon="pi pi-plus" class="p-button-success"
-                                (click)="onOpenAddPessoas()"></button>
+
+                    <div class="flex flex-col gap-3 mb-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <input #fileInput type="file" accept=".csv" class="hidden" (change)="onFileSelect($event)" />
+                                <button pButton type="button"
+                                        [label]="importando ? 'Importando...' : 'Importar arq csv'"
+                                        [icon]="importando ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
+                                        class="p-button-outlined"
+                                        [disabled]="importando"
+                                        pTooltip="Selecione um arquivo .csv"
+                                        (click)="fileInput.click()">
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button pButton type="button" label="Refresh" icon="pi pi-refresh"
+                                        (click)="onRefreshGridPessoas()"></button>
+                                <button pButton type="button" label="Adicionar" icon="pi pi-plus" class="p-button-success"
+                                        (click)="onOpenAddPessoas()"></button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 p-3 border rounded surface-ground bg-gray-50 items-center">
+                            <span class="p-input-icon-left flex-1 min-w-[200px]">
+                                <i class="pi pi-search"></i>
+                                <input pInputText type="text" class="w-full p-inputtext-sm"
+                                       placeholder="Buscar por Nome..."
+                                       [(ngModel)]="filtroPessoaNome"
+                                       (input)="filtrarPessoasLocalmente()" />
+                            </span>
+                            <span class="p-input-icon-left flex-1 min-w-[200px]">
+                                <i class="pi pi-id-card"></i>
+                                <input pInputText type="text" class="w-full p-inputtext-sm"
+                                       placeholder="Buscar por CPF..."
+                                       [(ngModel)]="filtroPessoaCpf"
+                                       (input)="filtrarPessoasLocalmente()" />
+                            </span>
+                            <div class="text-sm text-gray-500 whitespace-nowrap">
+                                Exibindo {{ pessoasFiltradas.length }} registros
+                            </div>
+                        </div>
                     </div>
 
                     <e-data-grid #gridPessoas
-                                 [dataSource]="vm.model.eventoPessoas || []"
-                                 [loading]="false"
-                                 [summaryDataSource]="vm.model.eventoPessoas || []"
+                                 [dataSource]="pessoasFiltradas"
+                                 [loading]="importando"
+                                 [summaryDataSource]="pessoasFiltradas"
                                  (onEditDialogOpen)="onEditingStartPessoa($event)"
                                  (onSaving)="onSavingPessoa($event)"
                                  (onDeleting)="onDeletingPessoa($event)">
@@ -180,78 +217,52 @@
 
                             <e-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></e-popup>
 
-                            <!-- Para garantir renderização dentro do popup, encapsulamos as abas em um ei-item template -->
                             <eo-form [colCount]="1" [useContentProjection]="true">
-
                                 <p-tabs value="0" class="w-full">
                                     <p-tablist>
                                         <p-tab value="0">Geral</p-tab>
                                         <p-tab value="1">Escolha atual</p-tab>
                                         <p-tab value="2">Historico</p-tab>
                                     </p-tablist>
-
                                     <p-tabpanels>
-
                                         <p-tabpanel value="0">
                                             <ei-item dataField="pessoa" label="Nome" editorType="template"></ei-item>
                                             <ei-item dataField="status" label="Status" editorType="template"></ei-item>
                                         </p-tabpanel>
-
                                         <p-tabpanel value="1">
                                             <div class="grid gap-2">
-                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}
-                                                </div>
-                                                <div>
-                                                    <b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}
-                                                </div>
-                                                <div>
-                                                    <b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.tamanho || pessoaUltimaEscolha?.tamanho?.id }}
-                                                </div>
-                                                <div>
-                                                    <b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.nome || pessoaUltimaEscolha?.cor?.id }}
-                                                </div>
+                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}</div>
+                                                <div><b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</div>
+                                                <div><b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.tamanho || pessoaUltimaEscolha?.tamanho?.id }}</div>
+                                                <div><b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.nome || pessoaUltimaEscolha?.cor?.id }}</div>
                                             </div>
                                         </p-tabpanel>
-
                                         <p-tabpanel value="2">
-                                            <e-data-grid [dataSource]="pessoaHistorico"
-                                                         [scrollable]="true"
-                                                         scrollHeight="400px">
-
-                                                <ei-column dataField="dataEscolha" caption="Escolha"
-                                                           cellTemplate="dataTemplate"></ei-column>
-                                                <ei-column dataField="alteradoEm" caption="Alterado em"
-                                                           cellTemplate="dataTemplate"></ei-column>
+                                            <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true" scrollHeight="400px">
+                                                <ei-column dataField="dataEscolha" caption="Escolha" cellTemplate="dataTemplate"></ei-column>
+                                                <ei-column dataField="alteradoEm" caption="Alterado em" cellTemplate="dataTemplate"></ei-column>
                                                 <ei-column dataField="eventoNome" caption="Evento"></ei-column>
                                                 <ei-column dataField="produtoNome" caption="Produto"></ei-column>
                                                 <ei-column dataField="corNome" caption="Cor"></ei-column>
                                                 <ei-column dataField="tamanhoDescricao" caption="Tamanho"></ei-column>
-
-                                                <ng-template eTemplate="dataTemplate"
-                                                             let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}
-                                                </ng-template>
-
-
+                                                <ng-template eTemplate="dataTemplate" let-data="data">{{ data | date:'dd/MM/yyyy hh:mm' }}</ng-template>
                                             </e-data-grid>
                                         </p-tabpanel>
-
                                     </p-tabpanels>
                                 </p-tabs>
-
                             </eo-form>
-
                         </eo-editing>
 
-                        <!-- Colunas -->
-                        <ei-column dataField="pessoa" caption="Pessoa" editCellTemplate="pessoaEditCellTemplate" cellTemplate="pessoaCellTemplate"></ei-column>
+                        <ei-column dataField="pessoa" caption="Pessoa" cellTemplate="pessoaCellTemplate" editCellTemplate="pessoaEditCellTemplate"></ei-column>
+                        <ei-column dataField="pessoa.cpf" caption="CPF" cellTemplate="cpfCellTemplate"></ei-column>
                         <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
                         <ei-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></ei-column>
                         <ei-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></ei-column>
                         <ei-column dataField="nomeMagicNumber" caption="Ações" cellTemplate="acoesCellTemplate"></ei-column>
 
                         <ng-template eTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
-                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}
-                        </ng-template>
+                        <ng-template eTemplate="cpfCellTemplate" let-data="data">{{ data?.cpf || '-' }}</ng-template>
+                        <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
                         <ng-template eTemplate="jaEscolheuTpl" let-data="data">
                             <span [title]="data ? 'Já escolheu' : 'Ainda não'">{{ data ? '✔' : '✖' }}</span>
                         </ng-template>
@@ -292,25 +303,12 @@
                         </ng-template>
 
                         <ng-template eTemplate="acoesCellTemplate" let-data='data'>
-                            <button pButton type="button"
-                                    icon="pi pi-external-link"
-                                    class="p-button-text p-button-sm"
-                                    pTooltip="Abrir Presente"
-                                    tooltipPosition="top"
-                                    [disabled]="!data"
-                                    (click)="abrirPresente(data)"
-                            ></button>
-                            <button pButton type="button"
-                                    icon="pi pi-copy"
-                                    class="p-button-text p-button-sm"
-                                    pTooltip="Copiar Link"
-                                    tooltipPosition="top"
-                                    [disabled]="!data"
-                                    (click)="copiarLink(data)"
-                            ></button>
+                            <button pButton type="button" icon="pi pi-external-link" class="p-button-text p-button-sm"
+                                    pTooltip="Abrir Presente" [disabled]="!data" (click)="abrirPresente(data)"></button>
+                            <button pButton type="button" icon="pi pi-copy" class="p-button-text p-button-sm"
+                                    pTooltip="Copiar Link" [disabled]="!data" (click)="copiarLink(data)"></button>
                         </ng-template>
 
-                        <!-- Somatória (rodapé) -->
                         <eo-somatoria>
                             <ei-total-item summaryType="count" label="Total de pessoas"></ei-total-item>
                             <ei-total-item column="jaEscolheu" summaryType="sum" label="Já escolheram"></ei-total-item>
@@ -318,14 +316,11 @@
 
                     </e-data-grid>
 
-                    <!-- Popup custom de Adição de Pessoas -->
                     <p-dialog [(visible)]="addPessoasDialogVisible" [modal]="true" [dismissableMask]="false"
                               [closable]="true"
                               header="Adicionar Pessoas" [style]="{width: '900px'}"
                               [breakpoints]="{'960px':'95vw','640px':'95vw'}">
-                        <!-- Layout responsivo: 1 coluna no mobile, 2 colunas no desktop -->
                         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Lado esquerdo: Select com filtro e múltipla seleção -->
                             <div class="flex flex-col gap-2 md:min-w-[220px]">
                                 <label class="block mb-2">Pessoas disponíveis</label>
                                 <p-listbox class="w-full"
@@ -338,11 +333,8 @@
                                            [(ngModel)]="pessoasSelecionadas"
                                            name="pessoasSelecionadas">
                                 </p-listbox>
-                                <small class="opacity-70">Somente pessoas que ainda não estão na lista do evento são
-                                    exibidas.</small>
+                                <small class="opacity-70">Somente pessoas não listadas são exibidas.</small>
                             </div>
-
-                            <!-- Lado direito: Enum de Status -->
                             <div class="flex flex-col gap-2 md:min-w-[220px]">
                                 <label class="block">Status</label>
                                 <enum-select class="w-full"
@@ -368,7 +360,6 @@
                 </p-tabpanel>
 
                 <p-tabpanel value="produto">
-
                     <e-data-grid
                         [dataSource]="vm.model.eventoProdutos || []"
                         [loading]="false"
@@ -378,20 +369,15 @@
 
                         <eo-editing mode="popup" [allowAdding]="true" [allowUpdating]="true" [allowDeleting]="true"
                                     [confirmDelete]="true">
-
                             <e-popup title="Produto do Evento" [showTitle]="true" width="700px" height="auto"></e-popup>
-
                             <eo-form [colCount]="2">
                                 <ei-item dataField="produto" label="Produto" editorType="template">
-                                    <ei-validation-rule type="required"
-                                                        message="Produto é obrigatório"></ei-validation-rule>
+                                    <ei-validation-rule type="required" message="Produto é obrigatório"></ei-validation-rule>
                                 </ei-item>
                                 <ei-item dataField="status" label="Status" editorType="template">
-                                    <ei-validation-rule type="required"
-                                                        message="Status é obrigatório"></ei-validation-rule>
+                                    <ei-validation-rule type="required" message="Status é obrigatório"></ei-validation-rule>
                                 </ei-item>
                             </eo-form>
-
                         </eo-editing>
 
                         <ei-column dataField="produto" caption="Produto" editCellTemplate="produtoEditCellTemplate" cellTemplate="produtoCellTemplate"></ei-column>
@@ -410,24 +396,23 @@
                                       (onFilter)="onFilterProdutoSelect($event)"
                                       [loading]="loading"
                                       placeholder="Selecione um Produto"
-                                      appendTo="body"> <ng-template #footer>
-                                <div (click)="$event.stopPropagation()" class="p-2 border-top-1 surface-border">
-                                    <p-paginator
-                                        [first]="filtroProduto.page * filtroProduto.size"
-                                        [rows]="filtroProduto.size"
-                                        [totalRecords]="filtroProduto.totalItens"
-                                        (onPageChange)="onPageChangeProdutoPaginator($event)"
-                                        [showFirstLastIcon]="false"
-                                        [showPageLinks]="true"
-                                        [pageLinkSize]="2"
-                                        styleClass="p-paginator-sm border-none">
-                                    </p-paginator>
-                                </div>
-                            </ng-template>
+                                      appendTo="body">
+                                <ng-template #footer>
+                                    <div (click)="$event.stopPropagation()" class="p-2 border-top-1 surface-border">
+                                        <p-paginator
+                                            [first]="filtroProduto.page * filtroProduto.size"
+                                            [rows]="filtroProduto.size"
+                                            [totalRecords]="filtroProduto.totalItens"
+                                            (onPageChange)="onPageChangeProdutoPaginator($event)"
+                                            [showFirstLastIcon]="false"
+                                            [showPageLinks]="true"
+                                            [pageLinkSize]="2"
+                                            styleClass="p-paginator-sm border-none">
+                                        </p-paginator>
+                                    </div>
+                                </ng-template>
                             </p-select>
-
                         </ng-template>
-
                         <ng-template eTemplate="statusEditCellTemplate" let-data="data">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
@@ -436,9 +421,26 @@
                                          [ngModelOptions]="{standalone:true}"
                             ></enum-select>
                         </ng-template>
-
                     </e-data-grid>
+                </p-tabpanel>
 
+                <p-tabpanel value="log" *ngIf="importacaoLogs.length > 0">
+                    <div class="p-4 border border-red-200 rounded bg-red-50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-red-700 font-bold text-lg">Relatório de Erros na Importação</h3>
+                            <button pButton label="Limpar e Fechar" icon="pi pi-times"
+                                    class="p-button-danger p-button-text"
+                                    (click)="limparLogs()"></button>
+                        </div>
+                        <div class="max-h-[400px] overflow-y-auto bg-white p-2 border rounded shadow-sm">
+                            <ul class="list-none m-0 p-0">
+                                <li *ngFor="let log of importacaoLogs" class="py-2 border-b border-gray-100 text-sm text-gray-700 flex items-start gap-2">
+                                    <i class="pi pi-times-circle text-red-500 mt-0.5"></i>
+                                    <span>{{ log }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </p-tabpanel>
 
             </p-tabpanels>

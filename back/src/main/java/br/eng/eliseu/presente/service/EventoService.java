@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -740,6 +741,131 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
+    // No EventoService.java
+
+// Adicione/Atualize o método no seu Service
+
+    @Transactional
+    public ImportacaoResultadoDto importarPessoasCsv(Long eventoId, MultipartFile file) {
+        List<String> logs = new ArrayList<>();
+        int adicionados = 0;
+
+        if (file == null || file.isEmpty()) {
+            logs.add("O arquivo está vazio ou não foi enviado.");
+            return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
+        }
+
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado."));
+        Cliente cliente = evento.getCliente();
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            int linhaNum = 0;
+
+            // Se o arquivo tiver cabeçalho na primeira linha, descomente:
+            // br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                linhaNum++;
+                if (line.trim().isEmpty()) continue; // Pular linhas em branco
+
+                String[] cols = line.split(","); // Separador CSV (ajuste para ";" se necessário)
+
+                // Validação: Quantidade de colunas
+                if (cols.length < 4) {
+                    logs.add("Linha " + linhaNum + ": Falta de informação (Esperado 4 colunas: Nome, CPF, Telefone, Email).");
+                    continue;
+                }
+
+                String nome = cols[0].trim();
+                String cpfRaw = cols[1].trim();
+                String telefone = cols[2].trim();
+                String email = cols[3].trim();
+
+                // Validação: Campos obrigatórios
+                if (nome.isEmpty()) {
+                    logs.add("Linha " + linhaNum + ": Nome está vazio.");
+                    continue;
+                }
+
+                // Validação: CPF (formato)
+                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
+                if (cpfNumerico.length() != 11) {
+                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + "). Deve conter 11 dígitos.");
+                    continue;
+                }
+
+                // Validação: Email (Regex simples)
+                if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                    logs.add("Linha " + linhaNum + ": Email incorreto (" + email + ").");
+                    continue;
+                }
+
+                // Validação: Telefone
+                String telNumerico = telefone.replaceAll("\\D", "");
+                if (telNumerico.length() < 8 || telNumerico.length() > 15) {
+                    logs.add("Linha " + linhaNum + ": Telefone incorreto (" + telefone + ").");
+                    continue;
+                }
+
+                // Verifica se a Pessoa já existe no sistema (Geral)
+                Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
+
+                if (pessoa == null) {
+                    // Tenta buscar por email para evitar violação de UniqueConstraint se o CPF for novo
+                    if (pessoaRepository.findByEmail(email).isPresent()) {
+                        logs.add("Linha " + linhaNum + ": Email já cadastrado para outra pessoa (" + email + ").");
+                        continue;
+                    }
+
+                    try {
+                        pessoa = Pessoa.builder()
+                                .nome(nome)
+                                .cpf(cpfNumerico)
+                                .telefone(telefone)
+                                .email(email)
+                                .cliente(cliente)
+                                .status(StatusEnum.ATIVO)
+                                .build();
+                        pessoa = pessoaRepository.save(pessoa);
+                    } catch (Exception e) {
+                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa (possível duplicidade).");
+                        continue;
+                    }
+                } else {
+                    // Pessoa já existe no banco. Se necessário, atualize dados aqui.
+                    // Atualmente apenas reutilizamos a pessoa encontrada.
+                }
+
+                // Verifica se a Pessoa já está vinculada a ESTE evento
+                boolean jaVinculado = eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa);
+                if (jaVinculado) {
+                    logs.add("Linha " + linhaNum + ": CPF já cadastrado neste evento (" + cpfRaw + ").");
+                    continue;
+                }
+
+                // Realiza o vínculo
+                EventoPessoa vinculo = EventoPessoa.builder()
+                        .evento(evento)
+                        .pessoa(pessoa)
+                        .status(StatusEnum.ATIVO)
+                        .build();
+                eventoPessoaRepository.save(vinculo);
+                adicionados++;
+            }
+        } catch (IOException e) {
+            logs.add("Erro fatal ao ler o arquivo: " + e.getMessage());
+        }
+
+        return ImportacaoResultadoDto.builder()
+                .adicionados(adicionados)
+                .logErros(logs)
+                .build();
+    }
+
+
+/*
     public int importarPessoasCsv(Long eventoId, MultipartFile file) {
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado: " + eventoId));
@@ -757,6 +883,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         eventoRepository.save(evento);
         return adicionados.size();
     }
+*/
 
     private List<EventoPessoa> parseCsvEventoPessoa(MultipartFile file) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {

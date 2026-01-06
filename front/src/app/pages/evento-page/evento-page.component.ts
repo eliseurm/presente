@@ -1,57 +1,46 @@
-import {Component} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {MessageService} from 'primeng/api';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {ToastModule} from 'primeng/toast';
-import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
-import {DatePickerModule} from 'primeng/datepicker';
-import {SelectFilterEvent, SelectModule} from 'primeng/select';
-import {AutoCompleteModule} from 'primeng/autocomplete';
-import {DialogModule} from 'primeng/dialog';
-import {TextareaModule} from 'primeng/textarea';
-import {TableModule} from 'primeng/table';
-import {ListboxModule} from 'primeng/listbox';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { ToastModule } from 'primeng/toast';
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from 'primeng/tabs';
+import { DatePickerModule } from 'primeng/datepicker';
+import { SelectFilterEvent, SelectModule } from 'primeng/select';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { DialogModule } from 'primeng/dialog';
+import { TextareaModule } from 'primeng/textarea';
+import { TableModule } from 'primeng/table';
+import { ListboxModule } from 'primeng/listbox';
+import { Paginator } from 'primeng/paginator';
 
-import {CrudMetadata} from "@/shared/core/crud.metadata.decorator";
-import {FilterField} from '@/shared/components/crud-filter/filter-field';
-import {CrudComponent} from '@/shared/crud/crud.component';
-import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.component';
-import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
+import { CrudMetadata } from '@/shared/core/crud.metadata.decorator';
+import { FilterField } from '@/shared/components/crud-filter/filter-field';
+import { CrudComponent } from '@/shared/crud/crud.component';
+import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
+import { EnumSelectComponent } from '@/shared/components/enum-select/enum-select.component';
+import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
+import { EDataGridComponent, EiColumnComponent, EiItemComponent, EiTotalItemComponent, EiValidationRuleComponent, EoEditingComponent, EoFormComponent, EoSomatoriaComponent, EPopupComponent, ETemplateDirective } from '@/shared/components/e-data-grid';
 
-import {EventoService} from '@/services/evento.service';
-import {Evento} from '@/shared/model/evento';
-import {EventoFilter} from '@/shared/model/filter/evento-filter';
-import {Pessoa} from '@/shared/model/pessoa';
-import {Produto} from '@/shared/model/produto';
-import {Cliente} from '@/shared/model/cliente';
-import {StatusEnum} from '@/shared/model/enum/status.enum';
-import {EventoCrudVM} from './evento-crud.vm';
-import {Router} from '@angular/router';
-import {PessoaService} from '@/services/pessoa.service';
-import {ProdutoService} from '@/services/produto.service';
-import {ClienteService} from '@/services/cliente.service';
-import {
-    EDataGridComponent,
-    EiColumnComponent,
-    EiItemComponent,
-    EiTotalItemComponent,
-    EiValidationRuleComponent,
-    EoEditingComponent,
-    EoFormComponent,
-    EoSomatoriaComponent,
-    EPopupComponent,
-    ETemplateDirective
-} from '@/shared/components/e-data-grid';
-import {EventoEscolhaDto} from "@/shared/model/dto/evento-escolha-dto";
-import {forkJoin, of} from "rxjs";
-import {CrudBaseComponent} from "@/shared/components/crud-base/crud-base.component";
-import {catchError} from "rxjs/operators";
-import {ProdutoFilter} from "@/shared/model/filter/produto-filter";
-import {ProdutoMapper} from "@/shared/model/mapper/produto-mapper";
-import {Paginator} from "primeng/paginator";
-import {EventoProduto} from "@/shared/model/evento-produto";
+import { EventoService } from '@/services/evento.service';
+import { Evento } from '@/shared/model/evento';
+import { EventoFilter } from '@/shared/model/filter/evento-filter';
+import { Pessoa } from '@/shared/model/pessoa';
+import { Produto } from '@/shared/model/produto';
+import { Cliente } from '@/shared/model/cliente';
+import { StatusEnum } from '@/shared/model/enum/status.enum';
+import { EventoCrudVM } from './evento-crud.vm';
+import { Router } from '@angular/router';
+import { PessoaService } from '@/services/pessoa.service';
+import { ProdutoService } from '@/services/produto.service';
+import { ClienteService } from '@/services/cliente.service';
+import { EventoEscolhaDto } from '@/shared/model/dto/evento-escolha-dto';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ProdutoFilter } from '@/shared/model/filter/produto-filter';
+import { ProdutoMapper } from '@/shared/model/mapper/produto-mapper';
+import { EventoProduto } from '@/shared/model/evento-produto';
 
 @Component({
     selector: 'evento-page',
@@ -90,20 +79,16 @@ import {EventoProduto} from "@/shared/model/evento-produto";
         Paginator
     ],
     templateUrl: './evento-page.component.html',
-    styleUrls: [
-        './evento-page.component.scss',
-        '../../shared/components/crud-base/crud-base.component.scss'
-    ],
+    styleUrls: ['./evento-page.component.scss', '../../shared/components/crud-base/crud-base.component.scss'],
     providers: [MessageService, EventoCrudVM]
 })
-@CrudMetadata("EventoPageComponent", [Evento, EventoFilter])
+@CrudMetadata('EventoPageComponent', [Evento, EventoFilter])
 export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
-
-
     // Opções
     clientesOptions: Cliente[] = [];
     statusEnumType: any = StatusEnum;
     abasVisitadas = new Set<string>();
+    abaAtiva: string = 'geral';
 
     // Sugestões para selectBox
     pessoasSugestoes: Pessoa[] = [];
@@ -117,13 +102,20 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     // ======= Popup custom de Adição de Pessoas =======
     addPessoasDialogVisible = false;
-    pessoasPossiveis: Pessoa[] = []; // pessoas para este cliente
+    pessoasPossiveis: Pessoa[] = [];
     pessoasSelecionadas: Pessoa[] = [];
     statusSelecionado: any = null;
 
+    // ======= Controles de Importação e Filtro Local =======
+    importando: boolean = false;
+    importacaoLogs: string[] = [];
+    filtroPessoaNome: string = '';
+    filtroPessoaCpf: string = '';
+    pessoasFiltradas: any[] = [];
+
     filterFields: FilterField[] = [
-        {key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome'},
-        {key: 'clienteId', label: 'Cliente', type: 'select', options: []},
+        { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
+        { key: 'clienteId', label: 'Cliente', type: 'select', options: [] },
         {
             key: 'status',
             label: 'Status',
@@ -153,31 +145,101 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     override ngOnInit(): void {
         this.vm.init();
-        // Hotfix: não usar expand no carregamento do evento para evitar 500 no backend.
-        // O backend já inicializa pessoas/produtos em buscarPorId() dentro da transação.
-        // Quando o modelo é recarregado (abrir edição, salvar, etc.), atualiza labels auxiliares
-        this.vm.refreshModel.subscribe(() => this.preencherCamposDeExibicao());
+        this.vm.refreshModel.subscribe(() => {
+            this.preencherCamposDeExibicao();
+            this.filtrarPessoasLocalmente();
+        });
         this.carregarOpcoes();
     }
 
-    /** Aqui eu carrego pessoas Possiveis e as pessoas selecionadas com suas respectivas escolhas **/
-    onRefreshGridPessoas(): void {
+    // ================= Importação CSV =================
+    onFileSelect(event: any) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const eventoId = this.vm.model?.id;
 
+            if (!eventoId) {
+                this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Salve o evento antes de importar.' });
+                return;
+            }
+
+            this.importando = true;
+            this.importacaoLogs = [];
+
+            this.eventoService.importarPessoasCsv(eventoId, file).subscribe({
+                next: (res: any) => {
+                    this.importando = false;
+                    const adicionados = res?.adicionados ?? 0;
+                    const logs = res?.logErros ?? [];
+
+                    if (adicionados > 0) {
+                        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${adicionados} pessoas importadas.` });
+                        this.onRefreshGridPessoas();
+                    } else if (logs.length === 0) {
+                        this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhuma pessoa nova foi adicionada.' });
+                    }
+
+                    if (logs.length > 0) {
+                        this.importacaoLogs = logs;
+                        this.abaAtiva = 'log'; // Foca na aba de logs
+                        this.messageService.add({ severity: 'error', summary: 'Erros na Importação', detail: 'Verifique a aba de Log.' });
+                    }
+
+                    input.value = '';
+                },
+                error: (err) => {
+                    this.importando = false;
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Erro Fatal',
+                        detail: err?.error?.message || 'Falha ao enviar arquivo.'
+                    });
+                    input.value = '';
+                }
+            });
+        }
+    }
+
+    limparLogs() {
+        this.importacaoLogs = [];
+        this.abaAtiva = 'pessoa';
+    }
+
+    // ================= Filtro Local Pessoas =================
+    filtrarPessoasLocalmente() {
+        const listaCompleta = this.vm.model?.eventoPessoas || [];
+
+        if (!this.filtroPessoaNome && !this.filtroPessoaCpf) {
+            this.pessoasFiltradas = [...listaCompleta];
+            return;
+        }
+
+        const termoNome = this.filtroPessoaNome.toLowerCase();
+        const termoCpf = this.filtroPessoaCpf.replace(/\D/g, ''); // Apenas números
+
+        this.pessoasFiltradas = listaCompleta.filter((item: any) => {
+            const p = item.pessoa || {};
+            const nome = (typeof p === 'object' ? p.nome : p.toString() || '').toLowerCase();
+            const cpf = (typeof p === 'object' ? p.cpf : '').replace(/\D/g, '');
+
+            const matchNome = !termoNome || nome.includes(termoNome);
+            const matchCpf = !termoCpf || cpf.includes(termoCpf);
+
+            return matchNome && matchCpf;
+        });
+    }
+
+    onRefreshGridPessoas(): void {
         const clienteId = this.abstractVM.getClienteId();
         const eventoId = this.vm.model?.id;
 
         if (clienteId && eventoId) {
+            this.loading = true; // loading geral se quiser
             forkJoin({
-                // Chamada 1: Pessoas do Cliente
-                listaPossiveis: this.pessoaService.findPessoaPorCliente(clienteId).pipe(
-                    catchError(err => {
-                        this.messageToastAddAndShow('Não foi possível carregar as pessoas para este Cliente.', 'Erro', 'error');
-                        return of([]); // Retorna lista vazia em caso de erro para não quebrar o forkJoin
-                    })
-                ),
-                // Chamada 2: Pessoas do Evento
+                listaPossiveis: this.pessoaService.findPessoaPorCliente(clienteId).pipe(catchError(() => of([]))),
                 eventoPessoas: this.eventoService.getEventoPessoa(eventoId).pipe(
-                    catchError(err => {
+                    catchError((err) => {
                         this.vm.messageToastShow(err);
                         return of([]);
                     })
@@ -186,18 +248,17 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 next: (res) => {
                     this.pessoasPossiveis = res.listaPossiveis;
                     this.vm.model.eventoPessoas = res.eventoPessoas;
+                    this.filtrarPessoasLocalmente(); // Atualiza a grid
                     this.vm.refreshModel.next();
-                }
+                    this.loading = false;
+                },
+                error: () => (this.loading = false)
             });
         }
-
     }
 
-    // ======= Popup custom: adicionar pessoas =======
     onOpenAddPessoas() {
-        // Limpa seleção anterior
         this.pessoasSelecionadas = [];
-        // Tenta inferir cliente atual (do filtro ou do modelo)
         let clienteId: number | undefined = (this.vm.filter as any)?.clienteId;
         const mc = (this.vm.model as any)?.cliente;
         if (!clienteId && mc) {
@@ -215,16 +276,12 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.pessoaService.findPessoaPorCliente(clienteId).subscribe({
             next: (list) => {
                 const jaIds = new Set((this.vm.model?.eventoPessoas || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
-                this.pessoasPossiveis = (list || []).filter(p => !jaIds.has(p.id));
+                this.pessoasPossiveis = (list || []).filter((p) => !jaIds.has(p.id));
                 this.addPessoasDialogVisible = true;
             },
-            error: _ => {
+            error: (_) => {
                 this.pessoasPossiveis = [];
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Erro',
-                    detail: 'Não foi possível carregar as pessoas disponíveis.'
-                });
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar as pessoas disponíveis.' });
             }
         });
     }
@@ -237,7 +294,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     onConfirmAddPessoas() {
         const selecionados = this.pessoasSelecionadas || [];
         if (!selecionados.length) return;
-        // Normaliza status para string do enum
+
         let status = this.statusSelecionado;
         if (status && typeof status === 'object') {
             status = status.key ?? status.name ?? status;
@@ -252,23 +309,22 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         for (const pes of selecionados) {
             if (!pes?.id || jaIds.has(pes.id)) continue;
             const row: any = {
-                pessoa: pes, // manter objeto para exibição na grid
+                pessoa: pes,
                 status: status
             };
             pessoasArr.push(row);
             adicionados.push(pes.id);
         }
-        // Remove adicionados da lista disponível
         if (adicionados.length) {
             const ids = new Set(adicionados);
-            this.pessoasPossiveis = this.pessoasPossiveis.filter(p => !ids.has(p.id));
+            this.pessoasPossiveis = this.pessoasPossiveis.filter((p) => !ids.has(p.id));
             this.messageService.add({
                 severity: 'success',
                 summary: 'OK',
                 detail: `${adicionados.length} pessoa(s) adicionada(s) (pendente de Gravar).`
             });
+            this.filtrarPessoasLocalmente(); // Atualiza visualização
         }
-        // Limpa seleção e fecha
         this.pessoasSelecionadas = [];
         this.addPessoasDialogVisible = false;
     }
@@ -286,7 +342,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     onClearFilters() {
         this.vm.filter = this.vm['newFilter']();
-        // Preserva clienteId se houver apenas um cliente disponível
         if (this.clientesOptions && this.clientesOptions.length === 1) {
             const unico = this.clientesOptions[0];
             if (unico?.id) (this.vm.filter as any).clienteId = unico.id;
@@ -312,7 +367,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         return '';
     }
 
-    // ================= Ações: Iniciar / Parar Evento =================
     onIniciarEvento() {
         const id = this.vm.model?.id;
         if (!id) {
@@ -323,32 +377,22 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.eventoService.iniciarEvento(id as number, baseUrl).subscribe({
             next: (res) => {
                 const n = res?.gerados ?? 0;
-
-                // Recarrega o evento para refletir tokens e datas
-                // this.vm.onIdParam(String(id));
-                if (id != null) {
-                    this.abstractVM.preencherDetalhes(this.vm.model).subscribe({
-                        next: (modelAtualizado) => {
-                            this.vm.model = modelAtualizado;
-                            this.vm.refreshModel.next();
-                            this.messageService.add({
-                                severity: 'success',
-                                summary: 'Evento iniciado',
-                                detail: `${n} link(s) gerados`
-                            });
-
-                        },
-                        error: (err) => this.vm.messageToastShow(err)
-                    });
-                }
-                else {
-                    this.vm.refreshModel.next();
-                }
-
+                this.abstractVM.preencherDetalhes(this.vm.model).subscribe({
+                    next: (modelAtualizado) => {
+                        this.vm.model = modelAtualizado;
+                        this.vm.refreshModel.next();
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Evento iniciado',
+                            detail: `${n} link(s) gerados`
+                        });
+                    },
+                    error: (err) => this.vm.messageToastShow(err)
+                });
             },
             error: (err) => {
                 const msg = err?.error?.message || 'Falha ao iniciar o evento.';
-                this.messageService.add({severity: 'error', summary: 'Erro', detail: msg});
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
             }
         });
     }
@@ -366,38 +410,27 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 });
                 this.vm.onIdParam(String(id));
             },
-            error: () => this.messageService.add({
-                severity: 'error',
-                summary: 'Erro',
-                detail: 'Falha ao pausar o evento.'
-            })
+            error: () =>
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erro',
+                    detail: 'Falha ao pausar o evento.'
+                })
         });
     }
 
     onPararEvento(): void {
         const id = this.vm.model?.id;
         if (!id) return;
-        this.eventoService.pausarEvento(id as number).subscribe({
-                next: (eventoAtualizado) => {
-                    this.vm.model = {
-                        ...this.vm.model,
-                        ...eventoAtualizado
-                    };
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Sucesso',
-                        detail: 'Evento parado com sucesso!'
-                    });
-                },
-                error: (err) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erro',
-                        detail: 'Não foi possível parar o evento.'
-                    });
-                    console.error(err);
-                }
-            });
+        this.eventoService.pararEvento(id as number).subscribe({
+            next: (eventoAtualizado) => {
+                this.vm.model = { ...this.vm.model, ...eventoAtualizado };
+                this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Evento parado com sucesso!' });
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível parar o evento.' });
+            }
+        });
     }
 
     buildTokenLink(token?: string): string {
@@ -416,40 +449,29 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         const url = this.buildTokenLink(token);
         try {
             await navigator.clipboard.writeText(url);
-            this.messageService.add({
-                severity: 'info',
-                summary: 'Copiado',
-                detail: 'Link copiado para a área de transferência'
-            });
+            this.messageService.add({ severity: 'info', summary: 'Copiado', detail: 'Link copiado para a área de transferência' });
         } catch {
-            // Fallback
             const ta = document.createElement('textarea');
             ta.value = url;
             document.body.appendChild(ta);
             ta.select();
             try {
                 document.execCommand('copy');
-            } catch {
-            }
+            } catch {}
             document.body.removeChild(ta);
-            this.messageService.add({
-                severity: 'info',
-                summary: 'Copiado',
-                detail: 'Link copiado para a área de transferência'
-            });
+            this.messageService.add({ severity: 'info', summary: 'Copiado', detail: 'Link copiado para a área de transferência' });
         }
     }
 
-    // Busca remota de pessoas (lookup escopado)
     searchPessoas(event: any) {
         const query = (event?.filter || '').trim();
         let clienteId = this.abstractVM.getClienteId();
         if (!clienteId) return;
         this.pessoaService.findPessoaPorCliente(clienteId, query || undefined).subscribe({
-            next: list => {
+            next: (list) => {
                 this.pessoasSugestoes = list || [];
             },
-            error: _ => {
+            error: (_) => {
                 this.pessoasSugestoes = [];
             }
         });
@@ -458,58 +480,36 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     onSavingPessoa(event: any) {
         const row: any = event?.data || {};
         if (!this.vm.model.eventoPessoas) this.vm.model.eventoPessoas = [];
-        // Objeto selecionado no AutoComplete e ID
+
         const selected = row._pessoaObj ?? row.pessoa;
         const pessoaId = typeof selected === 'object' ? selected?.id : selected;
         if (!pessoaId) {
-            this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Selecione a Pessoa'});
+            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione a Pessoa' });
             event.cancel = true;
             return;
         }
-        // Normaliza status para valor serializável ao backend (enum string)
+
         if (row.status && typeof row.status === 'object') {
             row.status = (row.status as any).key ?? (row.status as any).name ?? row.status;
         }
-        // Evita duplicidade
-        // const duplicate = this.vm.model.eventoPessoas.some((p: any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
-        // if (duplicate) {
-        //     this.messageService.add({severity: 'warn', summary: 'Atenção', detail: 'Essa pessoa já está na lista.'});
-        //     event.cancel = true;
-        //     return;
-        // }
-        const duplicateIndex = this.vm.model.eventoPessoas.findIndex((p: any) =>
-            (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row
-        );
+
+        const duplicateIndex = this.vm.model.eventoPessoas.findIndex((p: any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
 
         if (duplicateIndex !== -1) {
-            // 1. Sobrepõe as informações: Mescla os dados da linha atual no registro que já existia
             this.vm.model.eventoPessoas[duplicateIndex] = {
                 ...this.vm.model.eventoPessoas[duplicateIndex],
-                ...row, // 'row' contém as alterações recentes
-                pessoa: row.pessoa // Garante que o objeto pessoa seja preservado corretamente
+                ...row,
+                pessoa: row.pessoa
             };
-
-            this.messageService.add({
-                severity: 'info',
-                summary: 'Atualizado',
-                detail: 'As informações da pessoa foram sobrepostas no registro existente.'
-            });
-
-            // 2. Como já atualizamos o registro antigo, cancelamos a criação/edição desta linha atual
-            // para evitar que fiquem dois registros iguais na lista
-            // event.cancel = true;
-
-            // Se estiver usando um componente de tabela que exige refresh manual:
+            this.messageService.add({ severity: 'info', summary: 'Atualizado', detail: 'As informações foram sobrepostas no registro existente.' });
             this.vm.model.eventoPessoas = [...this.vm.model.eventoPessoas];
+            this.filtrarPessoasLocalmente();
             return;
         }
 
-        // Normaliza campos para exibição/persistência
-        this.messageService.add({
-            severity: 'success',
-            summary: 'OK',
-            detail: 'Pessoa registrada na lista do evento (pendente de Gravar).'
-        });
+        this.messageService.add({ severity: 'success', summary: 'OK', detail: 'Pessoa registrada (pendente de Gravar).' });
+        // O e-data-grid adicionará o item, precisamos atualizar o filtro depois
+        setTimeout(() => this.filtrarPessoasLocalmente(), 100);
     }
 
     onDeletingPessoa(event: any) {
@@ -517,13 +517,12 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         if (!this.vm.model.eventoPessoas) return;
         const pessoaId = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
         this.vm.model.eventoPessoas = this.vm.model.eventoPessoas.filter((p: any) => (p?.pessoa?.id || p?.pessoa) !== pessoaId);
+        this.filtrarPessoasLocalmente();
     }
 
-    // Busca remota de produtos para o Autocomplete
     onSavingProduto(event: any) {
         const row: any = (event?.data || {}) as EventoProduto;
-        if (!this.vm.model.eventoProdutos)
-            this.vm.model.eventoProdutos = [];
+        if (!this.vm.model.eventoProdutos) this.vm.model.eventoProdutos = [];
         const produto = row.produto;
         const produtoId = typeof produto === 'object' ? produto?.id : produto;
         if (!produtoId) {
@@ -539,40 +538,34 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             event.cancel = true;
             return;
         }
-        row.produto = typeof produto === 'object' ? produto : (this.produtosSugestoes.find(p => p.id === produtoId));
-        this.messageToastAddAndShow('Produto adicionado na grid (pendente de Gravar).', 'Adicionado', 'success');
+        row.produto = typeof produto === 'object' ? produto : this.produtosSugestoes.find((p) => p.id === produtoId);
+        this.messageToastAddAndShow('Produto adicionado (pendente de Gravar).', 'Adicionado', 'success');
     }
 
-    // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Pessoa)
     onEditingStartPessoa(event: any) {
         let data: any = event?.data || {};
         data._tab = 'geral';
-
-        // Hidrata o AutoComplete com a pessoa atual da linha
         try {
             if (typeof data?.pessoa === 'object') {
                 const id = data.pessoa?.id;
-                const cached = this.pessoasSugestoes.find(p => p.id === id);
+                const cached = this.pessoasSugestoes.find((p) => p.id === id);
                 if (!cached) {
                     this.pessoaService.getById(id).subscribe({
                         next: (p) => {
-                            // a ordem destes dois proximos comandos importa
-                            this.pessoasSugestoes = [p, ...this.pessoasSugestoes]
+                            this.pessoasSugestoes = [p, ...this.pessoasSugestoes];
                             data.pessoa = p;
                         },
                         error: () => {
-                            this.pessoasSugestoes = [data.pessoa, ...this.pessoasSugestoes]
+                            this.pessoasSugestoes = [data.pessoa, ...this.pessoasSugestoes];
                         }
                     });
                 }
             }
-        } catch {
-        }
+        } catch {}
 
-        // Carrega última escolha e histórico da pessoa nesta aba
         try {
             const eventoId = this.vm.model?.id;
-            const pessoaId = (typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa));
+            const pessoaId = typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa);
             if (!eventoId || !pessoaId) return;
             this.pessoaEscolhaLoading = true;
             this.pessoaUltimaEscolha = null as any;
@@ -581,33 +574,29 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 next: (e) => {
                     this.pessoaUltimaEscolha = e;
                 },
-                error: () => this.pessoaUltimaEscolha = null
+                error: () => (this.pessoaUltimaEscolha = null)
             });
             this.eventoService.getHistoricoEscolhas(eventoId as number, pessoaId as number).subscribe({
                 next: (list) => {
                     this.pessoaHistorico = list || [];
                 },
-                error: () => this.pessoaHistorico = []
+                error: () => (this.pessoaHistorico = [])
             });
         } finally {
-            setTimeout(() => this.pessoaEscolhaLoading = false, 300);
+            setTimeout(() => (this.pessoaEscolhaLoading = false), 300);
         }
     }
 
-    // Hidrata o AutoComplete ao iniciar edição de uma linha existente (Produto)
     onEditingStartProduto(event: any) {
         this.filtroProduto.nome = '';
         this.filtroProduto.page = 0;
-
         const data: any = event?.data || {};
-        // Garante que o Status apareça selecionado no enum-select do popup
-        // data.status = this.statusEnumType[data].descricao;
         const id = typeof data?.produto === 'object' ? data.produto?.id : data?.produto;
         if (!id) {
             data.produto = null;
             return;
         }
-        const cached = this.produtosSugestoes.find(p => p.id === id);
+        const cached = this.produtosSugestoes.find((p) => p.id === id);
         if (cached) {
             data.produto = cached;
             return;
@@ -618,8 +607,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                     data.produto = p;
                 }
             });
-        }
-        catch {}
+        } catch {}
     }
 
     onPessoaLimpar(row: any) {
@@ -631,14 +619,9 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         if (!this.vm.model.eventoProdutos) return;
         const produtoId = typeof row.produto === 'object' ? row.produto?.id : row.produto;
         this.vm.model.eventoProdutos = this.vm.model.eventoProdutos.filter((pr: any) => (pr?.produto?.id || pr?.produto) !== produtoId);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'OK',
-            detail: 'Produto removido da lista (pendente de Gravar).'
-        });
+        this.messageService.add({ severity: 'success', summary: 'OK', detail: 'Produto removido.' });
     }
 
-    // Preenche labels auxiliares para exibição na grid
     private preencherCamposDeExibicao(): void {
         try {
             if (this.vm.model && this.vm.model.id) {
@@ -646,8 +629,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 this.vm.model.fimPrevisto = this.toDateOrNull(this.vm.model.fimPrevisto) as any;
                 this.vm.model.fim = this.toDateOrNull(this.vm.model.fim) as any;
             }
-        } catch {
-        }
+        } catch {}
     }
 
     private handleListError(err: any) {
@@ -661,7 +643,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             return;
         }
         const msg = err?.error?.message || 'Não foi possível carregar a lista de eventos.';
-        this.messageService.add({severity: 'error', summary: 'Erro', detail: msg});
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
     }
 
     private garanteEventoPessoasArray(): any[] {
@@ -674,33 +656,26 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     private carregarOpcoes(): void {
         const base: any = new EventoFilter();
-        // Carrega somente os clientes vinculados ao usuário (evita 403 para CLIENTE)
         this.clienteService.getMe().subscribe({
             next: (clientes) => {
                 this.clientesOptions = clientes || [];
-                // Se houver apenas um cliente, auto-seleciona no filtro
                 if (this.clientesOptions.length === 1) {
                     const unico = this.clientesOptions[0];
                     if (unico?.id) {
                         (this.vm.filter as any).clienteId = unico.id;
-                        // Predefine também no modelo para criação/edição mantendo OBJETO completo
                         if (!(this.vm.model as any)?.cliente) {
-                            (this.vm.model as any).cliente = unico; // manter objeto completo
+                            (this.vm.model as any).cliente = unico;
                         }
-                        // Dispara uma filtragem inicial já com clienteId para evitar 403
                         try {
                             this.vm.doFilter().subscribe();
-                        } catch {
-                        }
+                        } catch {}
                     }
                 }
-
-                // Atualiza opções do filtro Cliente
-                const idx = this.filterFields.findIndex(f => f.key === 'clienteId');
+                const idx = this.filterFields.findIndex((f) => f.key === 'clienteId');
                 if (idx >= 0) {
                     this.filterFields[idx] = {
                         ...this.filterFields[idx],
-                        options: this.clientesOptions.map(c => {
+                        options: this.clientesOptions.map((c) => {
                             return {
                                 label: c?.nome ?? String(c?.id ?? ''),
                                 value: c?.id
@@ -710,21 +685,13 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 }
                 this.preencherCamposDeExibicao();
             },
-            error: _ => {
-                // 403 aqui indicará que o token não possui papel/escopo; mostrar aviso
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Erro',
-                    detail: 'Não foi possível carregar seus clientes (acesso negado).'
-                });
+            error: (_) => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar seus clientes (acesso negado).' });
             }
         });
-
     }
 
     private getPublicBaseUrl(): string {
-        // Usa a origem atual para que o link seja sensível ao ambiente (dev/prod/domínio atual)
-        // Evita hardcode do host e independe de environment.apiUrl
         return window.location.origin;
     }
 
@@ -732,15 +699,14 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         if (!val) return null;
         if (val instanceof Date) return val;
         const str = String(val);
-        // aceita formatos ISO com minutos
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
     }
 
     protected onTabChangePrincipal(tabValue: any) {
+        this.abaAtiva = tabValue;
         if (!this.abasVisitadas.has(tabValue)) {
             if (tabValue === 'produto') {
-                // Você abriu a aba de produto pela primeira vez!
                 this.searchProdutos();
             }
             this.abasVisitadas.add(tabValue);
@@ -749,43 +715,30 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     searchProdutos() {
         this.loading = true;
-
         this.produtoService.listar(this.filtroProduto).subscribe({
-            next: page => {
+            next: (page) => {
                 const produtosDtoSet = page?.content || [];
                 this.produtosSugestoes = ProdutoMapper.fromDtoList(produtosDtoSet);
-
                 this.filtroProduto.totalItens = page.totalElements || 0;
-
                 this.loading = false;
             },
-            error: _ => {
+            error: (_) => {
                 this.produtosSugestoes = [];
                 this.loading = false;
             }
         });
-
     }
 
     protected onFilterProdutoSelect(event?: SelectFilterEvent) {
         this.filtroProduto.nome = event?.filter;
         this.filtroProduto.page = 0;
-        this.searchProdutos()
-    }
-
-    onPageChangeProdutoPaginator(event: any) {
-        // Impede que o clique feche o dropdown (reforço extra)
-        if (event.originalEvent) {
-            event.originalEvent.stopPropagation();
-        }
-
-        // O PrimeNG entrega 'page' começando em 0 no evento
-        this.filtroProduto.page = event.page;
-        this.filtroProduto.size = event.rows;
-
-        // Dispara a busca com a nova página
         this.searchProdutos();
     }
 
+    onPageChangeProdutoPaginator(event: any) {
+        if (event.originalEvent) event.originalEvent.stopPropagation();
+        this.filtroProduto.page = event.page;
+        this.filtroProduto.size = event.rows;
+        this.searchProdutos();
+    }
 }
-
