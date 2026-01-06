@@ -15,6 +15,7 @@ public class PessoaFilter extends BaseFilter {
     private Long clienteId;
 
     private String nome;
+    private String cpf;
     private String email;
     private String telefone;
     private StatusEnum status;

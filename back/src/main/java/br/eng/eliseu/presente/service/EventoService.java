@@ -2,7 +2,9 @@ package br.eng.eliseu.presente.service;
 
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
+import br.eng.eliseu.presente.model.filter.PessoaFilter;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
+import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -14,6 +16,7 @@ import br.eng.eliseu.presente.model.dto.*;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
@@ -741,9 +744,24 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
-    // No EventoService.java
+    @Transactional(readOnly = true)
+    public Page<EventoPessoaDto> listarPessoasPaginado(Long eventoId, PessoaFilter filtro, Pageable pageable) {
 
-// Adicione/Atualize o método no seu Service
+        // Limpeza básica dos filtros (opcional)
+        if (filtro.getCpf() != null) filtro.setCpf(filtro.getCpf().replaceAll("\\D", ""));
+        if (filtro.getNome() != null && filtro.getNome().isBlank()) filtro.setNome(null);
+
+        // Busca paginada no repositório
+        Page<EventoPessoa> page = eventoPessoaRepository.buscarPaginado(eventoId, filtro, pageable);
+
+        // Otimização: Busca IDs de quem já escolheu em lote
+        Set<Long> pessoasQueJaEscolheram = eventoEscolhaRepository
+                .findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO).stream()
+                .map(ev -> ev.getPessoa().getId())
+                .collect(Collectors.toSet());
+
+        return page.map(ep -> eventoPessoaMapper.toDto(ep, pessoasQueJaEscolheram));
+    }
 
     @Transactional
     public ImportacaoResultadoDto importarPessoasCsv(Long eventoId, MultipartFile file) {
@@ -763,18 +781,17 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             String line;
             int linhaNum = 0;
 
-            // Se o arquivo tiver cabeçalho na primeira linha, descomente:
+            // Se o CSV tiver cabeçalho, descomente:
             // br.readLine();
 
             while ((line = br.readLine()) != null) {
                 linhaNum++;
-                if (line.trim().isEmpty()) continue; // Pular linhas em branco
+                if (line.trim().isEmpty()) continue;
 
-                String[] cols = line.split(","); // Separador CSV (ajuste para ";" se necessário)
+                String[] cols = line.split(","); // Ajuste para ";" se necessário
 
-                // Validação: Quantidade de colunas
                 if (cols.length < 4) {
-                    logs.add("Linha " + linhaNum + ": Falta de informação (Esperado 4 colunas: Nome, CPF, Telefone, Email).");
+                    logs.add("Linha " + linhaNum + ": Falta de informação (Esperado: Nome, CPF, Telefone, Email).");
                     continue;
                 }
 
@@ -783,42 +800,37 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 String telefone = cols[2].trim();
                 String email = cols[3].trim();
 
-                // Validação: Campos obrigatórios
+                // Validações
                 if (nome.isEmpty()) {
                     logs.add("Linha " + linhaNum + ": Nome está vazio.");
                     continue;
                 }
 
-                // Validação: CPF (formato)
                 String cpfNumerico = cpfRaw.replaceAll("\\D", "");
                 if (cpfNumerico.length() != 11) {
-                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + "). Deve conter 11 dígitos.");
+                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + "). Deve ter 11 dígitos.");
                     continue;
                 }
 
-                // Validação: Email (Regex simples)
                 if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
                     logs.add("Linha " + linhaNum + ": Email incorreto (" + email + ").");
                     continue;
                 }
 
-                // Validação: Telefone
                 String telNumerico = telefone.replaceAll("\\D", "");
                 if (telNumerico.length() < 8 || telNumerico.length() > 15) {
                     logs.add("Linha " + linhaNum + ": Telefone incorreto (" + telefone + ").");
                     continue;
                 }
 
-                // Verifica se a Pessoa já existe no sistema (Geral)
+                // Busca ou Cria Pessoa
                 Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
 
                 if (pessoa == null) {
-                    // Tenta buscar por email para evitar violação de UniqueConstraint se o CPF for novo
                     if (pessoaRepository.findByEmail(email).isPresent()) {
-                        logs.add("Linha " + linhaNum + ": Email já cadastrado para outra pessoa (" + email + ").");
+                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
                         continue;
                     }
-
                     try {
                         pessoa = Pessoa.builder()
                                 .nome(nome)
@@ -830,22 +842,17 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                                 .build();
                         pessoa = pessoaRepository.save(pessoa);
                     } catch (Exception e) {
-                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa (possível duplicidade).");
+                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa (dados duplicados).");
                         continue;
                     }
-                } else {
-                    // Pessoa já existe no banco. Se necessário, atualize dados aqui.
-                    // Atualmente apenas reutilizamos a pessoa encontrada.
                 }
 
-                // Verifica se a Pessoa já está vinculada a ESTE evento
-                boolean jaVinculado = eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa);
-                if (jaVinculado) {
+                // Vincula ao Evento
+                if (eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa)) {
                     logs.add("Linha " + linhaNum + ": CPF já cadastrado neste evento (" + cpfRaw + ").");
                     continue;
                 }
 
-                // Realiza o vínculo
                 EventoPessoa vinculo = EventoPessoa.builder()
                         .evento(evento)
                         .pessoa(pessoa)
@@ -855,7 +862,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 adicionados++;
             }
         } catch (IOException e) {
-            logs.add("Erro fatal ao ler o arquivo: " + e.getMessage());
+            logs.add("Erro fatal ao ler arquivo: " + e.getMessage());
         }
 
         return ImportacaoResultadoDto.builder()

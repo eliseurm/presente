@@ -41,6 +41,7 @@ import { catchError } from 'rxjs/operators';
 import { ProdutoFilter } from '@/shared/model/filter/produto-filter';
 import { ProdutoMapper } from '@/shared/model/mapper/produto-mapper';
 import { EventoProduto } from '@/shared/model/evento-produto';
+import { PessoaFilter } from '@/shared/model/filter/pessoa-filter'; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -84,34 +85,39 @@ import { EventoProduto } from '@/shared/model/evento-produto';
 })
 @CrudMetadata('EventoPageComponent', [Evento, EventoFilter])
 export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
-    // Opções
+    // Opções Gerais
     clientesOptions: Cliente[] = [];
     statusEnumType: any = StatusEnum;
     abasVisitadas = new Set<string>();
     abaAtiva: string = 'geral';
 
-    // Sugestões para selectBox
+    // ======= Grid Paginada (Lazy Load) =======
+    listaPessoasPaginada: any[] = [];
+    totalPessoas: number = 0;
+    loadingPessoas: boolean = false;
+
+    // Filtro Tipado para Busca Server-Side
+    filtroPessoa: PessoaFilter = new PessoaFilter();
+
+    // ======= Sugestões para Selects =======
     pessoasSugestoes: Pessoa[] = [];
     produtosSugestoes: Produto[] = [];
     filtroProduto: ProdutoFilter = new ProdutoFilter();
 
-    // ======= Estado do popup: escolha/histórico =======
+    // ======= Estado do Popup: Escolha/Histórico =======
     pessoaEscolhaLoading = false;
     pessoaUltimaEscolha: any = null;
     pessoaHistorico: EventoEscolhaDto[] = [];
 
-    // ======= Popup custom de Adição de Pessoas =======
+    // ======= Popup Custom de Adição de Pessoas =======
     addPessoasDialogVisible = false;
     pessoasPossiveis: Pessoa[] = [];
     pessoasSelecionadas: Pessoa[] = [];
     statusSelecionado: any = null;
 
-    // ======= Controles de Importação e Filtro Local =======
+    // ======= Controles de Importação e Logs =======
     importando: boolean = false;
     importacaoLogs: string[] = [];
-    filtroPessoaNome: string = '';
-    filtroPessoaCpf: string = '';
-    pessoasFiltradas: any[] = [];
 
     filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -145,14 +151,22 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     override ngOnInit(): void {
         this.vm.init();
+
+        // Inicializa paginação padrão
+        this.filtroPessoa.page = 0;
+        this.filtroPessoa.size = 10;
+
         this.vm.refreshModel.subscribe(() => {
             this.preencherCamposDeExibicao();
-            this.filtrarPessoasLocalmente();
+            // Carrega a primeira página da grid ao abrir o evento
+            this.buscarPessoasDoBackend();
         });
         this.carregarOpcoes();
     }
 
-    // ================= Importação CSV =================
+    // =========================================================================
+    //  IMPORTAÇÃO CSV
+    // =========================================================================
     onFileSelect(event: any) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
@@ -175,14 +189,14 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
                     if (adicionados > 0) {
                         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${adicionados} pessoas importadas.` });
-                        this.onRefreshGridPessoas();
+                        this.onRefreshGridPessoas(); // Recarrega do backend
                     } else if (logs.length === 0) {
                         this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhuma pessoa nova foi adicionada.' });
                     }
 
                     if (logs.length > 0) {
                         this.importacaoLogs = logs;
-                        this.abaAtiva = 'log'; // Foca na aba de logs
+                        this.abaAtiva = 'log'; // Troca aba para mostrar erro
                         this.messageService.add({ severity: 'error', summary: 'Erros na Importação', detail: 'Verifique a aba de Log.' });
                     }
 
@@ -206,56 +220,60 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.abaAtiva = 'pessoa';
     }
 
-    // ================= Filtro Local Pessoas =================
-    filtrarPessoasLocalmente() {
-        const listaCompleta = this.vm.model?.eventoPessoas || [];
+    // =========================================================================
+    //  GRID PESSOAS: FILTRO E PAGINAÇÃO (SERVER-SIDE)
+    // =========================================================================
 
-        if (!this.filtroPessoaNome && !this.filtroPessoaCpf) {
-            this.pessoasFiltradas = [...listaCompleta];
-            return;
-        }
+    // Chamado pela Grid automaticamente (paginação, ordenação)
+    onLazyLoadPessoas(event: any) {
+        const page = Math.floor((event.first || 0) / (event.rows || 10));
+        const size = event.rows || 10;
 
-        const termoNome = this.filtroPessoaNome.toLowerCase();
-        const termoCpf = this.filtroPessoaCpf.replace(/\D/g, ''); // Apenas números
+        this.filtroPessoa.page = page;
+        this.filtroPessoa.size = size;
 
-        this.pessoasFiltradas = listaCompleta.filter((item: any) => {
-            const p = item.pessoa || {};
-            const nome = (typeof p === 'object' ? p.nome : p.toString() || '').toLowerCase();
-            const cpf = (typeof p === 'object' ? p.cpf : '').replace(/\D/g, '');
+        this.buscarPessoasDoBackend();
+    }
 
-            const matchNome = !termoNome || nome.includes(termoNome);
-            const matchCpf = !termoCpf || cpf.includes(termoCpf);
+    // Chamado pelos inputs de texto (Nome/CPF)
+    filtrarPessoasBackend() {
+        this.filtroPessoa.page = 0; // Volta para 1ª página na nova busca
+        this.buscarPessoasDoBackend();
+    }
 
-            return matchNome && matchCpf;
+    // Executa a busca na API
+    buscarPessoasDoBackend() {
+        const eventoId = this.vm.model?.id;
+        if (!eventoId) return;
+
+        this.loadingPessoas = true;
+
+        this.eventoService.listarPessoasPaginado(eventoId as number, this.filtroPessoa).subscribe({
+            next: (pageData: any) => {
+                this.listaPessoasPaginada = pageData.content || [];
+                this.totalPessoas = pageData.totalElements || 0;
+
+                // Atualiza model principal para manter consistência
+                if (this.vm.model) {
+                    this.vm.model.eventoPessoas = this.listaPessoasPaginada;
+                }
+                this.loadingPessoas = false;
+            },
+            error: (err) => {
+                this.loadingPessoas = false;
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível buscar as pessoas.' });
+            }
         });
     }
 
     onRefreshGridPessoas(): void {
-        const clienteId = this.abstractVM.getClienteId();
-        const eventoId = this.vm.model?.id;
-
-        if (clienteId && eventoId) {
-            this.loading = true; // loading geral se quiser
-            forkJoin({
-                listaPossiveis: this.pessoaService.findPessoaPorCliente(clienteId).pipe(catchError(() => of([]))),
-                eventoPessoas: this.eventoService.getEventoPessoa(eventoId).pipe(
-                    catchError((err) => {
-                        this.vm.messageToastShow(err);
-                        return of([]);
-                    })
-                )
-            }).subscribe({
-                next: (res) => {
-                    this.pessoasPossiveis = res.listaPossiveis;
-                    this.vm.model.eventoPessoas = res.eventoPessoas;
-                    this.filtrarPessoasLocalmente(); // Atualiza a grid
-                    this.vm.refreshModel.next();
-                    this.loading = false;
-                },
-                error: () => (this.loading = false)
-            });
-        }
+        this.buscarPessoasDoBackend();
     }
+
+    // =========================================================================
+    //  CRUD PESSOA (ADICIONAR/EDITAR/REMOVER)
+    // =========================================================================
 
     onOpenAddPessoas() {
         this.pessoasSelecionadas = [];
@@ -273,9 +291,12 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             });
             return;
         }
+
+        // Carrega lista para o popup de adição
         this.pessoaService.findPessoaPorCliente(clienteId).subscribe({
             next: (list) => {
-                const jaIds = new Set((this.vm.model?.eventoPessoas || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
+                // Filtra visualmente quem já está na PÁGINA ATUAL (limitação do lazy, mas ajuda)
+                const jaIds = new Set((this.listaPessoasPaginada || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
                 this.pessoasPossiveis = (list || []).filter((p) => !jaIds.has(p.id));
                 this.addPessoasDialogVisible = true;
             },
@@ -303,31 +324,138 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             this.messageToastAddAndShow('Selecione o Status', 'Atenção', 'warn');
             return;
         }
-        const pessoasArr = this.garanteEventoPessoasArray();
-        const jaIds = new Set((pessoasArr || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
-        const adicionados: any[] = [];
-        for (const pes of selecionados) {
-            if (!pes?.id || jaIds.has(pes.id)) continue;
-            const row: any = {
-                pessoa: pes,
-                status: status
-            };
-            pessoasArr.push(row);
-            adicionados.push(pes.id);
-        }
-        if (adicionados.length) {
-            const ids = new Set(adicionados);
-            this.pessoasPossiveis = this.pessoasPossiveis.filter((p) => !ids.has(p.id));
-            this.messageService.add({
-                severity: 'success',
-                summary: 'OK',
-                detail: `${adicionados.length} pessoa(s) adicionada(s) (pendente de Gravar).`
-            });
-            this.filtrarPessoasLocalmente(); // Atualiza visualização
-        }
-        this.pessoasSelecionadas = [];
-        this.addPessoasDialogVisible = false;
+
+        const eventoId = this.vm.model.id;
+        // Chama API para adicionar um a um
+        const observables = selecionados.map((p) => this.eventoService.addOrUpdatePessoa(eventoId!, p.id, status));
+
+        forkJoin(observables).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Adicionado', detail: `${selecionados.length} pessoas adicionadas.` });
+                this.addPessoasDialogVisible = false;
+                this.pessoasSelecionadas = [];
+                this.buscarPessoasDoBackend(); // Recarrega grid do servidor
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao adicionar algumas pessoas.' });
+            }
+        });
     }
+
+    onSavingPessoa(event: any) {
+        // Grid Lazy: Salvar vai direto ao backend
+        const row: any = event?.data || {};
+
+        const selected = row._pessoaObj ?? row.pessoa;
+        const pessoaId = typeof selected === 'object' ? selected?.id : selected;
+
+        if (!pessoaId) {
+            event.cancel = true;
+            return;
+        }
+
+        let status = row.status;
+        if (status && typeof status === 'object') {
+            status = status.key ?? status.name;
+        }
+
+        const eventoId = this.vm.model.id!;
+
+        this.eventoService.addOrUpdatePessoa(eventoId, pessoaId, status).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Salvo', detail: 'Registro atualizado.' });
+                // Não precisa recarregar se for apenas update visual, mas para segurança:
+                // this.buscarPessoasDoBackend();
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao salvar.' });
+                event.cancel = true;
+            }
+        });
+    }
+
+    onDeletingPessoa(event: any) {
+        const row: any = event?.data || {};
+        const eventoId = this.vm.model?.id;
+        if (!eventoId || !row.id) return;
+
+        this.eventoService.removerPessoaVinculo(eventoId, row.id).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Removido', detail: 'Pessoa removida do evento.' });
+                this.buscarPessoasDoBackend(); // Refresh essencial após delete em lazy grid
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao remover.' });
+            }
+        });
+    }
+
+    onEditingStartPessoa(event: any) {
+        let data: any = event?.data || {};
+        data._tab = 'geral';
+        try {
+            if (typeof data?.pessoa === 'object') {
+                const id = data.pessoa?.id;
+                const cached = this.pessoasSugestoes.find((p) => p.id === id);
+                if (!cached) {
+                    this.pessoaService.getById(id).subscribe({
+                        next: (p) => {
+                            this.pessoasSugestoes = [p, ...this.pessoasSugestoes];
+                            data.pessoa = p;
+                        },
+                        error: () => {
+                            this.pessoasSugestoes = [data.pessoa, ...this.pessoasSugestoes];
+                        }
+                    });
+                }
+            }
+        } catch {}
+
+        try {
+            const eventoId = this.vm.model?.id;
+            const pessoaId = typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa);
+            if (!eventoId || !pessoaId) return;
+            this.pessoaEscolhaLoading = true;
+            this.pessoaUltimaEscolha = null as any;
+            this.pessoaHistorico = [] as any[];
+            this.eventoService.getUltimaEscolha(eventoId as number, pessoaId as number).subscribe({
+                next: (e) => {
+                    this.pessoaUltimaEscolha = e;
+                },
+                error: () => (this.pessoaUltimaEscolha = null)
+            });
+            this.eventoService.getHistoricoEscolhas(eventoId as number, pessoaId as number).subscribe({
+                next: (list) => {
+                    this.pessoaHistorico = list || [];
+                },
+                error: () => (this.pessoaHistorico = [])
+            });
+        } finally {
+            setTimeout(() => (this.pessoaEscolhaLoading = false), 300);
+        }
+    }
+
+    onPessoaLimpar(row: any) {
+        row.pessoa = null;
+    }
+
+    searchPessoas(event: any) {
+        const query = (event?.filter || '').trim();
+        let clienteId = this.abstractVM.getClienteId();
+        if (!clienteId) return;
+        this.pessoaService.findPessoaPorCliente(clienteId, query || undefined).subscribe({
+            next: (list) => {
+                this.pessoasSugestoes = list || [];
+            },
+            error: (_) => {
+                this.pessoasSugestoes = [];
+            }
+        });
+    }
+
+    // =========================================================================
+    //  OUTRAS ABAS (GERAL / PRODUTO) E AUXILIARES
+    // =========================================================================
 
     onLazyLoad(event: any) {
         const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
@@ -463,63 +591,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
     }
 
-    searchPessoas(event: any) {
-        const query = (event?.filter || '').trim();
-        let clienteId = this.abstractVM.getClienteId();
-        if (!clienteId) return;
-        this.pessoaService.findPessoaPorCliente(clienteId, query || undefined).subscribe({
-            next: (list) => {
-                this.pessoasSugestoes = list || [];
-            },
-            error: (_) => {
-                this.pessoasSugestoes = [];
-            }
-        });
-    }
-
-    onSavingPessoa(event: any) {
-        const row: any = event?.data || {};
-        if (!this.vm.model.eventoPessoas) this.vm.model.eventoPessoas = [];
-
-        const selected = row._pessoaObj ?? row.pessoa;
-        const pessoaId = typeof selected === 'object' ? selected?.id : selected;
-        if (!pessoaId) {
-            this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione a Pessoa' });
-            event.cancel = true;
-            return;
-        }
-
-        if (row.status && typeof row.status === 'object') {
-            row.status = (row.status as any).key ?? (row.status as any).name ?? row.status;
-        }
-
-        const duplicateIndex = this.vm.model.eventoPessoas.findIndex((p: any) => (p?.pessoa?.id || p?.pessoa) === pessoaId && p !== row);
-
-        if (duplicateIndex !== -1) {
-            this.vm.model.eventoPessoas[duplicateIndex] = {
-                ...this.vm.model.eventoPessoas[duplicateIndex],
-                ...row,
-                pessoa: row.pessoa
-            };
-            this.messageService.add({ severity: 'info', summary: 'Atualizado', detail: 'As informações foram sobrepostas no registro existente.' });
-            this.vm.model.eventoPessoas = [...this.vm.model.eventoPessoas];
-            this.filtrarPessoasLocalmente();
-            return;
-        }
-
-        this.messageService.add({ severity: 'success', summary: 'OK', detail: 'Pessoa registrada (pendente de Gravar).' });
-        // O e-data-grid adicionará o item, precisamos atualizar o filtro depois
-        setTimeout(() => this.filtrarPessoasLocalmente(), 100);
-    }
-
-    onDeletingPessoa(event: any) {
-        const row: any = event?.data || {};
-        if (!this.vm.model.eventoPessoas) return;
-        const pessoaId = typeof row.pessoa === 'object' ? row.pessoa?.id : row.pessoa;
-        this.vm.model.eventoPessoas = this.vm.model.eventoPessoas.filter((p: any) => (p?.pessoa?.id || p?.pessoa) !== pessoaId);
-        this.filtrarPessoasLocalmente();
-    }
-
     onSavingProduto(event: any) {
         const row: any = (event?.data || {}) as EventoProduto;
         if (!this.vm.model.eventoProdutos) this.vm.model.eventoProdutos = [];
@@ -540,51 +611,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
         row.produto = typeof produto === 'object' ? produto : this.produtosSugestoes.find((p) => p.id === produtoId);
         this.messageToastAddAndShow('Produto adicionado (pendente de Gravar).', 'Adicionado', 'success');
-    }
-
-    onEditingStartPessoa(event: any) {
-        let data: any = event?.data || {};
-        data._tab = 'geral';
-        try {
-            if (typeof data?.pessoa === 'object') {
-                const id = data.pessoa?.id;
-                const cached = this.pessoasSugestoes.find((p) => p.id === id);
-                if (!cached) {
-                    this.pessoaService.getById(id).subscribe({
-                        next: (p) => {
-                            this.pessoasSugestoes = [p, ...this.pessoasSugestoes];
-                            data.pessoa = p;
-                        },
-                        error: () => {
-                            this.pessoasSugestoes = [data.pessoa, ...this.pessoasSugestoes];
-                        }
-                    });
-                }
-            }
-        } catch {}
-
-        try {
-            const eventoId = this.vm.model?.id;
-            const pessoaId = typeof data?.pessoa === 'object' ? data.pessoa?.id : (data?.pessoaId ?? data?.pessoa);
-            if (!eventoId || !pessoaId) return;
-            this.pessoaEscolhaLoading = true;
-            this.pessoaUltimaEscolha = null as any;
-            this.pessoaHistorico = [] as any[];
-            this.eventoService.getUltimaEscolha(eventoId as number, pessoaId as number).subscribe({
-                next: (e) => {
-                    this.pessoaUltimaEscolha = e;
-                },
-                error: () => (this.pessoaUltimaEscolha = null)
-            });
-            this.eventoService.getHistoricoEscolhas(eventoId as number, pessoaId as number).subscribe({
-                next: (list) => {
-                    this.pessoaHistorico = list || [];
-                },
-                error: () => (this.pessoaHistorico = [])
-            });
-        } finally {
-            setTimeout(() => (this.pessoaEscolhaLoading = false), 300);
-        }
     }
 
     onEditingStartProduto(event: any) {
@@ -608,10 +634,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 }
             });
         } catch {}
-    }
-
-    onPessoaLimpar(row: any) {
-        row.pessoa = null;
     }
 
     onDeletingProduto(event: any) {
@@ -644,14 +666,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
         const msg = err?.error?.message || 'Não foi possível carregar a lista de eventos.';
         this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
-    }
-
-    private garanteEventoPessoasArray(): any[] {
-        const model: any = this.vm.model as any;
-        if (!model.eventoPessoas) {
-            model.eventoPessoas = [];
-        }
-        return model.eventoPessoas as any[];
     }
 
     private carregarOpcoes(): void {

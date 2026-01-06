@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {BaseCrudService} from '@/shared/services/base-crud.service';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
@@ -16,6 +16,7 @@ import {EventoProdutoDto} from "@/shared/model/dto/evento-produto-dto";
 import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
 import {filter} from "rxjs/operators";
+import { PessoaFilter } from '@/shared/model/filter/pessoa-filter';
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -68,6 +69,22 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         formData.append('file', file);
         // O endpoint conforme EventoController: POST /evento/{id}/pessoas/import
         return this.http.post(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
+    }
+
+    listarPessoasPaginado(eventoId: number, filtro: PessoaFilter): Observable<any> {
+        let params = new HttpParams();
+
+        // Mapeia propriedades do filtro
+        if (filtro.nome) params = params.set('nome', filtro.nome);
+        if (filtro.cpf) params = params.set('cpf', filtro.cpf);
+        if (filtro.email) params = params.set('email', filtro.email);
+
+        // Mapeia paginação (assumindo que PessoaFilter estende BaseFilter com page/size)
+        // Se PessoaFilter não tiver page/size, use filtro['page'] ou passe argumentos separados
+        if (filtro.page !== undefined) params = params.set('page', filtro.page.toString());
+        if (filtro.size !== undefined) params = params.set('size', filtro.size.toString());
+
+        return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas`, { params });
     }
 
 }

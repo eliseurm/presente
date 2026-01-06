@@ -8,6 +8,7 @@ export class PessoaFilter extends BaseFilter {
     clienteId?: number;
 
     nome?: string;
+    cpf?: string;
     email?: string;
     telefone?: string;
     status?: string;

@@ -3,6 +3,7 @@ package br.eng.eliseu.presente.controller;
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.dto.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
+import br.eng.eliseu.presente.model.filter.PessoaFilter;
 import br.eng.eliseu.presente.model.mapper.EventoEscolhaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
@@ -13,6 +14,8 @@ import br.eng.eliseu.presente.repository.EventoProdutoRepository;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -107,6 +110,17 @@ public class EventoController {
         ImportacaoResultadoDto resultado = eventoService.importarPessoasCsv(id, file);
         return ResponseEntity.ok(resultado);
     }
+
+    @GetMapping("/{id}/pessoas")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<Page<EventoPessoaDto>> listarPessoas(
+            @PathVariable("id") Long eventoId,
+            @ModelAttribute PessoaFilter filtro,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        return ResponseEntity.ok(eventoService.listarPessoasPaginado(eventoId, filtro, pageable));
+    }
+
 
     // ======= Endpoints de vínculo: Pessoas =======
 
