@@ -1,4 +1,4 @@
-import {Component, Directive, inject, Injectable, Injector, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, Directive, inject, Injectable, Injector, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {TableLazyLoadEvent} from 'primeng/table';
 import {ConfirmationService, MessageService, ToastMessageOptions} from 'primeng/api';
 import {BaseCrudService} from '../../services/base-crud.service';
@@ -12,7 +12,7 @@ import {Subject} from "rxjs";
 import {AbstractCrud} from "@/shared/crud/abstract.crud";
 
 @Directive()
-export class CrudBaseComponent<T extends { id?: any; version?: number }, F extends BaseFilter> implements OnInit {
+export class CrudBaseComponent<T extends { id?: any; version?: number }, F extends BaseFilter> implements OnInit, OnDestroy {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<Pessoa, PessoaFilter>;
 
@@ -43,6 +43,9 @@ export class CrudBaseComponent<T extends { id?: any; version?: number }, F exten
             }
             this.messageToastShow();
         });
+    }
+
+    ngOnDestroy(): void {
     }
 
 

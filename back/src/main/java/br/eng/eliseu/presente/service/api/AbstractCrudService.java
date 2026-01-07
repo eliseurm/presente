@@ -4,6 +4,7 @@ import br.eng.eliseu.presente.model.filter.BaseFilter;
 import br.eng.eliseu.presente.model.filter.SortSpec;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +30,23 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     @Override
     public Page<T> listar(F filtro) {
 
-        Sort sort = Sort.unsorted();
-
         List<String> orderList = filtro.getOrder();
+
+        Sort sort = getSort(orderList);
+
+        Pageable pageable = PageRequest.of(
+                filtro.getPage(),
+                filtro.getSize(),
+                sort
+        );
+
+        Specification<T> spec = buildSpecification(filtro);
+
+        return getSpecificationExecutor().findAll(spec, pageable);
+    }
+
+    public static Sort getSort(List<String> orderList) {
+        Sort sort = Sort.unsorted();
 
         if (orderList != null && !orderList.isEmpty()) {
 
@@ -41,6 +56,7 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
                 String trimmed = token.trim();
                 if (trimmed.isEmpty()) continue;
 
+                trimmed = trimmed.replace(",", ";");
                 String[] parts = trimmed.split(";");
                 if (parts.length == 0) continue;
 
@@ -67,15 +83,7 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
             sort = Sort.by(Sort.Direction.ASC, "id");
         }
 
-        Pageable pageable = PageRequest.of(
-                filtro.getPage(),
-                filtro.getSize(),
-                sort
-        );
-
-        Specification<T> spec = buildSpecification(filtro);
-
-        return getSpecificationExecutor().findAll(spec, pageable);
+        return sort;
     }
 
     @Override

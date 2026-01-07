@@ -1,47 +1,56 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToastModule } from 'primeng/toast';
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from 'primeng/tabs';
-import { DatePickerModule } from 'primeng/datepicker';
-import { SelectFilterEvent, SelectModule } from 'primeng/select';
-import { AutoCompleteModule } from 'primeng/autocomplete';
-import { DialogModule } from 'primeng/dialog';
-import { TextareaModule } from 'primeng/textarea';
-import { TableModule } from 'primeng/table';
-import { ListboxModule } from 'primeng/listbox';
-import { Paginator } from 'primeng/paginator';
+import {Component} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {MessageService} from 'primeng/api';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {ToastModule} from 'primeng/toast';
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
+import {DatePickerModule} from 'primeng/datepicker';
+import {SelectFilterEvent, SelectModule} from 'primeng/select';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DialogModule} from 'primeng/dialog';
+import {TextareaModule} from 'primeng/textarea';
+import {TableModule} from 'primeng/table';
+import {ListboxModule} from 'primeng/listbox';
 
-import { CrudMetadata } from '@/shared/core/crud.metadata.decorator';
-import { FilterField } from '@/shared/components/crud-filter/filter-field';
-import { CrudComponent } from '@/shared/crud/crud.component';
-import { CrudFilterComponent } from '@/shared/components/crud-filter/crud-filter.component';
-import { EnumSelectComponent } from '@/shared/components/enum-select/enum-select.component';
-import { CrudBaseComponent } from '@/shared/components/crud-base/crud-base.component';
-import { EDataGridComponent, EiColumnComponent, EiItemComponent, EiTotalItemComponent, EiValidationRuleComponent, EoEditingComponent, EoFormComponent, EoSomatoriaComponent, EPopupComponent, ETemplateDirective } from '@/shared/components/e-data-grid';
+import {CrudMetadata} from '@/shared/core/crud.metadata.decorator';
+import {FilterField} from '@/shared/components/crud-filter/filter-field';
+import {CrudComponent} from '@/shared/crud/crud.component';
+import {CrudFilterComponent} from '@/shared/components/crud-filter/crud-filter.component';
+import {EnumSelectComponent} from '@/shared/components/enum-select/enum-select.component';
+import {CrudBaseComponent} from '@/shared/components/crud-base/crud-base.component';
+import {
+    EDataGridComponent,
+    EiColumnComponent, EiItemComponent, EiValidationRuleComponent,
+    EoEditingComponent,
+    EoFormComponent,
+    EPopupComponent,
+    ETemplateDirective
+} from '@/shared/components/e-data-grid';
 
-import { EventoService } from '@/services/evento.service';
-import { Evento } from '@/shared/model/evento';
-import { EventoFilter } from '@/shared/model/filter/evento-filter';
-import { Pessoa } from '@/shared/model/pessoa';
-import { Produto } from '@/shared/model/produto';
-import { Cliente } from '@/shared/model/cliente';
-import { StatusEnum } from '@/shared/model/enum/status.enum';
-import { EventoCrudVM } from './evento-crud.vm';
-import { Router } from '@angular/router';
-import { PessoaService } from '@/services/pessoa.service';
-import { ProdutoService } from '@/services/produto.service';
-import { ClienteService } from '@/services/cliente.service';
-import { EventoEscolhaDto } from '@/shared/model/dto/evento-escolha-dto';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { ProdutoFilter } from '@/shared/model/filter/produto-filter';
-import { ProdutoMapper } from '@/shared/model/mapper/produto-mapper';
-import { EventoProduto } from '@/shared/model/evento-produto';
-import { PessoaFilter } from '@/shared/model/filter/pessoa-filter'; // Certifique-se que este arquivo existe
+import {EventoService} from '@/services/evento.service';
+import {Evento} from '@/shared/model/evento';
+import {EventoFilter} from '@/shared/model/filter/evento-filter';
+import {Pessoa} from '@/shared/model/pessoa';
+import {Produto} from '@/shared/model/produto';
+import {Cliente} from '@/shared/model/cliente';
+import {StatusEnum} from '@/shared/model/enum/status.enum';
+import {EventoCrudVM} from './evento-crud.vm';
+import {Router} from '@angular/router';
+import {PessoaService} from '@/services/pessoa.service';
+import {ProdutoService} from '@/services/produto.service';
+import {ClienteService} from '@/services/cliente.service';
+import {EventoEscolhaDto} from '@/shared/model/dto/evento-escolha-dto';
+import {debounceTime, distinctUntilChanged, forkJoin, Subject} from 'rxjs';
+import {ProdutoFilter} from '@/shared/model/filter/produto-filter';
+import {ProdutoMapper} from '@/shared/model/mapper/produto-mapper';
+import {EventoProduto} from '@/shared/model/evento-produto';
+import {PessoaFilter} from '@/shared/model/filter/pessoa-filter';
+import {Paginator} from "primeng/paginator";
+import {filter} from "rxjs/operators";
+import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
+import {EventoPessoa} from "@/shared/model/evento-pessoa"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -69,14 +78,12 @@ import { PessoaFilter } from '@/shared/model/filter/pessoa-filter'; // Certifiqu
         EoEditingComponent,
         EPopupComponent,
         EoFormComponent,
-        EiItemComponent,
         EiColumnComponent,
-        EiValidationRuleComponent,
         ETemplateDirective,
         AutoCompleteModule,
         ListboxModule,
-        EoSomatoriaComponent,
-        EiTotalItemComponent,
+        EiValidationRuleComponent,
+        EiItemComponent,
         Paginator
     ],
     templateUrl: './evento-page.component.html',
@@ -85,6 +92,7 @@ import { PessoaFilter } from '@/shared/model/filter/pessoa-filter'; // Certifiqu
 })
 @CrudMetadata('EventoPageComponent', [Evento, EventoFilter])
 export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
+
     // Opções Gerais
     clientesOptions: Cliente[] = [];
     statusEnumType: any = StatusEnum;
@@ -92,12 +100,13 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     abaAtiva: string = 'geral';
 
     // ======= Grid Paginada (Lazy Load) =======
-    listaPessoasPaginada: any[] = [];
-    totalPessoas: number = 0;
+    // listaPessoasPaginada: any[] = [];
+    // totalPessoas: number = 0;
     loadingPessoas: boolean = false;
 
-    // Filtro Tipado para Busca Server-Side
-    filtroPessoa: PessoaFilter = new PessoaFilter();
+    pessoasGridDisplay: any[] = [];
+    filterEventoPessoa: EventoPessoaFilter = new EventoPessoaFilter();
+    private filterSearchSubject = new Subject<void>();
 
     // ======= Sugestões para Selects =======
     pessoasSugestoes: Pessoa[] = [];
@@ -119,19 +128,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     importando: boolean = false;
     importacaoLogs: string[] = [];
 
-    filterFields: FilterField[] = [
+    readonly filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
         { key: 'clienteId', label: 'Cliente', type: 'select', options: [] },
-        {
-            key: 'status',
-            label: 'Status',
-            type: 'select',
-            options: (Object.values(StatusEnum) as any[]).map((s: any) => ({
-                label: String(s.descricao ?? s.key),
-                value: s.key
-            }))
-        }
-    ];
+        {key: 'status', label: 'Status', type: 'enum', placeholder: 'Selecione o status', enumObject: StatusEnum, optionLabel: 'descricao'}    ];
 
     constructor(
         messageService: MessageService,
@@ -153,8 +153,15 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.vm.init();
 
         // Inicializa paginação padrão
-        this.filtroPessoa.page = 0;
-        this.filtroPessoa.size = 10;
+        this.filterEventoPessoa.page = 0;
+        this.filterEventoPessoa.size = 10;
+
+        // Configure um timer para o filtro de eventoPessoas
+        this.filterSearchSubject.pipe(
+            debounceTime(2000)
+        ).subscribe(() => {
+            this.filtrarPessoasLocalmente(); // Chama sua função de filtro
+        });
 
         this.vm.refreshModel.subscribe(() => {
             this.preencherCamposDeExibicao();
@@ -225,38 +232,87 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     // =========================================================================
 
     // Chamado pela Grid automaticamente (paginação, ordenação)
+/*
     onLazyLoadPessoas(event: any) {
+        if(!this.vm.model.id) return;
+
         const page = Math.floor((event.first || 0) / (event.rows || 10));
         const size = event.rows || 10;
 
-        this.filtroPessoa.page = page;
-        this.filtroPessoa.size = size;
+        this.filterEventoPessoa.page = page;
+        this.filterEventoPessoa.size = size;
 
         this.buscarPessoasDoBackend();
     }
 
-    // Chamado pelos inputs de texto (Nome/CPF)
     filtrarPessoasBackend() {
-        this.filtroPessoa.page = 0; // Volta para 1ª página na nova busca
+        this.filterEventoPessoa.page = 0; // Volta para 1ª página na nova busca
         this.buscarPessoasDoBackend();
+    }
+*/
+
+
+    // Chamado pelos inputs de texto (Nome/CPF)
+    filtrarPessoasLocalmente() {
+        let lista: EventoPessoa[] = this.vm.model.eventoPessoas || [];
+
+        const nomeBusca = this.filterEventoPessoa.pessoaNome?.toLowerCase();
+        const cpfBusca = this.filterEventoPessoa.pessoaCpf?.replace(/\D/g, ''); // remove mascara se houver
+
+        if (nomeBusca) {
+            lista = lista.filter(item => {
+                // Ajuste 'pessoa.nome' conforme sua estrutura (item.pessoa.nome ou item.nome)
+                const nome = (item.pessoa?.nome || '').toLowerCase();
+                return nome.includes(nomeBusca);
+            });
+        }
+
+        if (cpfBusca) {
+            lista = lista.filter(item => {
+                const cpf = (item.pessoa?.cpf || '').replace(/\D/g, '');
+                return cpf.includes(cpfBusca);
+            });
+        }
+
+        // Atualiza a variável que a Grid está lendo
+        this.pessoasGridDisplay = lista;
+
+        // Atualiza contador visual
+        this.filterEventoPessoa.totalItens = this.pessoasGridDisplay.length;
     }
 
     // Executa a busca na API
     buscarPessoasDoBackend() {
-        const eventoId = this.vm.model?.id;
-        if (!eventoId) return;
-
         this.loadingPessoas = true;
+        this.filterEventoPessoa.eventoId = this.vm.model?.id;
+        this.filterEventoPessoa.size = -1; // Traz tudo
+        this.filterEventoPessoa.order = ['pessoa.nome,asc'];
 
-        this.eventoService.listarPessoasPaginado(eventoId as number, this.filtroPessoa).subscribe({
+        this.eventoService.listEventoPessoaPaginado(this.filterEventoPessoa).subscribe({
             next: (pageData: any) => {
-                this.listaPessoasPaginada = pageData.content || [];
-                this.totalPessoas = pageData.totalElements || 0;
-
-                // Atualiza model principal para manter consistência
                 if (this.vm.model) {
-                    this.vm.model.eventoPessoas = this.listaPessoasPaginada;
+                    this.vm.model.eventoPessoas = pageData.content || [];
                 }
+                this.filterEventoPessoa.totalItens = pageData.page.totalElements || 0;
+
+                this.filtrarPessoasLocalmente();
+
+                this.loadingPessoas = false;
+            },
+            error: (err) => {
+                this.loadingPessoas = false;
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar pessoas.' });
+            }
+        });
+
+/*
+        this.eventoService.listEventoPessoa(this.filterEventoPessoa).subscribe({
+            next: (pageData: any) => {
+                if (this.vm.model) {
+                    this.vm.model.eventoPessoas = pageData.content || [];
+                }
+                this.filterEventoPessoa.totalItens = pageData.page.totalElements || 0;
+
                 this.loadingPessoas = false;
             },
             error: (err) => {
@@ -265,6 +321,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível buscar as pessoas.' });
             }
         });
+*/
     }
 
     onRefreshGridPessoas(): void {
@@ -296,7 +353,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.pessoaService.findPessoaPorCliente(clienteId).subscribe({
             next: (list) => {
                 // Filtra visualmente quem já está na PÁGINA ATUAL (limitação do lazy, mas ajuda)
-                const jaIds = new Set((this.listaPessoasPaginada || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
+                const jaIds = new Set((this.vm.model.eventoPessoas || []).map((p: any) => (typeof p.pessoa === 'object' ? p.pessoa?.id : p.pessoa)));
                 this.pessoasPossiveis = (list || []).filter((p) => !jaIds.has(p.id));
                 this.addPessoasDialogVisible = true;
             },
@@ -327,7 +384,11 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
         const eventoId = this.vm.model.id;
         // Chama API para adicionar um a um
-        const observables = selecionados.map((p) => this.eventoService.addOrUpdatePessoa(eventoId!, p.id, status));
+        const observables = selecionados.map((p) => {
+            if (eventoId != null && p.id != null) {
+                this.eventoService.addOrUpdatePessoa(eventoId, p.id, status);
+            }
+        });
 
         forkJoin(observables).subscribe({
             next: () => {
@@ -457,7 +518,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     //  OUTRAS ABAS (GERAL / PRODUTO) E AUXILIARES
     // =========================================================================
 
-    onLazyLoad(event: any) {
+    onEventoLazyLoad(event: any) {
         const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
@@ -754,5 +815,15 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.filtroProduto.page = event.page;
         this.filtroProduto.size = event.rows;
         this.searchProdutos();
+    }
+
+    onSearchInput(): void {
+        this.filterSearchSubject.next();
+    }
+
+    // Boa prática: Limpar a inscrição quando sair da tela (opcional mas recomendado)
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
+        this.filterSearchSubject.complete();
     }
 }

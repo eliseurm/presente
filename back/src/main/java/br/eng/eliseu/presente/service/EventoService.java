@@ -2,7 +2,7 @@ package br.eng.eliseu.presente.service;
 
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
-import br.eng.eliseu.presente.model.filter.PessoaFilter;
+import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
@@ -16,7 +16,9 @@ import br.eng.eliseu.presente.model.dto.*;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
@@ -387,30 +389,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return page;
     }
 
-/*
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Evento> buscarPorId(Long id) {
-        Optional<Evento> opt = super.buscarPorId(id);
-        opt.ifPresent(e -> {
-            if (e.getPessoas() != null) {
-                e.getPessoas().size();
-                for (EventoPessoa ep : e.getPessoas()) {
-                    try { if (ep != null && ep.getPessoa() != null) { ep.getPessoa().getId(); } } catch (Exception ignore) {}
-                }
-            }
-            if (e.getProdutos() != null) {
-                e.getProdutos().size();
-                for (EventoProduto epr : e.getProdutos()) {
-                    try { if (epr != null && epr.getProduto() != null) { epr.getProduto().getId(); } } catch (Exception ignore) {}
-                }
-            }
-            try { if (e.getCliente() != null) e.getCliente().getId(); } catch (Exception ignore) {}
-        });
-        return opt;
-    }
-*/
-
     // Suporte ao expand para GET /evento/{id}?expand=...
     @Override
     @Transactional(readOnly = true)
@@ -485,120 +463,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
-    // ===================== MAPEAMENTO DTO =====================
-
-/*
-    private EventoDto toDTO(Evento e) {
-        if (e == null) return null;
-//        IdNomeDTO clienteDTO = null;
-//        if (e.getCliente() != null) {
-//            clienteDTO = new IdNomeDTO(e.getCliente().getId(), e.getCliente().getNome());
-//        }
-
-        // Carrega em lote as escolhas ATIVAS para este evento, a fim de marcar quem "já escolheu"
-        Set<Long> pessoasQueJaEscolheram = Optional
-                .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(e.getId(), StatusEnum.ATIVO))
-                .orElseGet(List::of)
-                .stream()
-                .map(ev -> ev.getPessoa() != null ? ev.getPessoa().getId() : null)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        List<EventoPessoaDto> pessoasDTO = EventoPessoaMapper.toDtoList(
-                Optional.ofNullable(e.getEventoPessoas())
-                        .orElseGet(List::of)
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList()),
-                pessoasQueJaEscolheram // Passando a lista de IDs para o mapper processar o 'jaEscolheu'
-        );
-
-        List<EventoProdutoDto> produtosDTO = EventoProdutoMapper.toDtoList(
-                Optional.ofNullable(e.getEventoProdutos())
-                        .orElseGet(Set::of)
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList())
-        );
-
-        return EventoDto.builder()
-                .id(e.getId())
-                .nome(e.getNome())
-                .descricao(e.getDescricao())
-                .clienteId(e.getCliente()!=null ? e.getCliente().getId() : null)
-                .clienteNome(e.getCliente()!=null ? e.getCliente().getNome() : null)
-                .status(e.getStatus())
-                .anotacoes(e.getAnotacoes())
-                .inicio(e.getInicio())
-                .fimPrevisto(e.getFimPrevisto())
-                .fim(e.getFim())
-                .eventoPessoas(pessoasDTO)
-                .eventoProdutos(produtosDTO)
-                .version(e.getVersion())
-                .build();
-    }
-
-    private Evento fromDTO(EventoDto dto) {
-        if (dto == null) return null;
-        Evento.EventoBuilder builder = Evento.builder()
-                .id(dto.getId())
-                .nome(dto.getNome())
-                .descricao(dto.getDescricao())
-                .status(dto.getStatus())
-                .anotacoes(dto.getAnotacoes())
-                .inicio(dto.getInicio())
-                .fimPrevisto(dto.getFimPrevisto())
-                .fim(dto.getFim())
-                .version(dto.getVersion());
-
-        // Cliente
-        if (dto.getClienteId() != null) {
-            clienteRepository.findById(dto.getClienteId()).ifPresent(builder::cliente);
-        } else {
-            builder.cliente(null);
-        }
-
-        Evento entidade = builder.build();
-
-        // Pessoas
-        if (dto.getEventoPessoas() != null) {
-            List<EventoPessoa> pessoas = new ArrayList<>();
-            for (EventoPessoaDto pDto : dto.getEventoPessoas()) {
-                if (pDto == null || pDto.getPessoaId() == null) continue;
-                Pessoa pessoa = pessoaRepository.findById(pDto.getPessoaId()).orElse(null);
-                if (pessoa == null) continue;
-                EventoPessoa ep = EventoPessoa.builder()
-                        .evento(entidade)
-                        .pessoa(pessoa)
-                        .status(pDto.getStatus())
-                        .nomeMagicNumber(pDto.getNomeMagicNumber())
-                        .build();
-                pessoas.add(ep);
-            }
-            entidade.setEventoPessoas(pessoas);
-        }
-
-        // Produtos
-        if (dto.getEventoProdutos() != null) {
-            Set<EventoProduto> set = new HashSet<>();
-            for (EventoProdutoDto prDto : dto.getEventoProdutos()) {
-                if (prDto == null || prDto.getProduto() == null) continue;
-                Produto pr = produtoRepository.findById(prDto.getId()).orElse(null);
-                if (pr == null) continue;
-                EventoProduto evp = EventoProduto.builder()
-                        .evento(entidade)
-                        .produto(pr)
-                        .status(prDto.getStatus())
-                        .build();
-                set.add(evp);
-            }
-            entidade.setEventoProdutos(set);
-        }
-
-        return entidade;
-    }
-*/
-
     @Transactional(readOnly = true)
     public Page<EventoDto> listarDTO(EventoFilter filtro) {
         // PASSO 1: Busca a página de entidades 'Evento' do banco de dados
@@ -611,10 +475,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             return dto;
         });
     }
-//    public Page<EventoDto> listarDTO(EventoFilter filtro) {
-//        Page<Evento> page = listar(filtro);
-//        return page.map(this::toDTO);
-//    }
 
     @Transactional(readOnly = true)
     public Optional<EventoDto> buscarPorIdDTO(Long id, String expand) {
@@ -745,22 +605,39 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     }
 
     @Transactional(readOnly = true)
-    public Page<EventoPessoaDto> listarPessoasPaginado(Long eventoId, PessoaFilter filtro, Pageable pageable) {
+    public Page<EventoPessoaDto> listEventoPessoasPaginado(EventoPessoaFilter filtro) {
 
-        // Limpeza básica dos filtros (opcional)
-        if (filtro.getCpf() != null) filtro.setCpf(filtro.getCpf().replaceAll("\\D", ""));
-        if (filtro.getNome() != null && filtro.getNome().isBlank()) filtro.setNome(null);
+        if (filtro.getEventoId() == null) return Page.empty();
+
+        if (filtro.getPessoaCpf() != null) filtro.setPessoaCpf(filtro.getPessoaCpf().replaceAll("\\D", ""));
+        if (filtro.getPessoaNome() != null && filtro.getPessoaNome().isBlank()) filtro.setPessoaNome(null);
+        if (filtro.getPessoaEmail() != null && filtro.getPessoaEmail().isBlank()) filtro.setPessoaEmail(null);
+        if (filtro.getPessoaTelefone() != null && filtro.getPessoaTelefone().isBlank()) filtro.setPessoaTelefone(null);
+
+        Sort sort = getSort(filtro.getOrder());
+
+        Pageable pageable;
+        if (filtro.getSize() <= 0) {
+            // Traz tudo se o tamanho for 0 ou negativo
+            pageable = PageRequest.of(0, Integer.MAX_VALUE, sort);
+        }
+        else {
+            pageable = PageRequest.of(
+                    filtro.getPage(),
+                    filtro.getSize(),
+                    sort
+            );
+        }
 
         // Busca paginada no repositório
-        Page<EventoPessoa> page = eventoPessoaRepository.buscarPaginado(eventoId, filtro, pageable);
+        Page<EventoPessoa> page = eventoPessoaRepository.buscarPaginado(filtro, pageable);
 
         // Otimização: Busca IDs de quem já escolheu em lote
-        Set<Long> pessoasQueJaEscolheram = eventoEscolhaRepository
-                .findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO).stream()
+        Set<Long> pessoasQueJaEscolheram = eventoEscolhaRepository.findByEvento_IdAndStatus(filtro.getEventoId(), StatusEnum.ATIVO).stream()
                 .map(ev -> ev.getPessoa().getId())
                 .collect(Collectors.toSet());
 
-        return page.map(ep -> eventoPessoaMapper.toDto(ep, pessoasQueJaEscolheram));
+        return page.map(ep -> EventoPessoaMapper.toDto(ep, pessoasQueJaEscolheram));
     }
 
     @Transactional

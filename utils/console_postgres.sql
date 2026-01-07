@@ -97,7 +97,10 @@ select * from pessoa ;
 select * from cliente ;
 
 select * from evento ;
-select * from evento_pessoa ;
+select * from evento_pessoa where pessoa_id < 3;
+
+delete from evento_pessoa where pessoa_id >= 3;
+
 select * from evento_produto ;
 select * from evento_escolha ;
 

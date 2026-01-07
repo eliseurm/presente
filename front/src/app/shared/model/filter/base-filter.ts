@@ -6,8 +6,8 @@ export abstract class BaseFilter {
     page: number = 0;
     size: number = 10;
     order?: string[] = ['id,ASC'];
-    totalItens?: number = 0;
 
+    totalItens?: number = 0;
     // Suporte genérico a expansão de relacionamentos (ex.: expand=pessoas,cliente)
     // Por padrão fica desabilitado (undefined). Quando usado, pode ser string ("pessoas,cliente")
     // ou string[] (["pessoas","cliente"]).

@@ -1,6 +1,7 @@
 package br.eng.eliseu.presente.repository;
 
 import br.eng.eliseu.presente.model.*;
+import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
 import br.eng.eliseu.presente.model.filter.PessoaFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +27,14 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
 
     boolean existsByEventoAndPessoa(Evento evento, Pessoa pessoa);
 
-    @Query("SELECT ep FROM EventoPessoa ep " +
-            "WHERE ep.evento.id = :eventoId " +
-            "AND (:#{#filtro.nome} IS NULL OR LOWER(ep.pessoa.nome) LIKE LOWER(CONCAT('%', :#{#filtro.nome}, '%'))) " +
-            "AND (:#{#filtro.cpf} IS NULL OR ep.pessoa.cpf LIKE CONCAT('%', :#{#filtro.cpf}, '%')) " +
-            "AND (:#{#filtro.email} IS NULL OR LOWER(ep.pessoa.email) LIKE LOWER(CONCAT('%', :#{#filtro.email}, '%')))")
-    Page<EventoPessoa> buscarPaginado(
-            @Param("eventoId") Long eventoId,
-            @Param("filtro") PessoaFilter filtro,
-            Pageable pageable);
+    @Query("""
+        SELECT ep FROM EventoPessoa ep 
+        WHERE 1=1 
+        and ep.evento.id = :#{#filtro.eventoId}
+        AND (:#{#filtro.pessoaNome} IS NULL OR LOWER(ep.pessoa.nome) LIKE LOWER(CONCAT('%', :#{#filtro.pessoaNome}, '%'))) 
+        AND (:#{#filtro.pessoaCpf} IS NULL OR ep.pessoa.cpf LIKE CONCAT('%', :#{#filtro.pessoaCpf}, '%')) 
+        AND (:#{#filtro.pessoaEmail} IS NULL OR LOWER(ep.pessoa.email) LIKE LOWER(CONCAT('%', :#{#filtro.pessoaEmail}, '%')))
+        AND (:#{#filtro.pessoaTelefone} IS NULL OR LOWER(ep.pessoa.telefone) LIKE LOWER(CONCAT('%', :#{#filtro.pessoaTelefone}, '%')))
+        """)
+    Page<EventoPessoa> buscarPaginado(@Param("filtro") EventoPessoaFilter filtro, Pageable pageable);
 }

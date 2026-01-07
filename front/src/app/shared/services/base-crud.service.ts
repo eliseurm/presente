@@ -16,34 +16,18 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
         const params = this.buildParams(filtro);
         return this.http.get<PageResponse<D>>(this.apiUrl, { params });
     }
-    // listar(filtro: F): Observable<PageResponse<T>> {
-    //     const params = this.buildParams(filtro);
-    //     return this.http.get<PageResponse<T>>(this.apiUrl, { params });
-    // }
 
     buscarPorId(id: number): Observable<D> {
         return this.http.get<D>(`${this.apiUrl}/${id}`);
     }
 
-    // buscarPorId(id: number): Observable<T> {
-    //     return this.http.get<T>(`${this.apiUrl}/${id}`);
-    // }
-
     criar(entidade: D): Observable<D> {
         return this.http.post<D>(this.apiUrl, entidade);
     }
 
-    // criar(entidade: T): Observable<T> {
-    //     return this.http.post<T>(this.apiUrl, entidade);
-    // }
-
     atualizar(id: number, entidade: D): Observable<D> {
         return this.http.put<D>(`${this.apiUrl}/${id}`, entidade);
     }
-
-    // atualizar(id: number, entidade: T): Observable<T> {
-    //     return this.http.put<T>(`${this.apiUrl}/${id}`, entidade);
-    // }
 
     deletar(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`);

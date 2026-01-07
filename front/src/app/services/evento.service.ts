@@ -3,12 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import {BaseCrudService} from '@/shared/services/base-crud.service';
 import {Evento} from '@/shared/model/evento';
 import {EventoFilter} from '@/shared/model/filter/evento-filter';
-import {map, Observable} from 'rxjs';
+import {map, Observable, throwError} from 'rxjs';
 import {EventoEscolhaDto} from "@/shared/model/dto/evento-escolha-dto";
 import {EventoDto} from "@/shared/model/dto/evento-dto";
 import {EventoPessoaDto} from "@/shared/model/dto/evento-pessoa-dto";
-import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
-import {PessoaMapper} from "@/shared/model/mapper/pessoa-mapper";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
 import {EventoProduto} from "@/shared/model/evento-produto";
@@ -17,6 +15,8 @@ import {EventoProdutoMapper} from "@/shared/model/mapper/evento-produto-mapper";
 import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
 import {filter} from "rxjs/operators";
 import { PessoaFilter } from '@/shared/model/filter/pessoa-filter';
+import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
+import {PageResponse} from "@/shared/model/page-response";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -26,10 +26,36 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         super(http);
     }
 
-    importPessoasCsv(eventoId: number, file: File): Observable<{ adicionados: number }> {
+    addOrUpdatePessoa(eventoId: number, pessoaId: number, status: string): Observable<EventoPessoa> {
+        // O Controller espera um objeto JSON { pessoaId: ..., status: ... }
+        return this.http.post<EventoPessoa>(`${this.apiUrl}/${eventoId}/pessoas`, {
+            pessoaId: pessoaId,
+            status: status
+        });
+    }
+
+    removerPessoaVinculo(eventoId: number, eventoPessoaId: number): Observable<void> {
+        // O Controller espera DELETE /evento/{id}/pessoas/{eventoPessoaId}
+        return this.http.delete<void>(`${this.apiUrl}/${eventoId}/pessoas/${eventoPessoaId}`);
+    }
+
+    addOrUpdateProduto(eventoId: number, produtoId: number, status: string): Observable<EventoProduto> {
+        // O Controller espera um objeto JSON { produtoId: ..., status: ... }
+        return this.http.post<EventoProduto>(`${this.apiUrl}/${eventoId}/produtos`, {
+            produtoId: produtoId,
+            status: status
+        });
+    }
+
+    removerProdutoVinculo(eventoId: number, eventoProdutoId: number): Observable<void> {
+        // O Controller espera DELETE /evento/{id}/produtos/{eventoProdutoId}
+        return this.http.delete<void>(`${this.apiUrl}/${eventoId}/produtos/${eventoProdutoId}`);
+    }
+
+    importarPessoasCsv(eventoId: number, file: File): Observable<any> {
         const formData = new FormData();
         formData.append('file', file);
-        return this.http.post<{ adicionados: number }>(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
+        return this.http.post(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
     }
 
     iniciarEvento(eventoId: number, baseUrl?: string): Observable<{ gerados: number; links: string[] }> {
@@ -56,35 +82,33 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.get<EventoEscolhaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
     }
 
-    getEventoPessoa(eventoId: number): Observable<EventoPessoa[]> {
-        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`).pipe(map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos)));
+    getEventoPessoa(eventoId: number|undefined): Observable<EventoPessoa[]> {
+        if(!eventoId){
+            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+        }
+        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`)
+            .pipe(map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos)));
     }
 
     getEventoProduto(eventoId: number): Observable<EventoProduto[]> {
-        return this.http.get<EventoProdutoDto[]>(`${this.apiUrl}/${eventoId}/produtos/list`).pipe(map((dtos: EventoProdutoDto[]) => EventoProdutoMapper.listFromDto(dtos)));
+        return this.http.get<EventoProdutoDto[]>(`${this.apiUrl}/${eventoId}/produtos/list`)
+            .pipe(map((dtos: EventoProdutoDto[]) => EventoProdutoMapper.listFromDto(dtos)));
     }
 
-    importarPessoasCsv(eventoId: number, file: File): Observable<any> {
-        const formData = new FormData();
-        formData.append('file', file);
-        // O endpoint conforme EventoController: POST /evento/{id}/pessoas/import
-        return this.http.post(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
-    }
-
-    listarPessoasPaginado(eventoId: number, filtro: PessoaFilter): Observable<any> {
-        let params = new HttpParams();
-
-        // Mapeia propriedades do filtro
-        if (filtro.nome) params = params.set('nome', filtro.nome);
-        if (filtro.cpf) params = params.set('cpf', filtro.cpf);
-        if (filtro.email) params = params.set('email', filtro.email);
-
-        // Mapeia paginação (assumindo que PessoaFilter estende BaseFilter com page/size)
-        // Se PessoaFilter não tiver page/size, use filtro['page'] ou passe argumentos separados
-        if (filtro.page !== undefined) params = params.set('page', filtro.page.toString());
-        if (filtro.size !== undefined) params = params.set('size', filtro.size.toString());
-
-        return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas`, { params });
+    listEventoPessoaPaginado(filter: EventoPessoaFilter): Observable<PageResponse<EventoPessoa>> {
+        if(!filter.eventoId){
+            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+        }
+        return this.http.post<PageResponse<EventoPessoaDto>>(`${this.apiUrl}/${filter.eventoId}/eventoPessoaList`, filter)
+            .pipe(
+                map((pageDto: PageResponse<EventoPessoaDto>) => {
+                    const contentMapped: EventoPessoa[] = EventoPessoaMapper.listFromDto(pageDto.content);
+                    return {
+                        ...pageDto,
+                        content: contentMapped
+                    };
+                })
+            );
     }
 
 }

@@ -130,11 +130,11 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         }
 
         return forkJoin({
-            pessoas: this.eventoService.getEventoPessoa(evento.id),
+            // pessoas: this.eventoService.getEventoPessoa(evento.id),
             produtos: this.eventoService.getEventoProduto(evento.id)
         }).pipe(
             map(result => {
-                evento.eventoPessoas = result.pessoas;
+                // evento.eventoPessoas = result.pessoas;
                 evento.eventoProdutos = result.produtos;
                 return evento;
             })

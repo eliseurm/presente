@@ -9,11 +9,12 @@ import {Mode} from '@/shared/crud/crud.mode';
 import {AbstractCrud} from '@/shared/crud/abstract.crud';
 import {BaseFilter} from '@/shared/model/filter/base-filter';
 import {Nl2BrPipe} from "@/shared/pipe/nl2br.pipe";
+import {Toast} from "primeng/toast";
 
 @Component({
     selector: 'crud',
     standalone: true,
-    imports: [CommonModule, ToolbarModule, ButtonModule, PanelModule, ConfirmDialogModule, Nl2BrPipe],
+    imports: [CommonModule, ToolbarModule, ButtonModule, PanelModule, ConfirmDialogModule, Nl2BrPipe, Toast],
     templateUrl: './crud.component.html',
     styleUrls: ['./crud.component.scss'],
     encapsulation: ViewEncapsulation.None,
