@@ -52,7 +52,12 @@ export class AppMenu {
         if (isAdmin || isCliente) {
             // Evento e Cliente para ADMIN e CLIENTE
             cadastrosItems.push(
-                { label: 'Eventos', icon: 'pi pi-fw pi-sparkles', routerLink: ['/evento'] },
+                { label: 'Eventos', icon: 'pi pi-fw pi-sparkles',
+                    items: [
+                        {label: 'Gestão', icon: 'pi pi-fw pi-list', routerLink: ['/evento']},
+                        {label: 'Relatório', icon: 'pi pi-fw pi-file-pdf', routerLink: ['/evento/relatorio']}
+                    ]
+                },
                 { label: 'Pessoa', icon: 'pi pi-fw pi-gift', routerLink: ['/pessoa'] },
                 { label: 'Cliente', icon: 'pi pi-fw pi-users', routerLink: ['/cliente'] },
             );

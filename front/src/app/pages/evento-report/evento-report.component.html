@@ -1,0 +1,66 @@
+<div class="p-4 flex justify-center">
+    <p-panel header="Relatório de Evento (PDF)" class="w-full max-w-4xl">
+        <p-toast></p-toast>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold">Cliente</label>
+                <p-select
+                    [options]="clientes"
+                    [(ngModel)]="filter.clienteId"
+                    optionLabel="nome"
+                    optionValue="id"
+                    placeholder="Selecione um Cliente"
+                    (onChange)="carregarEventos()"
+                    [filter]="true"
+                    filterBy="nome"
+                    styleClass="w-full">
+                </p-select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold">Evento</label>
+                <p-select
+                    [options]="eventos"
+                    [(ngModel)]="filter.eventoId"
+                    optionLabel="nome"
+                    optionValue="id"
+                    placeholder="Selecione um Evento"
+                    [disabled]="!filter.clienteId"
+                    [filter]="true"
+                    filterBy="nome"
+                    emptyMessage="Nenhum evento encontrado"
+                    styleClass="w-full">
+                </p-select>
+            </div>
+
+            <div class="flex flex-col gap-2 md:col-span-2">
+                <label class="font-bold">Status do Convidado</label>
+                <p-selectButton
+                    [options]="opcoesEscolha"
+                    [(ngModel)]="filter.jaEscolheu"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-selectButton>
+                <small class="text-gray-500">
+                    Filtre quem já escolheu o presente, quem está pendente ou liste todos.
+                </small>
+            </div>
+
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <button pButton
+                        label="Gerar PDF"
+                        icon="pi pi-file-pdf"
+                        class="p-button-danger"
+                        [loading]="loading"
+                        [disabled]="!filter.eventoId"
+                        (click)="gerarRelatorio()">
+                </button>
+            </div>
+        </ng-template>
+    </p-panel>
+</div>

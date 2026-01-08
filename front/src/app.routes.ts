@@ -13,6 +13,7 @@ export const appRoutes: Routes = [
             { path: '', redirectTo: '/home', pathMatch: 'full' },
             { path: 'home', loadComponent: () => import('@/pages/home-page/home-page.component').then(m => m.HomePageComponent) },
             { path: 'evento', loadComponent: () => import('@/pages/evento-page/evento-page.component').then(m => m.EventoPageComponent) },
+            { path: 'evento/relatorio', loadComponent: () => import('@/pages/evento-report/evento-report.component').then(m => m.EventoReportComponent) },
             { path: 'cliente', loadComponent: () => import('@/pages/cliente-page/cliente-page.component').then(m => m.ClientePageComponent) },
             { path: 'pessoa', loadComponent: () => import('@/pages/pessoa-page/pessoa-page.component').then(m => m.PessoaPageComponent) },
             { path: 'usuario', loadComponent: () => import('@/pages/usuario-page/usuario-page.component').then(m => m.UsuarioPageComponent) },

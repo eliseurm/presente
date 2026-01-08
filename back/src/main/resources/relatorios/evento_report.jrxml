@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="evento_report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="e3c54c33-8762-4293-9c86-1d1370e20063">
+
+    <parameter name="TITULO" class="java.lang.String"/>
+    <parameter name="DATA_INICIO" class="java.util.Date"/>
+    <parameter name="NOME_CLIENTE" class="java.lang.String"/>
+
+    <field name="pessoa.nome" class="java.lang.String"/>
+    <field name="pessoa.cpf" class="java.lang.String"/>
+    <field name="status" class="java.lang.Object"/>
+
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+
+    <title>
+        <band height="79" splitType="Stretch">
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="79" backcolor="#E6E6E6" uuid="a3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+            <textField>
+                <reportElement x="20" y="10" width="510" height="30" uuid="b3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TITULO}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="20" y="45" width="510" height="20" uuid="c3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement textAlignment="Center"/>
+                <textFieldExpression><![CDATA[$P{DATA_INICIO}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="30" splitType="Stretch">
+            <staticText>
+                <reportElement x="0" y="0" width="280" height="30" uuid="d3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <box>
+                    <bottomPen lineWidth="1.0"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Nome do Convidado]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="280" y="0" width="150" height="30" uuid="e3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <box>
+                    <bottomPen lineWidth="1.0"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[CPF]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="430" y="0" width="125" height="30" uuid="f3c54c33-8762-4293-9c86-1d1370e20063"/>
+                <box>
+                    <bottomPen lineWidth="1.0"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Status]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="25" splitType="Stretch">
+            <textField>
+                <reportElement x="0" y="0" width="280" height="20" uuid="13c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{pessoa.nome}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="280" y="0" width="150" height="20" uuid="23c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{pessoa.cpf}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="430" y="0" width="125" height="20" uuid="33c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA["" + $F{status}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="40" splitType="Stretch">
+            <textField>
+                <reportElement x="355" y="10" width="100" height="20" uuid="43c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement x="455" y="10" width="100" height="20" uuid="53c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textElement textAlignment="Left"/>
+                <textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="0" y="10" width="150" height="20" uuid="63c54c33-8762-4293-9c86-1d1370e20063"/>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>

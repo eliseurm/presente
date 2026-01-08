@@ -17,6 +17,7 @@ import {filter} from "rxjs/operators";
 import { PessoaFilter } from '@/shared/model/filter/pessoa-filter';
 import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
 import {PageResponse} from "@/shared/model/page-response";
+import {EventoReportFilter} from "@/shared/model/filter/evento-report-filter";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -109,6 +110,13 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
                     };
                 })
             );
+    }
+
+    gerarRelatorioPdf(filter: EventoReportFilter): Observable<Blob> {
+        // É crucial definir 'responseType' como 'blob' para o Angular não tentar ler como JSON
+        return this.http.post(`${this.apiUrl}/relatorio/pdf`, filter, {
+            responseType: 'blob'
+        });
     }
 
 }

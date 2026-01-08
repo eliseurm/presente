@@ -3,6 +3,7 @@ package br.eng.eliseu.presente.service;
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
+import br.eng.eliseu.presente.model.filter.EventoReportFilter;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
@@ -15,6 +16,8 @@ import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import br.eng.eliseu.presente.model.dto.*;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,8 +32,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -802,5 +807,46 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         } catch (Exception e) {
             throw new RuntimeException("Erro ao ler CSV: " + e.getMessage(), e);
         }
+    }
+
+    public byte[] gerarRelatorioPdf(EventoReportFilter filter) throws Exception {
+
+        // 1. BUSCAR DADOS (Simulação - adapte para sua busca real com Specifications)
+        Evento evento = eventoRepository.findById(filter.getEventoId())
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
+
+        // Busque as pessoas baseado nos filtros (jaEscolheu, clienteId, etc)
+//        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_Id(filter.getEventoId());
+        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter.getEventoId());
+
+        // 2. COMPILAR O RELATÓRIO (O trecho que você pediu)
+        // O arquivo deve estar em: src/main/resources/relatorios/evento_report.jrxml
+        InputStream stream = getClass().getResourceAsStream("/relatorios/evento_report.jrxml");
+
+        if (stream == null) {
+            throw new RuntimeException("Arquivo .jrxml não encontrado em /resources/relatorios/");
+        }
+
+        JasperReport report = JasperCompileManager.compileReport(stream);
+
+        // 3. PREENCHER PARÂMETROS
+        Date dataInicioConvertida = null;
+        if (evento.getInicio() != null) {
+            dataInicioConvertida = Date.from(evento.getInicio().atZone(ZoneId.systemDefault()).toInstant());
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("TITULO", "Relatório: " + evento.getNome());
+        params.put("DATA_INICIO", dataInicioConvertida);
+        params.put("NOME_CLIENTE", evento.getCliente() != null ? evento.getCliente().getNome() : "");
+
+        // 4. CRIAR O DATASOURCE (A lista de pessoas)
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(pessoas);
+
+        // 5. GERAR O PRINT (Juntar Template + Parâmetros + Dados)
+        JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);
+
+        // 6. EXPORTAR PARA PDF (Byte Array)
+        return JasperExportManager.exportReportToPdf(print);
     }
 }

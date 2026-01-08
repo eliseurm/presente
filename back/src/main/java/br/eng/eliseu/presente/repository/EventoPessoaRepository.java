@@ -37,4 +37,10 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
         AND (:#{#filtro.pessoaTelefone} IS NULL OR LOWER(ep.pessoa.telefone) LIKE LOWER(CONCAT('%', :#{#filtro.pessoaTelefone}, '%')))
         """)
     Page<EventoPessoa> buscarPaginado(@Param("filtro") EventoPessoaFilter filtro, Pageable pageable);
+
+    @Query("SELECT ep FROM EventoPessoa ep " +
+            "JOIN FETCH ep.pessoa p " +
+            "WHERE ep.evento.id = :eventoId")
+    List<EventoPessoa> findByEventoIdWithPessoa(@Param("eventoId") Long eventoId);
+
 }
