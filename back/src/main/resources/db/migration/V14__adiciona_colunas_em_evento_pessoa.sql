@@ -1,0 +1,6 @@
+ALTER TABLE IF EXISTS evento_pessoa
+    ADD COLUMN IF NOT EXISTS organo_nivel_1 VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS organo_nivel_2 VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS organo_nivel_3 VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS local_trabalho VARCHAR(100)
+;

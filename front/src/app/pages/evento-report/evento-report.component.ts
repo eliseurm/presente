@@ -115,6 +115,7 @@ export class EventoReportComponent implements OnInit {
 
     // Método auxiliar para fazer o navegador baixar o arquivo
     private downloadFile(blob: Blob, fileName: string) {
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -123,5 +124,6 @@ export class EventoReportComponent implements OnInit {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+
     }
 }

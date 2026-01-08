@@ -660,6 +660,159 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         Cliente cliente = evento.getCliente();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+
+            // 1. Ler o Cabeçalho
+            String headerLine = br.readLine();
+            if (headerLine == null) {
+                logs.add("O arquivo está vazio.");
+                return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
+            }
+
+            // Remove caractere BOM que o Excel costuma colocar no início (ï»¿)
+            headerLine = headerLine.replace("\uFEFF", "");
+
+            // Detecta separador (vírgula ou ponto e vírgula)
+            String separador = headerLine.contains(";") ? ";" : ",";
+            String[] headers = headerLine.split(separador);
+
+            // 2. Mapear nomes das colunas para índices
+            Map<String, Integer> mapaColunas = new HashMap<>();
+            for (int i = 0; i < headers.length; i++) {
+                // Normaliza para minúsculo e remove espaços: " Nome " -> "nome"
+                mapaColunas.put(headers[i].trim().toLowerCase(), i);
+            }
+
+            // Valida se as colunas obrigatórias existem
+            if (!mapaColunas.containsKey("nome") || !mapaColunas.containsKey("cpf")) {
+                logs.add("Erro: O arquivo deve conter colunas chamadas 'Nome' e 'CPF' no cabeçalho.");
+                return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
+            }
+
+            String line;
+            int linhaNum = 1; // Começa em 1 pois já lemos o cabeçalho
+
+            while ((line = br.readLine()) != null) {
+                linhaNum++;
+                if (line.trim().isEmpty()) continue;
+
+                // Usa o limite -1 para não descartar colunas vazias no final da linha
+                String[] cols = line.split(separador, -1);
+
+                // 3. Buscar valores usando o mapa (extrai lógica para método auxiliar para segurança)
+                String nome = obterValor(cols, mapaColunas, "nome");
+                String cpfRaw = obterValor(cols, mapaColunas, "cpf");
+                String telefone = obterValor(cols, mapaColunas, "telefone"); // Opcional, se não achar retorna vazio
+                String email = obterValor(cols, mapaColunas, "email");       // Opcional
+
+                String organo_nivel_1 = obterValor(cols, mapaColunas, "uniao");
+                String organo_nivel_2 = obterValor(cols, mapaColunas, "associacao");
+                String organo_nivel_3 = obterValor(cols, mapaColunas, "escola_igreja");
+                String localTrabalho = obterValor(cols, mapaColunas, "localTrabalho");
+
+                // Validações
+                if (nome.isEmpty()) {
+                    logs.add("Linha " + linhaNum + ": Coluna 'Nome' está vazia.");
+                    continue;
+                }
+
+                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
+                if (cpfNumerico.length() != 11) {
+                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + ").");
+                    continue;
+                }
+
+                // Validação de Email (apenas se preenchido)
+                if (!email.isEmpty() && !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                    logs.add("Linha " + linhaNum + ": Email incorreto (" + email + ").");
+                    continue;
+                }
+
+                // Validação de Telefone (apenas se preenchido)
+                String telNumerico = telefone.replaceAll("\\D", "");
+                if (!telefone.isEmpty() && (telNumerico.length() < 8 || telNumerico.length() > 15)) {
+                    logs.add("Linha " + linhaNum + ": Telefone incorreto (" + telefone + ").");
+                    continue;
+                }
+
+                // --- Lógica de Persistência (Pessoa / Evento) ---
+
+                Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
+
+                if (pessoa == null) {
+                    if (!email.isEmpty() && pessoaRepository.findByEmail(email).isPresent()) {
+                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
+                        continue;
+                    }
+                    try {
+                        pessoa = Pessoa.builder()
+                                .nome(nome)
+                                .cpf(cpfNumerico)
+                                .telefone(telefone)
+                                .email(email)
+                                .cliente(cliente)
+                                .status(StatusEnum.ATIVO)
+                                .build();
+                        pessoa = pessoaRepository.save(pessoa);
+                    } catch (Exception e) {
+                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa: " + e.getMessage());
+                        continue;
+                    }
+                }
+
+                // Vincula ao Evento
+                if (eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa)) {
+                    logs.add("Linha " + linhaNum + ": Pessoa já cadastrada neste evento (" + nome + ").");
+                    continue;
+                }
+
+                EventoPessoa vinculo = EventoPessoa.builder()
+                        .evento(evento)
+                        .pessoa(pessoa)
+                        .status(StatusEnum.ATIVO)
+                        .organo_nivel_1(organo_nivel_1)
+                        .organo_nivel_2(organo_nivel_2)
+                        .organo_nivel_3(organo_nivel_3)
+                        .localTrabalho(localTrabalho)
+                        .build();
+                eventoPessoaRepository.save(vinculo);
+                adicionados++;
+            }
+        } catch (IOException e) {
+            logs.add("Erro fatal ao ler arquivo: " + e.getMessage());
+        }
+
+        return ImportacaoResultadoDto.builder()
+                .adicionados(adicionados)
+                .logErros(logs)
+                .build();
+    }
+
+    // Método auxiliar para pegar valor com segurança (evita ArrayIndexOutOfBounds)
+    private String obterValor(String[] cols, Map<String, Integer> mapa, String nomeColuna) {
+        Integer index = mapa.get(nomeColuna);
+        // Se a coluna não existe no cabeçalho OU a linha atual é mais curta que o índice
+        if (index == null || index >= cols.length) {
+            return "";
+        }
+        return cols[index].trim();
+    }
+
+/*
+    @Transactional
+    public ImportacaoResultadoDto importarPessoasCsv(Long eventoId, MultipartFile file) {
+        List<String> logs = new ArrayList<>();
+        int adicionados = 0;
+
+        if (file == null || file.isEmpty()) {
+            logs.add("O arquivo está vazio ou não foi enviado.");
+            return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
+        }
+
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado."));
+        Cliente cliente = evento.getCliente();
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             int linhaNum = 0;
 
@@ -752,6 +905,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .logErros(logs)
                 .build();
     }
+*/
 
 
 /*
@@ -817,7 +971,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         // Busque as pessoas baseado nos filtros (jaEscolheu, clienteId, etc)
 //        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_Id(filter.getEventoId());
-        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter.getEventoId());
+        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter);
 
         // 2. COMPILAR O RELATÓRIO (O trecho que você pediu)
         // O arquivo deve estar em: src/main/resources/relatorios/evento_report.jrxml
