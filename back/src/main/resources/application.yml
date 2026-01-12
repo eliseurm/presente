@@ -35,6 +35,17 @@ spring:
     locations: classpath:/db/migration
     default-schema: presente_sh
     schemas: presente_sh
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USER:${SPRING_MAIL_USER:secretaria@mensageiros.udi.br}}
+    password: ${EMAIL_PASS:${SPRING_MAIL_PASSWORD:piwhrpyhroddimsj}}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 
 #app:

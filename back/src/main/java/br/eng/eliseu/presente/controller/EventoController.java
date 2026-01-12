@@ -281,5 +281,10 @@ public class EventoController {
         }
     }
 
+    @PostMapping("/{id}/enviar-emails")
+    public ResponseEntity<EmailsEnviadosResultadoDto> enviarEmails(@PathVariable Long id) {
+        EmailsEnviadosResultadoDto resultado = eventoService.enviarEmailsConvite(id);
+        return ResponseEntity.ok(resultado);
+    }
 
 }

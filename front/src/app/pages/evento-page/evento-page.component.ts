@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {ToastModule} from 'primeng/toast';
@@ -22,7 +22,9 @@ import {EnumSelectComponent} from '@/shared/components/enum-select/enum-select.c
 import {CrudBaseComponent} from '@/shared/components/crud-base/crud-base.component';
 import {
     EDataGridComponent,
-    EiColumnComponent, EiItemComponent, EiValidationRuleComponent,
+    EiColumnComponent,
+    EiItemComponent,
+    EiValidationRuleComponent,
     EoEditingComponent,
     EoFormComponent,
     EPopupComponent,
@@ -42,15 +44,15 @@ import {PessoaService} from '@/services/pessoa.service';
 import {ProdutoService} from '@/services/produto.service';
 import {ClienteService} from '@/services/cliente.service';
 import {EventoEscolhaDto} from '@/shared/model/dto/evento-escolha-dto';
-import {debounceTime, distinctUntilChanged, forkJoin, Subject} from 'rxjs';
+import {debounceTime, forkJoin, Subject} from 'rxjs';
 import {ProdutoFilter} from '@/shared/model/filter/produto-filter';
 import {ProdutoMapper} from '@/shared/model/mapper/produto-mapper';
 import {EventoProduto} from '@/shared/model/evento-produto';
-import {PessoaFilter} from '@/shared/model/filter/pessoa-filter';
 import {Paginator} from "primeng/paginator";
-import {filter} from "rxjs/operators";
 import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
-import {EventoPessoa} from "@/shared/model/evento-pessoa"; // Certifique-se que este arquivo existe
+import {EventoPessoa} from "@/shared/model/evento-pessoa";
+import {Mode} from "@/shared/crud/crud.mode";
+import {ConfirmDialog} from "primeng/confirmdialog"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -84,11 +86,12 @@ import {EventoPessoa} from "@/shared/model/evento-pessoa"; // Certifique-se que 
         ListboxModule,
         EiValidationRuleComponent,
         EiItemComponent,
-        Paginator
+        Paginator,
+        ConfirmDialog
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: ['./evento-page.component.scss', '../../shared/components/crud-base/crud-base.component.scss'],
-    providers: [MessageService, EventoCrudVM]
+    providers: [MessageService, EventoCrudVM, ConfirmationService]
 })
 @CrudMetadata('EventoPageComponent', [Evento, EventoFilter])
 export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
@@ -96,6 +99,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     // Opções Gerais
     clientesOptions: Cliente[] = [];
     statusEnumType: any = StatusEnum;
+    modeType = Mode;
+
     abasVisitadas = new Set<string>();
     abaAtiva: string = 'geral';
 
@@ -107,6 +112,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     pessoasGridDisplay: any[] = [];
     filterEventoPessoa: EventoPessoaFilter = new EventoPessoaFilter();
     private filterSearchSubject = new Subject<void>();
+
+    enviandoEmails = false;
 
     // ======= Sugestões para Selects =======
     pessoasSugestoes: Pessoa[] = [];
@@ -140,7 +147,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         private pessoaService: PessoaService,
         private produtoService: ProdutoService,
         private clienteService: ClienteService,
-        private router: Router
+        private router: Router,
+        private confirmationService: ConfirmationService
     ) {
         super(messageService, vm);
     }
@@ -826,4 +834,26 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         super.ngOnDestroy();
         this.filterSearchSubject.complete();
     }
+
+    enviarEmails() {
+        this.confirmationService.confirm({
+            message: 'Deseja enviar o e-mail de convite para todas as pessoas ativas deste evento? Antes de enviar, salve todas as alterações',
+            header: 'Confirmar Envio',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.enviandoEmails = true;
+                this.eventoService.enviarEmailsConvite(this.vm.model.id).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'O processo de envio foi iniciado.' });
+                        this.enviandoEmails = false;
+                    },
+                    error: () => {
+                        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao iniciar envio.' });
+                        this.enviandoEmails = false;
+                    }
+                });
+            }
+        });
+    }
+
 }

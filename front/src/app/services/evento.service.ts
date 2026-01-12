@@ -119,4 +119,11 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         });
     }
 
+    enviarEmailsConvite(eventoId: number | undefined): Observable<void> {
+        if(!eventoId){
+            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+        }
+        return this.http.post<void>(`${this.apiUrl}/${eventoId}/enviar-emails`, {});
+    }
+
 }

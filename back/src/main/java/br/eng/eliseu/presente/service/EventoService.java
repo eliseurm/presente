@@ -14,21 +14,30 @@ import br.eng.eliseu.presente.repository.EventoPessoaRepository;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.service.api.AbstractCrudService;
 import br.eng.eliseu.presente.model.dto.*;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,6 +58,10 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     private final ClienteRepository clienteRepository;
     private final EventoPessoaRepository eventoPessoaRepository;
     private final EventoEscolhaRepository eventoEscolhaRepository;
+
+    private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
+
 
     @Override
     protected EventoRepository getRepository() {
@@ -1058,4 +1071,63 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         // 6. EXPORTAR PARA PDF (Byte Array)
         return JasperExportManager.exportReportToPdf(print);
     }
+
+    @Async
+    @Transactional(readOnly = true)
+    public EmailsEnviadosResultadoDto enviarEmailsConvite(Long eventoId) {
+
+        List<String> logs = new ArrayList<>();
+        int enviados = 0;
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
+
+        // Busca apenas pessoas ativas do evento
+        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO);
+
+        for (EventoPessoa ep : pessoas) {
+            if (ep.getPessoa() != null) {
+                if (ep.getPessoa().getEmail()==null || ep.getPessoa().getEmail().isEmpty()) {
+                    logs.add(ep.getPessoa().getNome()+" nao tem e-mail cadastrado");
+                    continue;
+                }
+                if (ep.getNomeMagicNumber()==null || ep.getNomeMagicNumber().isEmpty()) {
+                    logs.add(ep.getPessoa().getNome()+" nao tem Numero Magico cadastrado");
+                    continue;
+                }
+
+                try {
+                    enviarEmailIndividual(ep, evento);
+                } catch (Exception e) {
+                    System.err.println("Erro ao enviar para: " + ep.getPessoa().getEmail());
+                }
+
+                enviados++;
+            }
+        }
+
+        return EmailsEnviadosResultadoDto.builder()
+                .enviados(enviados)
+                .logErros(logs)
+                .build();
+    }
+
+    private void enviarEmailIndividual(EventoPessoa ep, Evento evento) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("nome", ep.getPessoa().getNome());
+        context.setVariable("eventoNome", evento.getNome());
+        // Ajuste a URL conforme o seu domínio de frontend
+        context.setVariable("linkMagico", "http://localhost:8080/presente/" + ep.getNomeMagicNumber());
+
+        String body = templateEngine.process("carta_convite", context);
+
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+
+        helper.setTo(ep.getPessoa().getEmail());
+        helper.setSubject("Convite Especial: " + evento.getNome());
+        helper.setText(body, true);
+
+        mailSender.send(mimeMessage);
+    }
+
 }

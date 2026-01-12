@@ -180,6 +180,12 @@
                                         [disabled]="importando"
                                         (click)="fileInput.click()">
                                 </button>
+                                <button pButton label="Enviar e-mail" icon="pi pi-envelope"
+                                        class="p-button-success p-button-outlined mr-2"
+                                        (click)="enviarEmails()"
+                                        [loading]="enviandoEmails"
+                                        [disabled]="vm.mode !== modeType.Edit">
+                                </button>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button pButton type="button" label="Refresh" icon="pi pi-refresh"
@@ -478,3 +484,4 @@
         </p-tabs>
     </div>
 </crud>
+<p-confirmDialog></p-confirmDialog>

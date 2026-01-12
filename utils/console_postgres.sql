@@ -92,7 +92,7 @@ select * from produto_estoque ;
 
 select * from usuario ;
 
-select * from pessoa ;
+select * from pessoa where id<=3;
 delete from pessoa where id>=3;
 
 select * from cliente ;
