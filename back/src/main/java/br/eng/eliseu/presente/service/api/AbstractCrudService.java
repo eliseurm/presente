@@ -1,10 +1,8 @@
 package br.eng.eliseu.presente.service.api;
 
-import br.eng.eliseu.presente.model.filter.BaseFilter;
-import br.eng.eliseu.presente.model.filter.SortSpec;
+import br.eng.eliseu.presente.model.core.BaseFilter;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

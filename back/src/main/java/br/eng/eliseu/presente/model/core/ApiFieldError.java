@@ -1,3 +1,3 @@
-package br.eng.eliseu.presente.model.config;
+package br.eng.eliseu.presente.model.core;
 
 public record ApiFieldError(String field, String message) {}

@@ -1,4 +1,4 @@
-import { BaseFilter } from '@/shared/model/filter/base-filter';
+import { BaseFilter } from '@/shared/model/core/base-filter';
 
 export class ImagemFilter extends BaseFilter {
   nome?: string;

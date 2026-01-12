@@ -271,7 +271,7 @@ public class EventoController {
             byte[] pdfBytes = eventoService.gerarRelatorioPdf(filter);
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio.pdf")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+filter.getNomeArquivo())
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfBytes);
 

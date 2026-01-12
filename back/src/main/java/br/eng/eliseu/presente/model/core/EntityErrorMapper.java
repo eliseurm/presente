@@ -1,4 +1,4 @@
-package br.eng.eliseu.presente.model.config;
+package br.eng.eliseu.presente.model.core;
 
 import java.util.List;
 

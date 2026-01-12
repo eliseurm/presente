@@ -5,6 +5,28 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
 
             <div class="flex flex-col gap-2">
+                <label for="tipoRelatorio" class="font-bold">Tipo de Relatório</label>
+                <enum-select
+                    class="w-full"
+                    [enumObject]="eventoReportEnumType"
+                    [(ngModel)]="filter.nomeRelatorio"
+                    (ngModelChange)="onRelatorioChange($event)"
+                    name="statusSelecionado">
+                </enum-select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="nomeArquivo" class="font-bold">Nome do Arquivo (PDF)</label>
+                <input
+                    id="nomeArquivo"
+                    pInputText
+                    name="nomeArquivo"
+                    [(ngModel)]="filter.nomeArquivo"
+                    (blur)="sanitizarNomeArquivo()"
+                    placeholder="ex: relatorio_evento"/>
+            </div>
+
+            <div class="flex flex-col gap-2">
                 <label class="font-bold">Cliente</label>
                 <p-select
                     [options]="clientes"
@@ -40,6 +62,7 @@
                 <p-selectButton
                     [options]="opcoesEscolha"
                     [(ngModel)]="filter.jaEscolheu"
+                    styleClass="w-full"
                     optionLabel="label"
                     optionValue="value">
                 </p-selectButton>
@@ -57,7 +80,7 @@
                         icon="pi pi-file-pdf"
                         class="p-button-danger"
                         [loading]="loading"
-                        [disabled]="!filter.eventoId"
+                        [disabled]="!filter.eventoId || !filter.nomeRelatorio"
                         (click)="gerarRelatorio()">
                 </button>
             </div>

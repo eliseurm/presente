@@ -1,0 +1,45 @@
+<!-- Created with Jaspersoft Studio version 7.0.1.final using JasperReports Library version 7.0.1-573496633c2b4074e32f433154b543003f7d2498  -->
+<jasperReport name="etiquetas_destino" language="java" pageWidth="198" pageHeight="113" columnWidth="198" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="386e8810-7212-40f4-a034-734f195d2c70">
+	<field name="nomePessoa" class="java.lang.String"/>
+	<field name="numeroMagico" class="java.lang.String"/>
+	<field name="organoNivel1" class="java.lang.String"/>
+	<field name="organoNivel2" class="java.lang.String"/>
+	<field name="organoNivel3" class="java.lang.String"/>
+	<field name="nomeProduto" class="java.lang.String"/>
+	<field name="tamanho" class="java.lang.String"/>
+	<field name="cor" class="java.lang.String"/>
+	<background splitType="Stretch"/>
+	<detail>
+		<band height="113" splitType="Stretch">
+			<element kind="textField" uuid="78351545-d819-4702-8647-73d819077977" x="5" y="4" width="188" height="14" fontSize="11.0" textAdjust="ScaleFont" bold="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{organoNivel1}]]></expression>
+			</element>
+			<element kind="textField" uuid="dd1c1032-6827-4dbc-be39-c57467270fd7" x="5" y="18" width="188" height="14" fontSize="11.0" textAdjust="ScaleFont" bold="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{organoNivel2}]]></expression>
+			</element>
+			<element kind="textField" uuid="700165de-6f00-4022-820d-a5d8f9bb8cbd" x="5" y="32" width="188" height="14" fontSize="11.0" textAdjust="ScaleFont" bold="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{organoNivel3}]]></expression>
+			</element>
+			<element kind="textField" uuid="93425576-932d-4581-9f20-14e38c717017" x="5" y="49" width="188" height="16" fontSize="8.0" textAdjust="StretchHeight" vTextAlign="Top">
+				<expression><![CDATA[$F{nomePessoa}.toUpperCase()]]></expression>
+			</element>
+			<element kind="line" uuid="88523386-8149-432a-b611-303721345151" x="5" y="65" width="188" height="1" forecolor="#D1D1D1"/>
+			<element kind="textField" uuid="31316541-1188-4444-9999-524256550756" x="5" y="70" width="115" height="12" fontSize="7.0" bold="true" italic="true">
+				<expression><![CDATA[$F{nomeProduto}]]></expression>
+			</element>
+			<element kind="textField" uuid="17621102-1456-4123-8888-251456321456" x="120" y="70" width="73" height="12" fontSize="7.0" bold="true" italic="true" hTextAlign="Right">
+				<expression><![CDATA["T: "+$F{tamanho}+" - C: "+$F{cor}]]></expression>
+			</element>
+			<element kind="component" uuid="99999999-4444-4444-4444-123456789012" x="5" y="85" width="135" height="23">
+				<component kind="barcode4j:Code128" moduleWidth="1.0">
+					<codeExpression><![CDATA[$F{numeroMagico}]]></codeExpression>
+				</component>
+			</element>
+			<element kind="component" uuid="88888888-4444-4444-4444-123456789012" x="150" y="78" width="43" height="32">
+				<component kind="barcode4j:QRCode">
+					<codeExpression><![CDATA[$F{numeroMagico}]]></codeExpression>
+				</component>
+			</element>
+		</band>
+	</detail>
+</jasperReport>

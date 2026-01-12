@@ -1,20 +1,22 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { PanelModule } from 'primeng/panel';
-import { ToastModule } from 'primeng/toast';
-import { SelectButtonModule } from 'primeng/selectbutton'; // Para o filtro Sim/Não/Todos
-
-import { ClienteService } from '@/services/cliente.service';
-import { EventoService } from '@/services/evento.service';
-import { Cliente } from '@/shared/model/cliente';
-import { EventoDto } from '@/shared/model/dto/evento-dto';
-import { EventoReportFilter } from '@/shared/model/filter/evento-report-filter';
-import { EventoFilter } from '@/shared/model/filter/evento-filter';
+import {Component, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {MessageService} from 'primeng/api';
+import {ButtonModule} from 'primeng/button';
+import {PanelModule} from 'primeng/panel';
+import {ToastModule} from 'primeng/toast';
+import {SelectButtonModule} from 'primeng/selectbutton';
+import {ClienteService} from '@/services/cliente.service';
+import {EventoService} from '@/services/evento.service';
+import {Cliente} from '@/shared/model/cliente';
+import {EventoReportFilter} from '@/shared/model/filter/evento-report-filter';
+import {EventoFilter} from '@/shared/model/filter/evento-filter';
 import {SelectModule} from "primeng/select";
 import {Evento} from "@/shared/model/evento";
+import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";
+import {EventoReportEnum, EventoReportOptions} from "@/shared/model/enum/evento-report.enum";
+import {InputTextModule} from "primeng/inputtext";
+import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 @Component({
     selector: 'app-evento-report',
@@ -26,12 +28,17 @@ import {Evento} from "@/shared/model/evento";
         SelectModule,
         PanelModule,
         ToastModule,
-        SelectButtonModule
+        SelectButtonModule,
+        EnumSelectComponent,
+        InputTextModule
     ],
     templateUrl: './evento-report.component.html',
+    styleUrls: ['./evento-report.component.scss'],
     providers: [MessageService]
 })
 export class EventoReportComponent implements OnInit {
+
+    eventoReportEnumType = EventoReportOptions;
 
     filter: EventoReportFilter = new EventoReportFilter();
 
@@ -41,9 +48,9 @@ export class EventoReportComponent implements OnInit {
 
     // Opções para o "Já Escolheu?"
     opcoesEscolha = [
-        { label: 'Todos', value: null },
-        { label: 'Já Escolheu', value: true },
-        { label: 'Não Escolheu', value: false }
+        { label: 'Todos', value: -1 },
+        { label: 'Já Escolheu', value: 1 },
+        { label: 'Não Escolheu', value: 0 }
     ];
 
     loading: boolean = false;
@@ -92,16 +99,34 @@ export class EventoReportComponent implements OnInit {
     }
 
     gerarRelatorio() {
+        // Validações anteriores...
         if (!this.filter.eventoId) {
             this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione um Evento.'});
             return;
         }
 
+        // Nova Validação
+        if (!this.filter.nomeRelatorio) {
+            this.messageService.add({severity:'warn', summary:'Atenção', detail:'Selecione o Tipo de Relatório.'});
+            return;
+        }
+
+
+        this.filter.nomeRelatorio = EventoReportEnum.toKey(this.filter.nomeRelatorio);
+
+        // Garante que o nome do arquivo tenha extensão .pdf
+        let nomeFinal = this.filter.nomeArquivo || 'relatorio.pdf';
+        if (!nomeFinal.endsWith('.pdf')) {
+            nomeFinal += '.pdf';
+        }
+        this.filter.nomeArquivo = nomeFinal;
+
         this.loading = true;
 
         this.eventoService.gerarRelatorioPdf(this.filter).subscribe({
             next: (blob: Blob) => {
-                this.downloadFile(blob, `Relatorio_Evento_${this.filter.eventoId}.pdf`);
+                // Usa o nome definido pelo usuário para baixar
+                this.downloadFile(blob, this.filter.nomeArquivo!);
                 this.loading = false;
                 this.messageService.add({severity:'success', summary:'Sucesso', detail:'Relatório gerado.'});
             },
@@ -126,4 +151,30 @@ export class EventoReportComponent implements OnInit {
         window.URL.revokeObjectURL(url);
 
     }
+
+    onRelatorioChange(event: any) {
+        // Sugestão automática baseada na seleção
+        if (event) {
+            const nomeSugestao = `relatorio_${event.arquivoPadrao}`;
+            this.filter.nomeArquivo = this.formatarNomeArquivo(nomeSugestao);
+        }
+    }
+
+    sanitizarNomeArquivo() {
+        if (this.filter.nomeArquivo) {
+            this.filter.nomeArquivo = this.formatarNomeArquivo(this.filter.nomeArquivo);
+        }
+    }
+
+    private formatarNomeArquivo(nome: string): string {
+        return nome
+            .toLowerCase() // Tudo minúsculo
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .trim()
+            .replace(/\s+/g, '_') // Espaço vira underline
+            .replace(/[^a-z0-9._-]/g, ''); // Remove caracteres especiais indesejados
+        // Nota: Não adiciono .pdf aqui para deixar o usuário editar livremente,
+        // mas adiciono na hora de salvar se faltar.
+    }
+
 }

@@ -1,4 +1,4 @@
-package br.eng.eliseu.presente.model.filter;
+package br.eng.eliseu.presente.model.core;
 
 import lombok.Getter;
 import lombok.Setter;

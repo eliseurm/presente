@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {BaseFilter, SortSpec} from '@/shared/model/filter/base-filter';
+import {BaseFilter, SortSpec} from '@/shared/model/core/base-filter';
 import { PageResponse } from '@/shared/model/page-response';
 import { CrudPort } from '@/shared/services/crud-port';
 import {tap} from "rxjs/operators";

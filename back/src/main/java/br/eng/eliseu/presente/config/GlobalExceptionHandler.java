@@ -1,6 +1,6 @@
 package br.eng.eliseu.presente.config;
 
-import br.eng.eliseu.presente.model.config.ApiFieldError;
+import br.eng.eliseu.presente.model.core.ApiFieldError;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

@@ -93,11 +93,13 @@ select * from produto_estoque ;
 select * from usuario ;
 
 select * from pessoa ;
+delete from pessoa where id>=3;
 
 select * from cliente ;
 
 select * from evento ;
 
+select * from evento_pessoa ;
 select * from evento_pessoa where pessoa_id < 3;
 select * from evento_produto ;
 select * from evento_escolha ;
@@ -112,27 +114,31 @@ join cliente c on e.cliente_id=c.id
 
 select a from Evento a ;
 
-select * from evento_pessoa ;
+select * from evento_pessoa where pessoa_id<=3 ;
 delete from evento_pessoa where pessoa_id>=3 ;
 select * from evento_produto ;
 select * from evento_escolha ;
 
 
 select
---     e.id as evento_id, ep.pessoa_id, es.dt_escolha, es.status,
-    -- Adicione aqui os campos da escolha que você quer ver (ex: es.opcao_id)
-    case
-        when es.id is not null then true
-        else false
-        end as jaEscolheu
-, *
+    e.nome as nomeEvento, e.descricao, e.status as statusEvento, e.inicio, e.fim_previsto, e.fim,
+    p.nome as nomePessoa, p.email, p.telefone, p.cpf,
+    p.endereco, p.complemento, p.cidade, p.estado, p.cep,
+    ep.status as statusEventoPessoa, ep.numero_magico, ep.organo_nivel_1, ep.organo_nivel_2, ep.organo_nivel_3, ep.localtrabalho,
+    case when es.id is not null then true else false end as jaEscolheu,
+    es.dt_escolha, prd.nome as nomeProduto, prd.preco, tam.tipo, tam.tamanho, cor.nome as cor
 from evento e
 join evento_pessoa ep on e.id = ep.evento_id
+join pessoa p on ep.pessoa_id = p.id
 left join evento_escolha es on e.id = es.evento_id and ep.pessoa_id = es.pessoa_id
     and es.status = 'ATIVO'
     and es.dt_escolha = (select max(sub.dt_escolha) from evento_escolha sub where sub.evento_id = e.id and sub.pessoa_id = ep.pessoa_id and sub.status = 'ATIVO')
+left join produto prd on es.produto_id = prd.id
+left join tamanho tam on es.tamanho_id = tam.id
+left join cor cor on es.cor_id = cor.id
 where 1=1
 and e.id = 2
+and ( :jaEscolheuParam = -1 or (case when es.id is not null then 1 else 0 end = :jaEscolheuParam ))
 ;
 
 

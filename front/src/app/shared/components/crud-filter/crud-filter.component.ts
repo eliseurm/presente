@@ -6,7 +6,7 @@ import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
 import {DatePickerModule} from 'primeng/datepicker'; // Adicionar esta importação
-import {BaseFilter} from '@/shared/model/filter/base-filter';
+import {BaseFilter} from '@/shared/model/core/base-filter';
 import {FilterField} from "@/shared/components/crud-filter/filter-field";
 import {generateFields} from "@/shared/core/generate-fields.funcrion";
 import {EnumSelectComponent} from "@/shared/components/enum-select/enum-select.component";

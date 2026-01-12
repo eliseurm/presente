@@ -2,7 +2,7 @@ import {Component, Directive, inject, Injectable, Injector, Input, OnDestroy, On
 import {TableLazyLoadEvent} from 'primeng/table';
 import {ConfirmationService, MessageService, ToastMessageOptions} from 'primeng/api';
 import {BaseCrudService} from '../../services/base-crud.service';
-import {BaseFilter} from '../../model/filter/base-filter';
+import {BaseFilter} from '../../model/core/base-filter';
 import {Router} from "@angular/router";
 import {HttpClient} from "@angular/common/http";
 import {CrudComponent} from "@/shared/crud/crud.component";

@@ -704,9 +704,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 String telefone = obterValor(cols, mapaColunas, "telefone"); // Opcional, se não achar retorna vazio
                 String email = obterValor(cols, mapaColunas, "email");       // Opcional
 
-                String organo_nivel_1 = obterValor(cols, mapaColunas, "uniao");
-                String organo_nivel_2 = obterValor(cols, mapaColunas, "associacao");
-                String organo_nivel_3 = obterValor(cols, mapaColunas, "escola_igreja");
+                String organoNivel1 = obterValor(cols, mapaColunas, "uniao");
+                String organoNivel2 = obterValor(cols, mapaColunas, "associacao");
+                String organoNivel3 = obterValor(cols, mapaColunas, "escola_igreja");
                 String localTrabalho = obterValor(cols, mapaColunas, "localTrabalho");
 
                 // Validações
@@ -716,6 +716,10 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 }
 
                 String cpfNumerico = cpfRaw.replaceAll("\\D", "");
+                if (cpfNumerico.length() < 11) {
+                    // so para me divertir, vou tornar o cpf valido
+                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
+                }
                 if (cpfNumerico.length() != 11) {
                     logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + ").");
                     continue;
@@ -739,10 +743,10 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
 
                 if (pessoa == null) {
-                    if (!email.isEmpty() && pessoaRepository.findByEmail(email).isPresent()) {
-                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
-                        continue;
-                    }
+//                    if (!cpfRaw.isEmpty() && pessoaRepository.findByCpf(email).isPresent()) {
+//                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
+//                        continue;
+//                    }
                     try {
                         pessoa = Pessoa.builder()
                                 .nome(nome)
@@ -769,9 +773,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                         .evento(evento)
                         .pessoa(pessoa)
                         .status(StatusEnum.ATIVO)
-                        .organo_nivel_1(organo_nivel_1)
-                        .organo_nivel_2(organo_nivel_2)
-                        .organo_nivel_3(organo_nivel_3)
+                        .organoNivel1(organoNivel1)
+                        .organoNivel2(organoNivel2)
+                        .organoNivel3(organoNivel3)
                         .localTrabalho(localTrabalho)
                         .build();
                 eventoPessoaRepository.save(vinculo);
@@ -795,6 +799,51 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             return "";
         }
         return cols[index].trim();
+    }
+
+    public static String calcularDigitosVerificadores(String cpf) {
+        if (cpf == null) {
+            throw new IllegalArgumentException("CPF não pode ser nulo");
+        }
+
+        // 1. Remove tudo que não for número
+        String numeros = cpf.replaceAll("\\D", "");
+
+        // 2. Valida se tem o mínimo necessário para calcular (9 dígitos base)
+        if (numeros.length() < 9) {
+            numeros = String.format("%9s", numeros).replace(' ', '0');
+        }
+
+        // Pega apenas os 9 primeiros dígitos para iniciar o cálculo
+        String base = numeros.substring(0, 9);
+
+        // 3. Cálculo do 1º Dígito (peso começa em 10)
+        int digito1 = calcularDigitoRotina(base, 10);
+
+        // 4. Cálculo do 2º Dígito (adiciona o digito1 à base, peso começa em 11)
+        int digito2 = calcularDigitoRotina(base + digito1, 11);
+
+        return base + String.valueOf(digito1) + String.valueOf(digito2);
+    }
+
+    /**
+     * Método auxiliar que realiza o cálculo do Módulo 11.
+     */
+    private static int calcularDigitoRotina(String str, int pesoInicial) {
+        int soma = 0;
+        int peso = pesoInicial;
+
+        for (int i = 0; i < str.length(); i++) {
+            // Converte char numérico para int ('0' tem valor 48 na tabela ASCII)
+            int num = str.charAt(i) - '0';
+            soma += num * peso;
+            peso--;
+        }
+
+        int resto = soma % 11;
+
+        // Regra do CPF: Se resto < 2, dígito é 0. Senão, é 11 - resto.
+        return (resto < 2) ? 0 : 11 - resto;
     }
 
 /*
@@ -971,11 +1020,17 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         // Busque as pessoas baseado nos filtros (jaEscolheu, clienteId, etc)
 //        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_Id(filter.getEventoId());
-        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter);
+//        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter);
+        filter.setJaEscolheu(filter.getJaEscolheu());
+        List<EventoRelatorioDto> relatorio = eventoPessoaRepository.findByEventoIdWithFilter(filter);
 
-        // 2. COMPILAR O RELATÓRIO (O trecho que você pediu)
-        // O arquivo deve estar em: src/main/resources/relatorios/evento_report.jrxml
-        InputStream stream = getClass().getResourceAsStream("/relatorios/evento_report.jrxml");
+        InputStream stream = null;
+        if("EVENTO_PESSOAS_INFO".equals(filter.getNomeRelatorio())){
+            stream = getClass().getResourceAsStream("/relatorios/evento_pessoa_info.jrxml");
+        }
+        else if("EVENTO_ETIQUETAS_CORREIOS".equals(filter.getNomeRelatorio())){
+            stream = getClass().getResourceAsStream("/relatorios/evento_etiqueta.jrxml");
+        }
 
         if (stream == null) {
             throw new RuntimeException("Arquivo .jrxml não encontrado em /resources/relatorios/");
@@ -995,7 +1050,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         params.put("NOME_CLIENTE", evento.getCliente() != null ? evento.getCliente().getNome() : "");
 
         // 4. CRIAR O DATASOURCE (A lista de pessoas)
-        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(pessoas);
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(relatorio);
 
         // 5. GERAR O PRINT (Juntar Template + Parâmetros + Dados)
         JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);

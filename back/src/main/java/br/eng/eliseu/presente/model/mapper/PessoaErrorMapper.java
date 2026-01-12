@@ -1,7 +1,7 @@
 package br.eng.eliseu.presente.model.mapper;
 
-import br.eng.eliseu.presente.model.config.ApiFieldError;
-import br.eng.eliseu.presente.model.config.EntityErrorMapper;
+import br.eng.eliseu.presente.model.core.ApiFieldError;
+import br.eng.eliseu.presente.model.core.EntityErrorMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

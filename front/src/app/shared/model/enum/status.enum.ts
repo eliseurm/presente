@@ -1,11 +1,3 @@
-// 1. Define the shape of the enum item (optional but good for strict typing)
-export interface StatusItem {
-    key: string;
-    descricao: string;
-}
-
-// 2. Define the constant object with 'as const'
-// We rename this internal object to avoid conflict with the namespace/type export
 const _StatusEnum = {
     ATIVO: { key: 'ATIVO', descricao: 'Ativo' },
     PAUSADO: { key: 'PAUSADO', descricao: 'Pausado' },

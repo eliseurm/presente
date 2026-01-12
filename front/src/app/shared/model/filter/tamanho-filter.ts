@@ -1,4 +1,4 @@
-import {BaseFilter} from "@/shared/model/filter/base-filter";
+import {BaseFilter} from "@/shared/model/core/base-filter";
 import {ProdutoTipoEnum} from "@/shared/model/enum/produto-tipo.enum";
 
 export class TamanhoFilter extends BaseFilter {

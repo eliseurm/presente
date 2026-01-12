@@ -7,7 +7,7 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {ConfirmationService} from 'primeng/api';
 import {Mode} from '@/shared/crud/crud.mode';
 import {AbstractCrud} from '@/shared/crud/abstract.crud';
-import {BaseFilter} from '@/shared/model/filter/base-filter';
+import {BaseFilter} from '@/shared/model/core/base-filter';
 import {Nl2BrPipe} from "@/shared/pipe/nl2br.pipe";
 import {Toast} from "primeng/toast";
 

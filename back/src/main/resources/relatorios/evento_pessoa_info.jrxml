@@ -1,0 +1,86 @@
+<!-- Created with Jaspersoft Studio version 7.0.1.final using JasperReports Library version 7.0.1-573496633c2b4074e32f433154b543003f7d2498  -->
+<jasperReport name="evento_report" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="e3c54c33-8762-4293-9c86-1d1370e20063">
+	<parameter name="TITULO" class="java.lang.String"/>
+	<parameter name="DATA_INICIO" class="java.util.Date"/>
+	<parameter name="NOME_CLIENTE" class="java.lang.String"/>
+	<field name="nomePessoa" class="java.lang.String"/>
+	<field name="cpf" class="java.lang.String"/>
+	<field name="statusEventoPessoa" class="java.lang.Object"/>
+	<field name="telefone" class="java.lang.String"/>
+	<field name="email" class="java.lang.String"/>
+	<background splitType="Stretch"/>
+	<title height="79" splitType="Stretch">
+		<element kind="rectangle" uuid="a3c54c33-8762-4293-9c86-1d1370e20063" x="0" y="0" width="555" height="79" backcolor="#E6E6E6">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="textField" uuid="b3c54c33-8762-4293-9c86-1d1370e20063" x="20" y="10" width="510" height="30" fontSize="18.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{TITULO}]]></expression>
+		</element>
+		<element kind="textField" uuid="c3c54c33-8762-4293-9c86-1d1370e20063" x="20" y="45" width="510" height="20" pattern="dd/MM/yyyy HH:mm" hTextAlign="Center">
+			<expression><![CDATA[$P{DATA_INICIO}]]></expression>
+		</element>
+	</title>
+	<columnHeader height="35" splitType="Stretch">
+		<element kind="staticText" uuid="d3c54c33-8762-4293-9c86-1d1370e20063" x="0" y="0" width="150" height="30" bold="true" vTextAlign="Middle">
+			<text><![CDATA[Nome do Convidado]]></text>
+			<box>
+				<bottomPen lineWidth="1.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e3c54c33-8762-4293-9c86-1d1370e20063" x="150" y="0" width="80" height="30" bold="true" vTextAlign="Middle">
+			<text><![CDATA[CPF]]></text>
+			<box>
+				<bottomPen lineWidth="1.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="f3c54c33-8762-4293-9c86-1d1370e20063" x="500" y="0" width="55" height="30" bold="true" vTextAlign="Middle">
+			<text><![CDATA[Status]]></text>
+			<box>
+				<bottomPen lineWidth="1.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="0600db2e-919d-4d45-9971-84f9904674ac" x="230" y="0" width="100" height="30" bold="true" vTextAlign="Middle">
+			<text><![CDATA[Telefone]]></text>
+			<box>
+				<bottomPen lineWidth="1.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="2edaaffd-ecb2-4904-b8f9-82220e3de4b7" x="330" y="0" width="170" height="30" bold="true" vTextAlign="Middle">
+			<text><![CDATA[e-Mail]]></text>
+			<box>
+				<bottomPen lineWidth="1.0"/>
+			</box>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<element kind="textField" uuid="13c54c33-8762-4293-9c86-1d1370e20063" x="0" y="1" width="150" height="15" vTextAlign="Middle">
+				<expression><![CDATA[$F{nomePessoa}]]></expression>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="23c54c33-8762-4293-9c86-1d1370e20063" x="150" y="1" width="80" height="15" blankWhenNull="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{cpf}]]></expression>
+			</element>
+			<element kind="textField" uuid="33c54c33-8762-4293-9c86-1d1370e20063" x="500" y="0" width="55" height="15" vTextAlign="Middle">
+				<expression><![CDATA["" + $F{statusEventoPessoa}]]></expression>
+			</element>
+			<element kind="textField" uuid="46991ca6-0ab6-4650-b9ce-367e6fd0204d" x="230" y="1" width="100" height="15" blankWhenNull="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{telefone}]]></expression>
+			</element>
+			<element kind="textField" uuid="531c81f5-abb8-4592-88ab-ef0efb307d3b" x="330" y="1" width="170" height="15" blankWhenNull="true" vTextAlign="Middle">
+				<expression><![CDATA[$F{email}]]></expression>
+			</element>
+		</band>
+	</detail>
+	<pageFooter height="40" splitType="Stretch">
+		<element kind="textField" uuid="43c54c33-8762-4293-9c86-1d1370e20063" x="355" y="10" width="100" height="20" hTextAlign="Right">
+			<expression><![CDATA["Página " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+		<element kind="textField" uuid="53c54c33-8762-4293-9c86-1d1370e20063" x="455" y="10" width="100" height="20" evaluationTime="Report" hTextAlign="Left">
+			<expression><![CDATA[" de " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+		<element kind="textField" uuid="63c54c33-8762-4293-9c86-1d1370e20063" x="0" y="10" width="150" height="20" pattern="dd/MM/yyyy HH:mm">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+		</element>
+	</pageFooter>
+</jasperReport>

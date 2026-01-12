@@ -37,11 +37,14 @@ public class EventoPessoa {
     @Column(name = "numero_magico", length = 64)
     private String nomeMagicNumber;
 
-    private String organo_nivel_1;
+    @Column(name = "organo_nivel_1", length = 100)
+    private String organoNivel1;
 
-    private String organo_nivel_2;
+    @Column(name = "organo_nivel_2", length = 100)
+    private String organoNivel2;
 
-    private String organo_nivel_3;
+    @Column(name = "organo_nivel_3", length = 100)
+    private String organoNivel3;
 
     private String localTrabalho;
 

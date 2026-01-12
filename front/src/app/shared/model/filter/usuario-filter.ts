@@ -1,4 +1,4 @@
-import { BaseFilter } from './base-filter';
+import { BaseFilter } from '../core/base-filter';
 
 export class UsuarioFilter extends BaseFilter {
   username?: string;

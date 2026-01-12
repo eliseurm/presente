@@ -1,5 +1,5 @@
 // src/app/shared/model/filter/pessoa-filter.ts
-import { BaseFilter } from './base-filter';
+import { BaseFilter } from '../core/base-filter';
 
 export class PessoaFilter extends BaseFilter {
 

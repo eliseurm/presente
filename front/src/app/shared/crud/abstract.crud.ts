@@ -4,7 +4,7 @@ import {catchError, tap} from 'rxjs/operators';
 import {CrudPort} from '@/shared/services/crud-port';
 import {Mode} from '@/shared/crud/crud.mode';
 import {PageResponse} from '@/shared/model/page-response';
-import {BaseFilter} from '@/shared/model/filter/base-filter';
+import {BaseFilter} from '@/shared/model/core/base-filter';
 import {stringify as flattedStringify, parse as flattedParse} from 'flatted';
 import {Evento} from "@/shared/model/evento";
 import {EventoMapper} from "@/shared/model/mapper/evento-mapper";
