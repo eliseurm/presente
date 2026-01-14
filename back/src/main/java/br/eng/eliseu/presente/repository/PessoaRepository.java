@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.repository;
 
+import br.eng.eliseu.presente.model.Cliente;
 import br.eng.eliseu.presente.model.Pessoa;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.List;
 
@@ -34,4 +36,7 @@ public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecif
     List<Pessoa> pesquisaByCliente(@Param("clienteId") Long clienteId, @Param("q") String q);
 
     Optional<Pessoa> findByCpf(String cpf);
+
+    List<Pessoa> findByCliente(Cliente cliente);
+
 }

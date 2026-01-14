@@ -12,9 +12,9 @@ import br.eng.eliseu.presente.model.mapper.EventoProdutoMapper;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.repository.EventoPessoaRepository;
 import br.eng.eliseu.presente.repository.EventoProdutoRepository;
+import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,13 +32,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventoController {
 
-    @Autowired private EventoPessoaMapper eventoPessoaMapper;
-    @Autowired private EventoProdutoMapper eventoProdutoMapper;
 
+    private final EventoPessoaMapper eventoPessoaMapper;
+    private final EventoProdutoMapper eventoProdutoMapper;
     private final EventoService eventoService;
     private final EventoEscolhaRepository eventoEscolhaRepository;
     private final EventoPessoaRepository eventoPessoaRepository;
     private final EventoProdutoRepository eventoProdutoRepository;
+    private final EventoRepository eventoRepository;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or (#filtro != null and #filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
@@ -99,19 +99,32 @@ public class EventoController {
         ));
     }
 
-//    @PostMapping("/{id}/pessoas/import")
-//    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-//    public ResponseEntity<Map<String, Object>> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-//        int adicionados = eventoService.importarPessoasCsv(id, file);
-//        return ResponseEntity.ok(Map.of("adicionados", adicionados));
-//    }
-
-    @PostMapping("/{id}/pessoas/import")
+    @PostMapping("/{id}/importar-csv")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<ImportacaoResultadoDto> importarPessoasCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        ImportacaoResultadoDto resultado = eventoService.importarPessoasCsv(id, file);
+    public ResponseEntity<ProgressoTarefaDto> importarArquivoCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        ProgressoTarefaDto resultado = eventoService.importarArquivoPessoasCsv(id, file);
         return ResponseEntity.ok(resultado);
     }
+
+    @PostMapping("/{id}/enviar-emails")
+    public ResponseEntity<ProgressoTarefaDto> enviarEmails(@PathVariable Long id) {
+        ProgressoTarefaDto resultado = eventoService.enviarEmailsAssincrono(id);
+        return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping("/{id}/status-processo")
+    public ResponseEntity<ProgressoTarefaDto> getStatusProcesso(@PathVariable Long id) {
+        ProgressoTarefaDto p = eventoService.getStatusProgresso(id);
+        return ResponseEntity.ok(p);
+    }
+
+    @GetMapping("/{id}/parar-processo")
+    public ResponseEntity<ProgressoTarefaDto> pararProcesso(@PathVariable Long id) {
+        ProgressoTarefaDto p = eventoService.pararProgresso(id);
+        return ResponseEntity.ok(p);
+    }
+
+
 
 //    @GetMapping("/{id}/pessoas")
 //    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
@@ -238,7 +251,7 @@ public class EventoController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<EventoPessoaDto>> getEventoPessoa(@PathVariable("id") Long eventoId) {
 
-        List<EventoPessoa> entidade = eventoPessoaRepository.findByEvento_Id(eventoId);
+        List<EventoPessoa> entidade = eventoPessoaRepository.findByEventoId(eventoId);
 
         Set<Long> pessoasQueJaEscolheram = Optional
                 .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO))
@@ -281,10 +294,5 @@ public class EventoController {
         }
     }
 
-    @PostMapping("/{id}/enviar-emails")
-    public ResponseEntity<EmailsEnviadosResultadoDto> enviarEmails(@PathVariable Long id) {
-        EmailsEnviadosResultadoDto resultado = eventoService.enviarEmailsConvite(id);
-        return ResponseEntity.ok(resultado);
-    }
 
 }

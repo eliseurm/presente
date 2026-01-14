@@ -16,22 +16,20 @@ public class EventoMapper {
      * Versão simplificada: mapeia o evento sem a lógica de 'jaEscolheu'
      */
     public static EventoDto toDTO(Evento e) {
-        return toDTO(e, Collections.emptySet());
+        return toDTO(e, Collections.emptySet(), false);
     }
 
     /**
      * Versão sobrecarregada: recebe a lista de IDs de quem já escolheu vinda do Service
      */
-    public static EventoDto toDTO(Evento e, Set<Long> pessoasQueJaEscolheram) {
+    public static EventoDto toDTO(Evento e, Set<Long> pessoasQueJaEscolheram, Boolean completo) {
         if (e == null) return null;
 
         // Mapeamento de Pessoas usando o Mapper específico (que agora lida com jaEscolheu)
-        List<EventoPessoaDto> pessoasDTO = EventoPessoaMapper.toDtoList(e.getEventoPessoas(), pessoasQueJaEscolheram);
+        List<EventoPessoaDto> pessoasDTO = completo ? EventoPessoaMapper.toDtoList(e.getEventoPessoas(), pessoasQueJaEscolheram) : null;
 
         // Mapeamento de Produtos usando o Mapper específico
-        List<EventoProdutoDto> produtosDTO = EventoProdutoMapper.toDtoList(
-                Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream().toList()
-        );
+        List<EventoProdutoDto> produtosDTO = completo ? EventoProdutoMapper.toDtoList(Optional.ofNullable(e.getEventoProdutos()).orElseGet(Set::of).stream().toList()) : null;
 
         return EventoDto.builder()
                 .id(e.getId())

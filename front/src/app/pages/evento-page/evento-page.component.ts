@@ -52,7 +52,9 @@ import {Paginator} from "primeng/paginator";
 import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {Mode} from "@/shared/crud/crud.mode";
-import {ConfirmDialog} from "primeng/confirmdialog"; // Certifique-se que este arquivo existe
+import {ConfirmDialog} from "primeng/confirmdialog";
+import {ProgressBar} from "primeng/progressbar";
+import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -87,7 +89,8 @@ import {ConfirmDialog} from "primeng/confirmdialog"; // Certifique-se que este a
         EiValidationRuleComponent,
         EiItemComponent,
         Paginator,
-        ConfirmDialog
+        ConfirmDialog,
+        ProgressBar
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: ['./evento-page.component.scss', '../../shared/components/crud-base/crud-base.component.scss'],
@@ -113,8 +116,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     filterEventoPessoa: EventoPessoaFilter = new EventoPessoaFilter();
     private filterSearchSubject = new Subject<void>();
 
-    enviandoEmails = false;
-
     // ======= Sugestões para Selects =======
     pessoasSugestoes: Pessoa[] = [];
     produtosSugestoes: Produto[] = [];
@@ -132,8 +133,11 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     statusSelecionado: any = null;
 
     // ======= Controles de Importação e Logs =======
-    importando: boolean = false;
+    inputArquivoSelecionado: any;
     importacaoLogs: string[] = [];
+    enviandoEmails = false;
+    progressoTarefaDto: ProgressoTarefaDto = new ProgressoTarefaDto();
+    timerStatus: any;
 
     readonly filterFields: FilterField[] = [
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
@@ -175,17 +179,55 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             this.preencherCamposDeExibicao();
             // Carrega a primeira página da grid ao abrir o evento
             this.buscarPessoasDoBackend();
+            this.verificaProgresso();
+
         });
+
+
         this.carregarOpcoes();
     }
 
-    // =========================================================================
+    private verificaProgresso() {
+        // Vejo se tem algum processo rodando
+        this.eventoService.getStatusProgresso(this.vm.model.id).subscribe({
+            next: res => {
+                Object.assign(this.progressoTarefaDto, res);
+
+                if (res.status === 'PROCESSANDO') {
+                    this.progressoTarefaDto.progresso = true;
+                    // Se não houver um timer rodando, cria um para perguntar de novo em 3 segundos
+                    if (!this.timerStatus) {
+                        this.timerStatus = setInterval(() => this.verificaProgresso(), 1000);
+                    }
+                }
+                else {
+                    this.progressoTarefaDto.progresso = false;
+                    if (this.timerStatus) {
+                        clearInterval(this.timerStatus);
+                        this.timerStatus = null;
+                    }
+
+                    if (res.progressoId === 'progressArquivo') {
+                        this.finalizaImportacaoCsv(res);
+                    }
+
+                }
+            },
+            error: (err) => {
+                console.error(err);
+            }
+        });
+    }
+
+// =========================================================================
     //  IMPORTAÇÃO CSV
     // =========================================================================
     onFileSelect(event: any) {
-        const input = event.target as HTMLInputElement;
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
+        const file = event.target.files[0];
+        if (file) {
+        // this.inputArquivoSelecionado = event.target as HTMLInputElement;
+        // if (this.inputArquivoSelecionado.files && this.inputArquivoSelecionado.files.length > 0) {
+        //     const file = this.inputArquivoSelecionado.files[0];
             const eventoId = this.vm.model?.id;
 
             if (!eventoId) {
@@ -193,40 +235,26 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 return;
             }
 
-            this.importando = true;
+            this.progressoTarefaDto.progresso = true;
             this.importacaoLogs = [];
 
-            this.eventoService.importarPessoasCsv(eventoId, file).subscribe({
+            this.eventoService.iniciaImportacaoArquivoCsv(eventoId, file).subscribe({
                 next: (res: any) => {
-                    this.importando = false;
-                    const adicionados = res?.adicionados ?? 0;
-                    const logs = res?.logErros ?? [];
+                    this.verificaProgresso();
 
-                    if (adicionados > 0) {
-                        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: `${adicionados} pessoas importadas.` });
-                        this.onRefreshGridPessoas(); // Recarrega do backend
-                    } else if (logs.length === 0) {
-                        this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhuma pessoa nova foi adicionada.' });
-                    }
-
-                    if (logs.length > 0) {
-                        this.importacaoLogs = logs;
-                        this.abaAtiva = 'log'; // Troca aba para mostrar erro
-                        this.messageService.add({ severity: 'error', summary: 'Erros na Importação', detail: 'Verifique a aba de Log.' });
-                    }
-
-                    input.value = '';
                 },
                 error: (err) => {
-                    this.importando = false;
+                    this.progressoTarefaDto.progresso = false;
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erro Fatal',
                         detail: err?.error?.message || 'Falha ao enviar arquivo.'
                     });
-                    input.value = '';
+                    this.inputArquivoSelecionado.value = '';
                 }
             });
+
+            event.target.value = '';
         }
     }
 
@@ -829,7 +857,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.filterSearchSubject.next();
     }
 
-    // Boa prática: Limpar a inscrição quando sair da tela (opcional mas recomendado)
+
     override ngOnDestroy(): void {
         super.ngOnDestroy();
         this.filterSearchSubject.complete();
@@ -842,7 +870,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.enviandoEmails = true;
-                this.eventoService.enviarEmailsConvite(this.vm.model.id).subscribe({
+                this.eventoService.iniciaEnvioEmails(this.vm.model.id).subscribe({
                     next: () => {
                         this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'O processo de envio foi iniciado.' });
                         this.enviandoEmails = false;
@@ -856,4 +884,66 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         });
     }
 
+    protected getValueProgresso() {
+        if(!this.progressoTarefaDto.percentual) {
+            return 0;
+        }
+
+        return this.progressoTarefaDto.percentual;
+    }
+
+    protected pararProcesso() {
+        this.eventoService.pararProgresso(this.vm.model.id).subscribe({
+            next: res => {
+                Object.assign(this.progressoTarefaDto, res);
+
+                this.progressoTarefaDto.progresso = false;
+                if (res.progressoId === 'progressArquivo') {
+                    this.finalizaImportacaoCsv(res);
+                }
+
+                if (this.timerStatus) {
+                    clearInterval(this.timerStatus);
+                    this.timerStatus = null;
+                }
+            },
+            error: (err) => {
+                console.error(err);
+            }
+        });
+
+    }
+
+    private finalizaImportacaoCsv(res: ProgressoTarefaDto) {
+        this.progressoTarefaDto.progresso = false;
+        const adicionados = res?.total ?? 0;
+        const logs = res?.logErros ?? [];
+
+        if (adicionados > 0) {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Sucesso',
+                detail: `${adicionados} pessoas importadas.`
+            });
+            this.onRefreshGridPessoas(); // Recarrega do backend
+        } else if (logs.length === 0) {
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Info',
+                detail: 'Nenhuma pessoa nova foi adicionada.'
+            });
+        }
+
+        if (logs.length > 0) {
+            this.importacaoLogs = logs;
+            this.abaAtiva = 'log'; // Troca aba para mostrar erro
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Erros na Importação',
+                detail: 'Verifique a aba de Log.'
+            });
+        }
+
+        this.inputArquivoSelecionado = '';
+    }
 }

@@ -22,6 +22,7 @@ import {TableModule} from 'primeng/table';
 import {EDataGridComponent, EiColumnComponent, ETemplateDirective} from '@/shared/components/e-data-grid';
 import {ClienteCrudVM} from './cliente-crud.vm';
 import {AuthService} from '@/pages/auth/auth-service';
+import {Usuario} from "@/shared/model/usuario";
 
 @Component({
     selector: 'cliente-page',
@@ -49,7 +50,7 @@ export class ClientePageComponent implements OnInit {
 
     @ViewChild('crudRef') crudRef?: CrudComponent<Cliente, ClienteFilter>;
 
-    usuariosOptions: { label: string; value: number }[] = [];
+    usuariosOptions: Usuario[] = [];
     readonly statusOptions: { label: string; value: string }[] = [
         {label: 'Ativo', value: 'ATIVO'},
         {label: 'Inativo', value: 'INATIVO'}
@@ -77,8 +78,8 @@ export class ClientePageComponent implements OnInit {
         const filtroUsuarios = new UsuarioFilter({page: 0, size: 1000, order: ['id,ASC'], papel: 'CLIENTE'} as any);
         this.usuarioService.listar(filtroUsuarios).subscribe({
             next: (resp: any) => {
-                const content = resp?.content || [];
-                this.usuariosOptions = content.map((u: any) => ({label: u.username, value: u.id}));
+                // const content = resp?.content || [];
+                this.usuariosOptions = resp?.content || [];
             },
             error: () => {
                 // Em caso de erro, mantém lista vazia

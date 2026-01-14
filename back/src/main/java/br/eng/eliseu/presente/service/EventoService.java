@@ -17,6 +17,8 @@ import br.eng.eliseu.presente.model.dto.*;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
@@ -32,6 +34,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
@@ -52,6 +57,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventoService extends AbstractCrudService<Evento, Long, EventoFilter> {
 
+    @PersistenceContext private EntityManager entityManager;
+    @Autowired private PlatformTransactionManager transactionManager;
+
     private final EventoRepository eventoRepository;
     private final PessoaRepository pessoaRepository;
     private final ProdutoRepository produtoRepository;
@@ -62,6 +70,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
+    private Thread thread;
 
     @Override
     protected EventoRepository getRepository() {
@@ -648,7 +657,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
 
         // Busca paginada no repositório
-        Page<EventoPessoa> page = eventoPessoaRepository.buscarPaginado(filtro, pageable);
+        Page<EventoPessoa> page = eventoPessoaRepository.findByEventoIdWithPessoa(filtro, pageable);
 
         // Otimização: Busca IDs de quem já escolheu em lote
         Set<Long> pessoasQueJaEscolheram = eventoEscolhaRepository.findByEvento_IdAndStatus(filtro.getEventoId(), StatusEnum.ATIVO).stream()
@@ -656,152 +665,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .collect(Collectors.toSet());
 
         return page.map(ep -> EventoPessoaMapper.toDto(ep, pessoasQueJaEscolheram));
-    }
-
-    @Transactional
-    public ImportacaoResultadoDto importarPessoasCsv(Long eventoId, MultipartFile file) {
-        List<String> logs = new ArrayList<>();
-        int adicionados = 0;
-
-        if (file == null || file.isEmpty()) {
-            logs.add("O arquivo está vazio ou não foi enviado.");
-            return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
-        }
-
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new RuntimeException("Evento não encontrado."));
-        Cliente cliente = evento.getCliente();
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-
-            // 1. Ler o Cabeçalho
-            String headerLine = br.readLine();
-            if (headerLine == null) {
-                logs.add("O arquivo está vazio.");
-                return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
-            }
-
-            // Remove caractere BOM que o Excel costuma colocar no início (ï»¿)
-            headerLine = headerLine.replace("\uFEFF", "");
-
-            // Detecta separador (vírgula ou ponto e vírgula)
-            String separador = headerLine.contains(";") ? ";" : ",";
-            String[] headers = headerLine.split(separador);
-
-            // 2. Mapear nomes das colunas para índices
-            Map<String, Integer> mapaColunas = new HashMap<>();
-            for (int i = 0; i < headers.length; i++) {
-                // Normaliza para minúsculo e remove espaços: " Nome " -> "nome"
-                mapaColunas.put(headers[i].trim().toLowerCase(), i);
-            }
-
-            // Valida se as colunas obrigatórias existem
-            if (!mapaColunas.containsKey("nome") || !mapaColunas.containsKey("cpf")) {
-                logs.add("Erro: O arquivo deve conter colunas chamadas 'Nome' e 'CPF' no cabeçalho.");
-                return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
-            }
-
-            String line;
-            int linhaNum = 1; // Começa em 1 pois já lemos o cabeçalho
-
-            while ((line = br.readLine()) != null) {
-                linhaNum++;
-                if (line.trim().isEmpty()) continue;
-
-                // Usa o limite -1 para não descartar colunas vazias no final da linha
-                String[] cols = line.split(separador, -1);
-
-                // 3. Buscar valores usando o mapa (extrai lógica para método auxiliar para segurança)
-                String nome = obterValor(cols, mapaColunas, "nome");
-                String cpfRaw = obterValor(cols, mapaColunas, "cpf");
-                String telefone = obterValor(cols, mapaColunas, "telefone"); // Opcional, se não achar retorna vazio
-                String email = obterValor(cols, mapaColunas, "email");       // Opcional
-
-                String organoNivel1 = obterValor(cols, mapaColunas, "uniao");
-                String organoNivel2 = obterValor(cols, mapaColunas, "associacao");
-                String organoNivel3 = obterValor(cols, mapaColunas, "escola_igreja");
-                String localTrabalho = obterValor(cols, mapaColunas, "localTrabalho");
-
-                // Validações
-                if (nome.isEmpty()) {
-                    logs.add("Linha " + linhaNum + ": Coluna 'Nome' está vazia.");
-                    continue;
-                }
-
-                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
-                if (cpfNumerico.length() < 11) {
-                    // so para me divertir, vou tornar o cpf valido
-                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
-                }
-                if (cpfNumerico.length() != 11) {
-                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + ").");
-                    continue;
-                }
-
-                // Validação de Email (apenas se preenchido)
-                if (!email.isEmpty() && !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                    logs.add("Linha " + linhaNum + ": Email incorreto (" + email + ").");
-                    continue;
-                }
-
-                // Validação de Telefone (apenas se preenchido)
-                String telNumerico = telefone.replaceAll("\\D", "");
-                if (!telefone.isEmpty() && (telNumerico.length() < 8 || telNumerico.length() > 15)) {
-                    logs.add("Linha " + linhaNum + ": Telefone incorreto (" + telefone + ").");
-                    continue;
-                }
-
-                // --- Lógica de Persistência (Pessoa / Evento) ---
-
-                Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
-
-                if (pessoa == null) {
-//                    if (!cpfRaw.isEmpty() && pessoaRepository.findByCpf(email).isPresent()) {
-//                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
-//                        continue;
-//                    }
-                    try {
-                        pessoa = Pessoa.builder()
-                                .nome(nome)
-                                .cpf(cpfNumerico)
-                                .telefone(telefone)
-                                .email(email)
-                                .cliente(cliente)
-                                .status(StatusEnum.ATIVO)
-                                .build();
-                        pessoa = pessoaRepository.save(pessoa);
-                    } catch (Exception e) {
-                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa: " + e.getMessage());
-                        continue;
-                    }
-                }
-
-                // Vincula ao Evento
-                if (eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa)) {
-                    logs.add("Linha " + linhaNum + ": Pessoa já cadastrada neste evento (" + nome + ").");
-                    continue;
-                }
-
-                EventoPessoa vinculo = EventoPessoa.builder()
-                        .evento(evento)
-                        .pessoa(pessoa)
-                        .status(StatusEnum.ATIVO)
-                        .organoNivel1(organoNivel1)
-                        .organoNivel2(organoNivel2)
-                        .organoNivel3(organoNivel3)
-                        .localTrabalho(localTrabalho)
-                        .build();
-                eventoPessoaRepository.save(vinculo);
-                adicionados++;
-            }
-        } catch (IOException e) {
-            logs.add("Erro fatal ao ler arquivo: " + e.getMessage());
-        }
-
-        return ImportacaoResultadoDto.builder()
-                .adicionados(adicionados)
-                .logErros(logs)
-                .build();
     }
 
     // Método auxiliar para pegar valor com segurança (evita ArrayIndexOutOfBounds)
@@ -1072,19 +935,434 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return JasperExportManager.exportReportToPdf(print);
     }
 
-    @Async
-    @Transactional(readOnly = true)
-    public EmailsEnviadosResultadoDto enviarEmailsConvite(Long eventoId) {
+    public ProgressoTarefaDto importarArquivoPessoasCsv(Long eventoId, MultipartFile file) {
+        List<String> logsIniciais = new ArrayList<>();
+
+        if (file == null || file.isEmpty()) {
+            logsIniciais.add("O arquivo está vazio ou não foi enviado.");
+            return ProgressoTarefaDto.builder()
+                    .status("CONCLUIDO")
+                    .logErros(logsIniciais)
+                    .build();
+        }
+
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento não encontrado."));
+
+        try {
+            // Lemos todas as linhas antes de abrir a thread para garantir que o MultipartFile não seja descartado
+            List<String> todasAsLinhas = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
+                    .lines().collect(Collectors.toList());
+
+            if (todasAsLinhas.size() <= 1) {
+                logsIniciais.add("Arquivo sem dados (apenas cabeçalho ou vazio).");
+                return ProgressoTarefaDto.builder()
+                        .status("CONCLUIDO")
+                        .logErros(logsIniciais)
+                        .build();
+            }
+
+            // Inicializa o estado no banco para o polling do front-end encontrar
+            evento.setProgLabel("progressArquivo");
+            evento.setProgStatus("PROCESSANDO");
+            evento.setProgTotal(todasAsLinhas.size() - 1); // Desconta o cabeçalho
+            evento.setProgAtual(0);
+            eventoRepository.saveAndFlush(evento);
+
+            // DISPARA A THREAD MANUAL: O processo continua aqui dentro mesmo se o Request acabar
+            thread = new Thread(() -> {
+                executarProcessamentoCsv(eventoId, todasAsLinhas);
+            });
+
+            thread.start();
+
+            // RETORNA IMEDIATAMENTE: O usuário recebe isso e começa o setInterval no Angular
+            return ProgressoTarefaDto.builder()
+                    .status("PROCESSANDO")
+                    .atual(0)
+                    .total(todasAsLinhas.size() - 1)
+                    .build();
+
+        } catch (IOException e) {
+            logsIniciais.add("Falha ao ler arquivo: " + e.getMessage());
+            return ProgressoTarefaDto.builder()
+                    .status("CONCLUIDO")
+                    .logErros(logsIniciais)
+                    .build();
+        }
+    }
+
+/*
+    private void executarProcessamentoCsv(Long eventoId, List<String> todasAsLinhas) {
+        // Buscamos o evento novamente para garantir que temos uma instância gerenciada nesta Thread
+        Evento evento = eventoRepository.findById(eventoId).orElse(null);
+        if (evento == null) return;
+
+        Cliente cliente = evento.getCliente();
+        List<String> logs = new ArrayList<>();
+        int adicionados = 0;
+
+
+
+        try {
+            // 1. Processamento do Cabeçalho
+            String headerLine = todasAsLinhas.get(0).replace("\uFEFF", "");
+            String separador = headerLine.contains(";") ? ";" : ",";
+            String[] headers = headerLine.split(separador);
+
+            Map<String, Integer> mapaColunas = new HashMap<>();
+            for (int i = 0; i < headers.length; i++) {
+                mapaColunas.put(headers[i].trim().toLowerCase(), i);
+            }
+
+            // Busco todas as pessoas
+            List<Pessoa> pessoaList = pessoaRepository.findByCliente(cliente);
+            Map<String, Pessoa> pessoaMap = pessoaList.stream()
+                    .collect(Collectors.toMap(
+                            Pessoa::getCpf,
+                            p -> p,
+                            (existente, novo) -> existente));
+
+            List<EventoPessoa> eventoPessoaList = eventoPessoaRepository.findByEventoId(eventoId);
+            Map<Long, EventoPessoa> eventoPessoaMap = eventoPessoaList.stream()
+                    .filter(ep -> ep.getPessoa() != null) // Segurança contra dados órfãos
+                    .collect(Collectors.toMap(
+                            ep -> ep.getPessoa().getId(),
+                            ep -> ep,
+                            (existente, novo) -> existente
+                    ));
+
+            List<Pessoa> lotePessoas = new ArrayList<>();
+            List<EventoPessoa> loteVinculos = new ArrayList<>();
+
+            // 2. Loop de Dados (começa em 1 para pular cabeçalho)
+            for (int i = 1; i < todasAsLinhas.size(); i++) {
+                String lineStr = todasAsLinhas.get(i);
+                if (lineStr.trim().isEmpty()) continue;
+
+                String[] cols = lineStr.split(separador, -1);
+
+                // Extração de valores
+                String nome = obterValor(cols, mapaColunas, "nome");
+                String cpfRaw = obterValor(cols, mapaColunas, "cpf");
+                String telefone = obterValor(cols, mapaColunas, "telefone");
+                String email = obterValor(cols, mapaColunas, "email");
+                String organoNivel1 = obterValor(cols, mapaColunas, "uniao");
+                String organoNivel2 = obterValor(cols, mapaColunas, "associacao");
+                String organoNivel3 = obterValor(cols, mapaColunas, "escola_igreja");
+                String localTrabalho = obterValor(cols, mapaColunas, "localtrabalho");
+
+                // Validações Básicas
+                if (nome.isEmpty()) {
+                    logs.add("Linha " + (i + 1) + ": Coluna 'Nome' está vazia.");
+                    eventoRepository.atualizarApenasProgresso(eventoId, i);
+                    continue;
+                }
+
+                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
+                if (cpfNumerico.length() < 11) {
+                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
+                }
+
+                if (cpfNumerico.length() != 11) {
+                    logs.add("Linha " + (i + 1) + ": CPF incorreto (" + cpfRaw + ").");
+                    eventoRepository.atualizarApenasProgresso(eventoId, i);
+                    continue;
+                }
+
+                // Persistência da Pessoa
+                try {
+//                    Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
+                    Pessoa pessoa = pessoaMap.get(cpfNumerico);
+                    if (pessoa == null) {
+                        pessoa = Pessoa.builder()
+                                .nome(nome)
+                                .cpf(cpfNumerico)
+                                .telefone(telefone)
+                                .email(email)
+                                .cliente(cliente)
+                                .status(StatusEnum.ATIVO)
+                                .build();
+                        lotePessoas.add(pessoa);
+//                        pessoa = pessoaRepository.save(pessoa);
+                    }
+
+                    // Vínculo ao Evento
+                    EventoPessoa ep = eventoPessoaMap.get(pessoa.getId());
+                    if (ep!=null) {
+                        logs.add("Linha " + (i + 1) + ": Pessoa já cadastrada (" + nome + ").");
+                    }
+                    else {
+                        EventoPessoa vinculo = EventoPessoa.builder()
+                                .evento(evento)
+                                .pessoa(pessoa)
+                                .status(StatusEnum.ATIVO)
+                                .organoNivel1(organoNivel1)
+                                .organoNivel2(organoNivel2)
+                                .organoNivel3(organoNivel3)
+                                .localTrabalho(localTrabalho)
+                                .build();
+                        loteVinculos.add(vinculo);
+//                        eventoPessoaRepository.save(vinculo);
+                        adicionados++;
+
+                    }
+                }
+                catch (Exception e) {
+                    logs.add("Linha " + (i + 1) + ": Erro ao processar registro: " + e.getMessage());
+                }
+
+                if (loteVinculos.size() >= 50 || i == todasAsLinhas.size() - 1) {
+                    pessoaRepository.saveAll(lotePessoas);
+                    pessoaRepository.flush();
+
+                    eventoPessoaRepository.saveAll(loteVinculos);
+                    eventoPessoaRepository.flush();
+
+                    lotePessoas.clear();
+                    loteVinculos.clear();
+
+                    // Atualiza o progresso no banco apenas no fim do lote
+                    eventoRepository.atualizarApenasProgresso(eventoId, i);
+
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                }
+
+            }
+
+            // 3. Finalização
+            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);
+
+        } catch (Exception e) {
+            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);        }
+    }
+*/
+
+    private void executarProcessamentoCsv(Long eventoId, List<String> todasAsLinhas) {
+        // 1. Setup Inicial
+        Evento evento = eventoRepository.findById(eventoId).orElse(null);
+        if (evento == null) return;
+
+        Cliente cliente = evento.getCliente();
+        List<String> logs = new ArrayList<>();
+        int adicionados = 0;
+
+        try {
+            // 2. Processamento do Cabeçalho
+            String headerLine = todasAsLinhas.get(0).replace("\uFEFF", "");
+            String separador = headerLine.contains(";") ? ";" : ",";
+            String[] headers = headerLine.split(separador);
+
+            Map<String, Integer> mapaColunas = new HashMap<>();
+            for (int i = 0; i < headers.length; i++) {
+                mapaColunas.put(headers[i].trim().toLowerCase(), i);
+            }
+
+            // 3. Carregamento de Caches (Maps)
+            List<Pessoa> pessoaList = pessoaRepository.findByCliente(cliente);
+            Map<String, Pessoa> pessoaCpfMap = new HashMap<>(pessoaList.stream()
+                    .filter(p -> p.getCpf() != null)
+                    .collect(Collectors.toMap(Pessoa::getCpf, p -> p, (existente, novo) -> existente)));
+
+            Map<String, Pessoa> pessoaEmailMap = new HashMap<>(pessoaList.stream()
+                    .filter(p -> p.getEmail() != null)
+                    .collect(Collectors.toMap(Pessoa::getEmail, p -> p, (existente, novo) -> existente)));
+
+            Map<String, Pessoa> pessoaTelefoneMap = new HashMap<>(pessoaList.stream()
+                    .filter(p -> p.getTelefone() != null)
+                    .collect(Collectors.toMap(Pessoa::getTelefone, p -> p, (existente, novo) -> existente)));
+
+
+            List<EventoPessoa> eventoPessoaList = eventoPessoaRepository.findByEventoId(eventoId);
+            Map<Long, EventoPessoa> eventoPessoaMap = new HashMap<>(eventoPessoaList.stream()
+                    .filter(ep -> ep.getPessoa() != null)
+                    .collect(Collectors.toMap(ep -> ep.getPessoa().getId(), ep -> ep, (existente, novo) -> existente)));
+
+
+
+            List<Pessoa> lotePessoas = new ArrayList<>();
+            List<EventoPessoa> loteVinculos = new ArrayList<>();
+
+            // 4. Loop de Dados
+            for (int i = 1; i < todasAsLinhas.size(); i++) {
+
+                // VERIFICAÇÃO CRÍTICA: Se alguém chamou thread.interrupt(), a thread para aqui
+                if (thread.isInterrupted()) {
+                    logs.add("Processamento interrompido pelo usuário.");
+                    eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", 0);
+                    return; // Sai do loop com segurança
+                }
+
+                String lineStr = todasAsLinhas.get(i);
+                if (lineStr.trim().isEmpty()) continue;
+
+                String[] cols = lineStr.split(separador, -1);
+
+                // Extração
+                String nome = obterValor(cols, mapaColunas, "nome");
+                String cpfRaw = obterValor(cols, mapaColunas, "cpf");
+                String telefone = obterValor(cols, mapaColunas, "telefone");
+                String email = obterValor(cols, mapaColunas, "email");
+                String organoNivel1 = obterValor(cols, mapaColunas, "uniao");
+                String organoNivel2 = obterValor(cols, mapaColunas, "associacao");
+                String organoNivel3 = obterValor(cols, mapaColunas, "escola_igreja");
+                String localTrabalho = obterValor(cols, mapaColunas, "localtrabalho");
+
+                // Validações Básicas
+                if (nome.isEmpty()) {
+                    logs.add("Linha " + (i + 1) + ": Coluna 'Nome' está vazia.");
+                    eventoRepository.atualizarApenasProgresso(eventoId, i);
+                    continue;
+                }
+
+                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
+                if (cpfNumerico.length() < 11) {
+                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
+                }
+
+                if (cpfNumerico.length() != 11) {
+                    logs.add("Linha " + (i + 1) + ": CPF incorreto (" + cpfRaw + ").");
+                    eventoRepository.atualizarApenasProgresso(eventoId, i);
+                    continue;
+                }
+
+                try {
+                    // Lógica de Pessoa
+                    Pessoa pessoaCpf = pessoaCpfMap.get(cpfNumerico);
+                    Pessoa pessoaEmail = pessoaCpfMap.get(email);
+                    Pessoa pessoaTelefone = pessoaCpfMap.get(telefone);
+
+                    if (pessoaCpf == null && (pessoaEmail != null || pessoaTelefone != null)) {
+                        logs.add("Linha " + (i + 1) + ": E-mail ou Telefone já usado por outro CPF [" + email + ", " + telefone + "].");
+                        continue; // Pula para não dar erro de UNIQUE no banco
+                    }
+
+                    boolean isNovaPessoa = false;
+                    if (pessoaCpf == null) {
+                        pessoaCpf = Pessoa.builder()
+                                .nome(nome)
+                                .cpf(cpfNumerico)
+                                .telefone(telefone)
+                                .email(email)
+                                .cliente(cliente)
+                                .status(StatusEnum.ATIVO)
+                                .build();
+
+                        lotePessoas.add(pessoaCpf);
+                        pessoaCpfMap.put(cpfNumerico, pessoaCpf);
+                        pessoaEmailMap.put(email, pessoaCpf);
+                        pessoaTelefoneMap.put(telefone, pessoaCpf);
+                        isNovaPessoa = true;
+                    }
+
+                    // Lógica de Vínculo
+                    // Se a pessoa já existia e já está no evento, pulamos
+                    if (!isNovaPessoa && pessoaCpf.getId() != null && eventoPessoaMap.containsKey(pessoaCpf.getId())) {
+                        logs.add("Linha " + (i + 1) + ": Pessoa já cadastrada (" + nome + ").");
+                    }
+                    else {
+                        EventoPessoa vinculo = EventoPessoa.builder()
+                                .evento(evento)
+                                .pessoa(pessoaCpf)
+                                .status(StatusEnum.ATIVO)
+                                .organoNivel1(organoNivel1)
+                                .organoNivel2(organoNivel2)
+                                .organoNivel3(organoNivel3)
+                                .localTrabalho(localTrabalho)
+                                .build();
+
+                        loteVinculos.add(vinculo);
+                        adicionados++;
+                    }
+
+                    // 5. PROCESSAMENTO DO LOTE (Batch)
+                    if (loteVinculos.size() >= 10 || i == todasAsLinhas.size() - 1) {
+
+                        // Atualiza o progresso (Este método no Repository DEVE ter @Transactional(propagation = Propagation.REQUIRES_NEW))
+                        eventoRepository.atualizarApenasProgresso(eventoId, i);
+
+
+                        // Criamos um executor de transação manual
+                        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+
+                        transactionTemplate.execute(status -> {
+                            // Passo A: Salvar Pessoas
+                            if (!lotePessoas.isEmpty()) {
+                                pessoaRepository.saveAll(lotePessoas);
+                            }
+
+                            // Passo B: Salvar Vínculos
+                            if (!loteVinculos.isEmpty()) {
+                                eventoPessoaRepository.saveAll(loteVinculos);
+                            }
+
+                            // Passo C: Forçar envio e limpar cache DENTRO da transação
+                            entityManager.flush();
+                            entityManager.clear();
+                            return null;
+                        });
+
+                        // <--- Aqui o COMMIT acontece e o banco libera os locks (destrava)
+
+                        // Atualiza o mapa de vínculos para a memória não se perder após o clear
+                        for (EventoPessoa evp : loteVinculos) {
+                            if (evp.getPessoa() != null) eventoPessoaMap.put(evp.getPessoa().getId(), evp);
+                        }
+
+                        lotePessoas.clear();
+                        loteVinculos.clear();
+
+                        // Recarregar o objeto evento que foi "limpo" pelo clear()
+                        evento = eventoRepository.findById(eventoId).orElse(null);
+
+                        try {
+                            Thread.sleep(300); // Respiro para o banco respirar entre transações
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                        }
+
+                    }
+                }
+                catch (Exception e) {
+                    logs.add("Linha " + (i + 1) + ": Erro: " + e.getMessage());
+                }
+
+            }
+
+            // 6. Finalização
+            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);
+
+        } catch (Exception e) {
+            eventoRepository.finalizarProgresso(eventoId, "ERRO", 0);
+        }
+    }
+
+    @Async // Faz o método rodar em uma thread separada
+    @Transactional
+    public ProgressoTarefaDto enviarEmailsAssincrono(Long eventoId) {
 
         List<String> logs = new ArrayList<>();
         int enviados = 0;
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
-        // Busca apenas pessoas ativas do evento
-        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO);
+        Evento evento = eventoRepository.findById(eventoId).orElseThrow();
+        List<EventoPessoa> eventoPessoaList = evento.getEventoPessoas();
 
-        for (EventoPessoa ep : pessoas) {
+        // Inicializa o estado no banco
+        evento.setProgLabel("progressEmail");
+        evento.setProgStatus("PROCESSANDO");
+        evento.setProgTotal(eventoPessoaList.size());
+        evento.setProgAtual(0);
+        eventoRepository.saveAndFlush(evento);
+
+        for (int i = 0; i < eventoPessoaList.size(); i++) {
+
+            EventoPessoa ep = eventoPessoaList.get(i);
+
             if (ep.getPessoa() != null) {
                 if (ep.getPessoa().getEmail()==null || ep.getPessoa().getEmail().isEmpty()) {
                     logs.add(ep.getPessoa().getNome()+" nao tem e-mail cadastrado");
@@ -1097,6 +1375,11 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
                 try {
                     enviarEmailIndividual(ep, evento);
+
+                    // ATUALIZA O BANCO A CADA PASSO
+                    // Usamos saveAndFlush para garantir que o progresso seja persistido IMEDIATAMENTE
+                    evento.setProgAtual(i + 1);
+                    eventoRepository.saveAndFlush(evento);
                 } catch (Exception e) {
                     System.err.println("Erro ao enviar para: " + ep.getPessoa().getEmail());
                 }
@@ -1105,10 +1388,17 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
         }
 
-        return EmailsEnviadosResultadoDto.builder()
-                .enviados(enviados)
+        // Finaliza
+        evento.setProgStatus("CONCLUIDO");
+        eventoRepository.saveAndFlush(evento);
+
+        return ProgressoTarefaDto.builder()
+                .status(evento.getProgStatus())
+                .atual(evento.getProgAtual())
+                .total(evento.getProgTotal())
                 .logErros(logs)
                 .build();
+
     }
 
     private void enviarEmailIndividual(EventoPessoa ep, Evento evento) throws MessagingException {
@@ -1128,6 +1418,63 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         helper.setText(body, true);
 
         mailSender.send(mimeMessage);
+    }
+
+    @Transactional
+    public ProgressoTarefaDto getStatusProgresso(Long eventoId) {
+
+        // Se a thread nao existir ou ja terminou o trabalho
+        if (thread == null || !thread.isAlive()) {
+            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", 0);
+        }
+
+        Evento evento = eventoRepository.findById(eventoId).orElseThrow();
+
+        return ProgressoTarefaDto.builder()
+                .status(evento.getProgStatus())
+                .atual(evento.getProgAtual())
+                .total(evento.getProgTotal())
+                .build();
+    }
+
+    public ProgressoTarefaDto pararProgresso(Long eventoId) {
+        boolean parouDeFato = false;
+        if (thread != null && thread.isAlive()) {
+            thread.interrupt();
+
+            // Espera ativa curta para tentar confirmar a parada antes de responder ao front-end
+            int tentativas = 0;
+            while (thread.isAlive() && tentativas < 10) { // Tenta por +/- 2.5 segundos
+                try {
+                    thread.join(1000);
+                    tentativas++;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
+                // Verifica o estado final após a tentativa de join
+                parouDeFato = (thread == null || !thread.isAlive());
+                if (parouDeFato) break;
+            }
+        }
+
+        // Se não parou de fato, o status no banco deve ser "CANCELANDO"
+        // para o usuário saber que o sistema ainda está limpando os recursos.
+        String statusFinal = parouDeFato ? "INTERROMPIDO" : "CANCELANDO";
+
+        // O status "CANCELANDO" bloqueia o início de uma nova importação no seu Front?
+        // Se sim, é a melhor escolha.
+        eventoRepository.finalizarProgresso(eventoId, statusFinal, 0);
+
+        Evento evento = eventoRepository.findById(eventoId).orElseThrow();
+
+        return ProgressoTarefaDto.builder()
+                .progressoId(evento.getProgLabel())
+                .status(evento.getProgStatus())
+                .atual(evento.getProgAtual())
+                .total(evento.getProgTotal())
+                .build();
     }
 
 }

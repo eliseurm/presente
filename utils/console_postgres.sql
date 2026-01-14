@@ -8,6 +8,7 @@ CREATE USER presente_user WITH PASSWORD 'Presente_pwd#123';
 CREATE DATABASE presente_db;
 GRANT CREATE ON DATABASE presente_db TO presente_user;
 
+
 -- Mude para presente_db mas ainda com superUsuario
 
 CREATE SCHEMA IF NOT EXISTS presente_sh ;
@@ -72,7 +73,14 @@ create table teste (id int, nome varchar(10));
 select * from teste ;
 drop table teste ;
 
+-- 1. Veja quais processos estão ativos e "travados"
+SELECT pid, query, state, wait_event_type, wait_event
+FROM pg_stat_activity
+WHERE query LIKE '%update%evento%' AND state != 'idle';
 
+-- 2. Mate os processos que estão tentando atualizar a tabela (substitua o PID pelo número encontrado acima)
+-- Repita para os PIDs que parecerem "presos"
+SELECT pg_terminate_backend(59944);
 
 -- ##########################################################
 select * from flyway_schema_history  ;
@@ -81,9 +89,9 @@ delete from flyway_schema_history where installed_rank >= 11 ;
 
 INSERT INTO presente_sh.usuario (id, username, password_hash, papel, status, criado_em, alterado_em) VALUES (1, 'admin', '$2a$10$UX68K.ZTOT4YiWIDMRONXONP3mV9vyYdlKfT.a7hbk.0IkykAfvN2', 'ADMINISTRADOR', 'ATIVO', '2025-11-12 09:46:52.613582', '2025-11-12 09:46:52.613582');
 
-select * from usuario ;
-
 select * from tamanho ;
+
+select * from cor ;
 
 select * from imagem ;
 
@@ -92,8 +100,17 @@ select * from produto_estoque ;
 
 select * from usuario ;
 
-select * from pessoa where id<=3;
-delete from pessoa where id>=3;
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE 1=1
+and state != 'idle'
+AND query ILIKE '%pessoa%'
+AND pid <> pg_backend_pid();
+REINDEX INDEX presente_sh.uq_pessoa_email;
+
+select * from pessoa ;
+reindex table presente_sh.pessoa;
+-- delete from pessoa where id>=3;
 
 select * from cliente ;
 
@@ -148,18 +165,31 @@ and ( :jaEscolheuParam = -1 or (case when es.id is not null then 1 else 0 end = 
 
 update evento_escolha set status = 'PAUSADO' where status = 'ENCERRADO' ;
 
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 005', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 005', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 005', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 005', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 005', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 006', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 006', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 006', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 006', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 006', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sapato Paula Bahia 007', 'Sapato tipo sandalia', null, true, '2025-12-11 15:15:37.536125', '2025-12-11 15:15:37.536125');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Sandalia Lorraci 007', 'Sandalia linda', null, true, '2025-12-11 15:16:27.655429', '2025-12-11 15:16:27.655429');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Tenis 007', 'Tenis', null, true, '2025-12-19 15:14:03.328825', '2025-12-19 15:14:03.328825');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('Chinelo 007', 'Chinelo', null, true, '2025-12-19 15:14:49.410483', '2025-12-19 15:14:49.410483');
-INSERT INTO presente_sh.produto (nome, descricao, preco, status, criado_em, alterado_em) VALUES ('chinelo 007', 'chinelo 2', null, true, '2025-12-19 15:15:26.617391', '2025-12-19 15:15:26.617391');
+
+INSERT INTO tamanho (id, tipo, tamanho, version) VALUES (1, 'SAPATO', '40', 0);
+INSERT INTO tamanho (id, tipo, tamanho, version) VALUES (2, 'SAPATO', '41', 0);
+INSERT INTO tamanho (id, tipo, tamanho, version) VALUES (3, 'SAPATO', '42', 0);
+INSERT INTO tamanho (id, tipo, tamanho, version) VALUES (4, 'SAPATO', '43', 0);
+
+
+INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (1, 'Marrom', '#7a7458', 'rgba(122, 116, 88, 1)', 0);
+INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (2, 'Camursa', '#b5a45b', 'rgba(181, 164, 91, 1)', 0);
+INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (3, 'Vermelho', '#9c2828', 'rgba(156, 40, 40, 1)', 0);
+
+
+INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (1, 'admin', '$2a$10$PemMUY1FAWLRTKc7eSieAey4d0dBySXvSUK6YpHGCcMS0aphSoTC2', 'ADMIN', 'ATIVO', '2026-01-12 15:01:17.940662', '2026-01-12 15:01:17.940662', 0);
+INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (2, 'cliente_mmo', '$2a$10$F5UJhXQZVXIBUTmBlkFjMe/XG..fh57u8/xAG3iThPJ8yFz1mfynu', 'CLIENTE', 'ATIVO', '2026-01-12 15:10:50.608350', '2026-01-12 15:10:50.608350', 0);
+INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (3, 'cliente_useb', '$2a$10$V9rz7YIpPuhnRYQCr33IROBc8yud92rIZSi9aPfYHs0lqHQAChnT2', 'CLIENTE', 'ATIVO', '2026-01-12 15:11:06.519004', '2026-01-12 15:11:06.519004', 0);
+
+INSERT INTO produto (id, nome, descricao, preco, criado_em, alterado_em, status, version) VALUES (1, 'Sandalia ', '', null, '2026-01-12 15:09:33.014900', '2026-01-12 15:09:33.014900', 'ATIVO', 0);
+INSERT INTO produto (id, nome, descricao, preco, criado_em, alterado_em, status, version) VALUES (2, 'Sandalia', '', null, '2026-01-12 15:10:28.124630', '2026-01-12 15:10:28.124630', 'ATIVO', 0);
+
+
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (1, 1, 3, 1, 0.00, 2.00, 'ATIVO', '2026-01-12 15:09:33.249226', '2026-01-12 15:09:33.249226', 0);
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (2, 1, 3, 2, 0.00, 1.00, 'ATIVO', '2026-01-12 15:09:33.479834', '2026-01-12 15:09:33.479834', 0);
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (3, 1, 3, 3, 0.00, 3.00, 'ATIVO', '2026-01-12 15:09:33.706818', '2026-01-12 15:09:33.706818', 0);
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (4, 2, 2, 4, 0.00, 1.00, 'ATIVO', '2026-01-12 15:10:28.355272', '2026-01-12 15:10:28.355272', 0);
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (5, 2, 2, 3, 0.00, 2.00, 'ATIVO', '2026-01-12 15:10:28.585645', '2026-01-12 15:10:28.585645', 0);
+INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (6, 2, 2, 2, 0.00, 3.00, 'ATIVO', '2026-01-12 15:10:28.812973', '2026-01-12 15:10:28.812973', 0);
+
+

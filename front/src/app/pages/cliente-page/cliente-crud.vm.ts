@@ -67,9 +67,11 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
         // ADMIN mantém comportamento completo
         const payload: any = {...this.model} as any;
         const u = (this.model as any)?.usuario;
-        if (u) {
-            const id = typeof u === 'object' ? u.id : u;
-            payload.usuario = id ? {id} : null;
+        if (u && typeof u === 'object') {
+            payload.usuario = {
+                id: u.id,
+                version: u.version
+            };
         }
         this.model = payload;
         return super.doSave();

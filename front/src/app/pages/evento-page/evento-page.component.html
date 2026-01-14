@@ -174,10 +174,10 @@
                                 <input #fileInput type="file" accept=".csv" class="hidden"
                                        (change)="onFileSelect($event)"/>
                                 <button pButton type="button"
-                                        [label]="importando ? 'Processando...' : 'Importar arq csv'"
-                                        [icon]="importando ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
+                                        [label]="progressoTarefaDto.progresso ? 'Processando...' : 'Importar arq csv'"
+                                        [icon]="progressoTarefaDto.progresso ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
                                         class="p-button-outlined"
-                                        [disabled]="importando"
+                                        [disabled]="progressoTarefaDto.progresso"
                                         (click)="fileInput.click()">
                                 </button>
                                 <button pButton label="Enviar e-mail" icon="pi pi-envelope"
@@ -194,6 +194,21 @@
                                         (click)="onOpenAddPessoas()"></button>
                             </div>
                         </div>
+
+                        @if (progressoTarefaDto.progresso) {
+                            <div class="mt-4 p-3 border rounded-lg bg-gray-50 shadow-sm flex flex-row items-center gap-4">
+                                <div class="flex-1">
+                                    <p-progressbar [value]="progressoTarefaDto.percentual" [showValue]="false" [style]="{ height: '10px' }"></p-progressbar>
+                                </div>
+                                <span class="text-xs font-bold text-blue-600 whitespace-nowrap">{{ progressoTarefaDto.atual }} / {{ progressoTarefaDto.total }}</span>
+                                <button pButton
+                                        class="p-button-danger p-button-text p-button-sm"
+                                        icon="pi pi-stop"
+                                        label="Parar"
+                                        (click)="pararProcesso()"
+                                ></button>
+                            </div>
+                        }
 
                         <div class="flex flex-col gap-3 p-3 border rounded surface-ground bg-gray-50">
                             <div class="flex flex-wrap gap-2 items-center w-full">

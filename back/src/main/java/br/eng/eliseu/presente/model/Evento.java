@@ -41,6 +41,22 @@ public class Evento {
 
     private LocalDateTime fim;
 
+    @Column(name = "criado_em")
+    private LocalDateTime criadoEm;
+
+    @Column(name = "alterado_em")
+    private LocalDateTime alteradoEm;
+
+    @Column(name = "prog_status")
+    private String progStatus;
+    @Column(name = "prog_atual")
+    private int progAtual;
+    @Column(name = "prog_total")
+    private int progTotal;
+    @Column(name = "prog_label")
+    private String progLabel;
+
+
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     @Fetch(FetchMode.SUBSELECT)
     @JsonManagedReference(value = "evento-produtos")
@@ -58,12 +74,6 @@ public class Evento {
     private List<EventoEscolha> eventoEscolhas;
 
 
-
-    @Column(name = "criado_em")
-    private LocalDateTime criadoEm;
-
-    @Column(name = "alterado_em")
-    private LocalDateTime alteradoEm;
 
     // Controle de concorrência otimista
     @Version

@@ -32,21 +32,21 @@ public class EventoPessoaMapper {
     }
 
     public static EventoPessoaDto toDto(EventoPessoa entity, Set<Long> IDsQueJaEscolheram) {
-        // 1. Aproveita o método base para criar o DTO inicial
-        EventoPessoaDto dto = toDto(entity);
 
-        if (dto == null) {
-            return null;
-        }
+        if (entity == null) return null;
 
-        // 2. Verifica a lógica de negócio adicional
+
         boolean jaEscolheu = entity.getPessoa() != null &&
                 IDsQueJaEscolheram != null &&
                 IDsQueJaEscolheram.contains(entity.getPessoa().getId());
 
-        // 3. Usa o toBuilder() para criar uma nova instância com o campo preenchido
-        return dto.toBuilder()
+        return EventoPessoaDto.builder()
+                .id(entity.getId())
+                .pessoa(PessoaMapper.toDto(entity.getPessoa())) // Aqui a Pessoa já deve estar em cache (Fetch)
+                .status(entity.getStatus())
+                .nomeMagicNumber(entity.getNomeMagicNumber())
                 .jaEscolheu(jaEscolheu)
+                .version(entity.getVersion())
                 .build();
     }
 

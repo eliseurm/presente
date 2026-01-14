@@ -74,13 +74,14 @@
       <div class="flex flex-col gap-2 w-full">
         <label class="block">Usuário</label>
         <p-select class="w-full"
+                  name="usuario"
                   [options]="usuariosOptions"
-                  optionLabel="label" optionValue="value"
-                  [ngModel]="getUsuarioIdFromModel()" name="usuario"
-                  (ngModelChange)="vm.model['usuario'] = $event ? { id: $event } : null"
+                  optionLabel="username"
+                  [(ngModel)]="vm.model.usuario"
                   [disabled]="isCliente()"
                   placeholder="Selecione"
-                  appendTo="body"></p-select>
+                  appendTo="body"
+        ></p-select>
       </div>
       <div class="flex flex-col gap-2 w-full md:col-span-2">
         <label class="block">Anotações</label>

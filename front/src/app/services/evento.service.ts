@@ -18,6 +18,7 @@ import { PessoaFilter } from '@/shared/model/filter/pessoa-filter';
 import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
 import {PageResponse} from "@/shared/model/page-response";
 import {EventoReportFilter} from "@/shared/model/filter/evento-report-filter";
+import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -51,12 +52,6 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
     removerProdutoVinculo(eventoId: number, eventoProdutoId: number): Observable<void> {
         // O Controller espera DELETE /evento/{id}/produtos/{eventoProdutoId}
         return this.http.delete<void>(`${this.apiUrl}/${eventoId}/produtos/${eventoProdutoId}`);
-    }
-
-    importarPessoasCsv(eventoId: number, file: File): Observable<any> {
-        const formData = new FormData();
-        formData.append('file', file);
-        return this.http.post(`${this.apiUrl}/${eventoId}/pessoas/import`, formData);
     }
 
     iniciarEvento(eventoId: number, baseUrl?: string): Observable<{ gerados: number; links: string[] }> {
@@ -119,11 +114,33 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         });
     }
 
-    enviarEmailsConvite(eventoId: number | undefined): Observable<void> {
+    iniciaImportacaoArquivoCsv(eventoId: number, file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post(`${this.apiUrl}/${eventoId}/importar-csv`, formData);
+    }
+
+    iniciaEnvioEmails(eventoId: number | undefined): Observable<void> {
         if(!eventoId){
             return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
         }
         return this.http.post<void>(`${this.apiUrl}/${eventoId}/enviar-emails`, {});
     }
+
+    getStatusProgresso(eventoId: number | undefined): Observable<ProgressoTarefaDto> {
+        if(!eventoId){
+            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+        }
+        return this.http.get<ProgressoTarefaDto>(`${this.apiUrl}/${eventoId}/status-processo`);
+    }
+
+    pararProgresso(eventoId: number | undefined): Observable<ProgressoTarefaDto> {
+        if(!eventoId){
+            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+        }
+        return this.http.get<ProgressoTarefaDto>(`${this.apiUrl}/${eventoId}/parar-processo`);
+    }
+
+
 
 }
