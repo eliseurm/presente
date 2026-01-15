@@ -1,3 +1,5 @@
+import {Observable} from "rxjs";
+
 export interface IEColumn {
     dataField: string;
     caption?: string;
@@ -52,4 +54,6 @@ export interface IEDataGridEvent {
     data?: any;
     isNew?: boolean;
     cancel?: boolean;
+    asyncResult?: Observable<boolean>;
+    validationMessage?: string;
 }

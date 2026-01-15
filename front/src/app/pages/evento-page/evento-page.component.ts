@@ -44,7 +44,7 @@ import {PessoaService} from '@/services/pessoa.service';
 import {ProdutoService} from '@/services/produto.service';
 import {ClienteService} from '@/services/cliente.service';
 import {EventoEscolhaDto} from '@/shared/model/dto/evento-escolha-dto';
-import {debounceTime, forkJoin, Subject} from 'rxjs';
+import {debounceTime, forkJoin, map, of, Subject} from 'rxjs';
 import {ProdutoFilter} from '@/shared/model/filter/produto-filter';
 import {ProdutoMapper} from '@/shared/model/mapper/produto-mapper';
 import {EventoProduto} from '@/shared/model/evento-produto';
@@ -56,7 +56,8 @@ import {ConfirmDialog} from "primeng/confirmdialog";
 import {ProgressBar} from "primeng/progressbar";
 import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
 import {EventoPessoaDto} from "@/shared/model/dto/evento-pessoa-dto";
-import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper"; // Certifique-se que este arquivo existe
+import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
+import {catchError} from "rxjs/operators"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -346,7 +347,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
         const eventoId = this.vm.model.id!;
 
-        this.eventoService.addOrUpdateEventoPessoa(eventoId, row).subscribe({
+/*
+        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Salvo', detail: 'Registro atualizado e Gravado.' });
                 // Não precisa recarregar se for apenas update visual, mas para segurança:
@@ -354,9 +356,34 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao salvar.' });
-                event.cancel = true;
+
+                // Retornamos false para o Grid saber que NÃO deve fechar o popup. (equivale ao 'event.cancel = true')
+                return of(false);
             }
         });
+*/
+
+        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).pipe(
+            map(res => {
+                // Se chegou aqui, a API salvou com sucesso.
+                // O Grid vai fechar o popup e atualizar a lista.
+                return true;
+            }),
+            catchError(err => {
+                const errorBody = err.error;
+                let msg = errorBody?.message;
+                if (errorBody?.errors?.length > 0) {
+                    errorBody?.errors.forEach((e:any) => {
+                        msg += (', '+e.error);
+                    });
+                }
+
+                // Injeta a mensagem no evento para o e-data-grid exibir no popup
+                event.validationMessage = msg || "Erro ao salvar registro.";
+
+                return of(false); // Impede o fechamento do popup
+            })
+        );
     }
 
     onDeletingPessoa(event: any) {

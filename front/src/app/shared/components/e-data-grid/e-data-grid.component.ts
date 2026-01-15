@@ -260,21 +260,54 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
         }
 
         const event: IEDataGridEvent = {
-            data: this.editingRow,
+            data: { ...this.editingRow },
             isNew: this.isNewRow,
             cancel: false
         };
 
         this.onSaving.emit(event);
 
+        // Se o cancelamento for síncrono (validação local no componente pai)
         if (event.cancel) {
             return; // Não fecha o dialog e não altera o dataSource
         }
 
-        if (this.isNewRow) {
-            this.dataSource.push({ ...this.editingRow });
+        // Verificação de fluxo Assíncrono (Observable)
+        if (event.asyncResult) {
+            this.loading = true;
+            event.asyncResult.subscribe({
+                next: (canProceed) => {
+                    if (canProceed) {
+                        this.finalizeSaveProcess(event);
+                    }
+                    else {
+                        if (event.validationMessage) {
+                            this.validationMessage = event.validationMessage;
+                            this.showValidationMessage = true;
+                            setTimeout(() => this.showValidationMessage = false, 5000);
+                        }
+                    }
+                    this.loading = false;
+                },
+                error: () => {
+                    this.loading = false;
+                    this.validationMessage = "Erro de conexão com o servidor.";
+                    this.showValidationMessage = true;
+                    // O popup não fecha porque finalizeSaveProcess não foi chamado
+                }
+            });
         }
         else {
+            // 3. Fluxo síncrono original
+            this.finalizeSaveProcess(event);
+        }
+
+    }
+
+    private finalizeSaveProcess(event: IEDataGridEvent) {
+        if (this.isNewRow) {
+            this.dataSource.push({ ...this.editingRow });
+        } else {
             const index = this.dataSource.findIndex(item =>
                 this.getRowId(item) === this.getRowId(this.editingRow)
             );
@@ -285,7 +318,7 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         this.onSaved.emit(event);
 
-        if(this.showMessageDefault) {
+        if (this.showMessageDefault) {
             this.messageService.add({
                 severity: 'success',
                 summary: 'DataGrid',
@@ -295,55 +328,6 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         this.closeDialog();
     }
-
-/*
-    validateForm(): boolean {
-        this.validationErrors.clear();
-        let isValid = true;
-
-        if (!this.formItems) {
-            return true;
-        }
-
-        this.formItems.forEach(item => {
-            const errors: string[] = [];
-            const value = this.editingRow[item.dataField];
-
-            if (item.validationRules) {
-                item.validationRules.forEach(rule => {
-                    if (rule.type === 'required') {
-                        if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
-                            errors.push(rule.message);
-                            isValid = false;
-                        }
-                    } else if (rule.type === 'email') {
-                        if (value && typeof value === 'string') {
-                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                            if (!emailRegex.test(value)) {
-                                errors.push(rule.message);
-                                isValid = false;
-                            }
-                        }
-                    } else if (rule.type === 'pattern' && rule.pattern) {
-                        if (value && typeof value === 'string') {
-                            const regex = new RegExp(rule.pattern);
-                            if (!regex.test(value)) {
-                                errors.push(rule.message);
-                                isValid = false;
-                            }
-                        }
-                    }
-                });
-            }
-
-            if (errors.length > 0) {
-                this.validationErrors.set(item.dataField, errors);
-            }
-        });
-
-        return isValid;
-    }
-*/
 
     validateForm(): boolean {
         this.validationErrors.clear();
@@ -371,7 +355,8 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
                             errors.push(rule.message);
                             isValid = false;
                         }
-                    } else if (rule.type === 'email') {
+                    }
+                    else if (rule.type === 'email') {
                         if (value && typeof value === 'string') {
                             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                             if (!emailRegex.test(value)) {
@@ -379,7 +364,8 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
                                 isValid = false;
                             }
                         }
-                    } else if (rule.type === 'pattern' && rule.pattern) {
+                    }
+                    else if (rule.type === 'pattern' && rule.pattern) {
                         if (value && typeof value === 'string') {
                             const regex = new RegExp(rule.pattern);
                             if (!regex.test(value)) {
@@ -413,6 +399,7 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
         this.isNewRow = false;
         this.validationErrors.clear();
         this.showValidationMessage = false;
+        this.loading = false;
     }
 
     getRowId(row: any): any {

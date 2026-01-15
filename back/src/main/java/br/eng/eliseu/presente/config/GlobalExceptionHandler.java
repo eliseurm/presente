@@ -24,6 +24,20 @@ public class GlobalExceptionHandler {
 
     @Autowired ConstraintViolationResolver  constraintViolationResolver;
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("code", "BUSINESS_ERROR");
+        body.put("message", ex.getMessage());
+
+        // Se a exceção contiver erros de campo, adicionamos ao corpo
+        if (ex.getErrors() != null && !ex.getErrors().isEmpty()) {
+            body.put("errors", ex.getErrors());
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         Map<String, Object> body = new HashMap<>();

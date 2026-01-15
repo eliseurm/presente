@@ -48,11 +48,13 @@
                 <p-tab value="geral">Geral</p-tab>
                 <p-tab value="pessoa">Pessoas</p-tab>
                 <p-tab value="produto">Produtos</p-tab>
+                @if (importacaoLogs.length > 0) {
                 <p-tab value="log">
-                        <span class="text-red-500 font-bold flex items-center gap-2">
-                            <i class="pi pi-exclamation-triangle"></i> Log Erros ({{ importacaoLogs.length }})
-                        </span>
+                    <span class="text-red-500 font-bold flex items-center gap-2">
+                        <i class="pi pi-exclamation-triangle"></i> Log Erros ({{ importacaoLogs.length }})
+                    </span>
                 </p-tab>
+                }
 
             </p-tablist>
 
