@@ -9,5 +9,8 @@ export class Usuario {
   senha?: string; // campo transitório para envio da nova senha
   papel?: PapelEnum;
   status?: StatusEnum;
+  criadoEm?: Date;
+  alteradoEm?: Date;
+  version?: number;
 
 }

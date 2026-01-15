@@ -1,18 +1,15 @@
-import {Usuario} from "@/shared/model/usuario";
+import { UsuarioDto } from './usuario-dto';
 import {StatusEnum} from "@/shared/model/enum/status.enum";
 
-export class Cliente {
-
+export interface ClienteDto {
     id?: number;
     nome?: string;
     email?: string;
     telefone?: string;
-    usuario?: Usuario;
+    usuario?: UsuarioDto;
     anotacoes?: string;
     status?: StatusEnum;
     criadoEm?: Date;
     alteradoEm?: Date;
     version?: number;
-
 }
-

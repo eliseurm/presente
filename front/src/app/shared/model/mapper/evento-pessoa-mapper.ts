@@ -23,6 +23,7 @@ export class EventoPessoaMapper {
             status: dto.status,
             nomeMagicNumber: dto.nomeMagicNumber,
             jaEscolheu: dto.jaEscolheu,
+            version: dto.version
         };
     }
 
@@ -31,8 +32,8 @@ export class EventoPessoaMapper {
      * @param model O modelo EventoPessoa local.
      * @returns O DTO a ser enviado para a API.
      */
-    public static toDTO(model: EventoPessoa): EventoPessoaDto | undefined{
-        if (!model) return undefined;
+    public static toDTO(model: EventoPessoa): EventoPessoaDto{
+        if (!model) return new EventoPessoaDto();
 
 
         return {
@@ -41,6 +42,7 @@ export class EventoPessoaMapper {
             status: model.status as StatusEnum,
             nomeMagicNumber: model.nomeMagicNumber,
             jaEscolheu: model.jaEscolheu,
+            version: model.version
         };
     }
 

@@ -2,6 +2,8 @@ import {Component, ContentChildren, QueryList, Input, Output, EventEmitter, Temp
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+// import * as _ from 'lodash';
+import { get, set } from 'lodash';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -80,6 +82,8 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
     @Input() lazy: boolean = false;
     // Fonte alternativa para somatórios (ex.: total geral, ignorando paginação)
     @Input() summaryDataSource?: any[];
+    @Input() showMessageDefault: boolean = true;
+
     @ContentChild(EoSomatoriaComponent) summaryContainer?: EoSomatoriaComponent;
     // Precisa capturar itens mesmo quando aninhados dentro de <eo-somatoria>
     @ContentChildren(EiTotalItemComponent, { descendants: true }) summaryItems?: QueryList<EiTotalItemComponent>;
@@ -269,7 +273,8 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         if (this.isNewRow) {
             this.dataSource.push({ ...this.editingRow });
-        } else {
+        }
+        else {
             const index = this.dataSource.findIndex(item =>
                 this.getRowId(item) === this.getRowId(this.editingRow)
             );
@@ -280,11 +285,13 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
         this.onSaved.emit(event);
 
-        this.messageService.add({
-            severity: 'success',
-            summary: 'DataGrid',
-            detail: `Registro ${this.isNewRow ? 'criado' : 'atualizado'} com sucesso!`
-        });
+        if(this.showMessageDefault) {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'DataGrid',
+                detail: `Registro ${this.isNewRow ? 'criado' : 'atualizado'} com sucesso!`
+            });
+        }
 
         this.closeDialog();
     }
@@ -614,11 +621,16 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
 
 
     getFormItemValue(dataField: string): any {
-        return this.editingRow[dataField];
+        // return this.editingRow[dataField];
+        return get(this.editingRow, dataField);
     }
 
     setFormItemValue(dataField: string, value: any): void {
-        this.editingRow[dataField] = value;
+        if (!dataField) return;
+
+        // this.editingRow[dataField] = value;
+        set(this.editingRow, dataField, value);
+
         // Remove os erros do campo quando o valor é alterado
         if (this.validationErrors.has(dataField)) {
             this.validationErrors.delete(dataField);

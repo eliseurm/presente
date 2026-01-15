@@ -5,6 +5,7 @@ import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.dto.EventoPessoaDto;
 import lombok.Builder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,26 +55,29 @@ public class EventoPessoaMapper {
      * Converte de DTO para Entidade (Front -> Back)
      */
     public static EventoPessoa fromDto(EventoPessoaDto dto) {
-        if (dto == null) {
-            return null;
+        return fromDto(dto, null);
+    }
+
+    public static EventoPessoa fromDto(EventoPessoaDto dto, EventoPessoa eventoPessoa) {
+        if (dto == null || ObjectUtils.isEmpty(dto)) {
+            return new EventoPessoa();
         }
 
-        EventoPessoa entity = new EventoPessoa();
+        if (eventoPessoa == null) {
+            eventoPessoa = new EventoPessoa();
+        }
 
-        entity.setId(dto.getId());
+        eventoPessoa.setId(dto.getId());
 
         // Mapeia o ID do pessoa para uma instância de Pessoa
         if (dto.getPessoa() != null) {
-            entity.setPessoa(PessoaMapper.fromDto(dto.getPessoa()));
+            eventoPessoa.setPessoa(PessoaMapper.fromDto(dto.getPessoa(), eventoPessoa.getPessoa()));
         }
 
-        entity.setStatus(dto.getStatus());
-        entity.setNomeMagicNumber(dto.getNomeMagicNumber());
+        eventoPessoa.setStatus(dto.getStatus());
+        eventoPessoa.setNomeMagicNumber(dto.getNomeMagicNumber());
 
-        // Nota: O campo 'evento' e o 'id' da própria relação
-        // geralmente são tratados na camada de Service.
-
-        return entity;
+        return eventoPessoa;
     }
 
     /**

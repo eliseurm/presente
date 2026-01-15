@@ -236,7 +236,13 @@
                         <ng-container *ngIf="getColumnByDataField(item.dataField)?.editCellTemplate">
                             <div [class.field-error]="hasError(item.dataField)">
                                 <ng-container
-                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!; context: { $implicit: editingRow, data: editingRow, dataField: item.dataField, onChange: setFormItemValue.bind(this) }">
+                                    *ngTemplateOutlet="getTemplate(getColumnByDataField(item.dataField)!.editCellTemplate!)!;
+                                    context: {
+                                    $implicit: editingRow,
+                                    data: editingRow,
+                                    dataField: item.dataField,
+                                    onChange: setFormItemValue.bind(this)
+                                    }">
                                 </ng-container>
                             </div>
                         </ng-container>

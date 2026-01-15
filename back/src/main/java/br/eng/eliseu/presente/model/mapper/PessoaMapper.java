@@ -1,9 +1,9 @@
 package br.eng.eliseu.presente.model.mapper;
 
 import br.eng.eliseu.presente.model.Pessoa;
-import br.eng.eliseu.presente.model.Cliente;
 import br.eng.eliseu.presente.model.dto.PessoaDto;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,7 +19,7 @@ public class PessoaMapper {
 
         return new PessoaDto(
                 pessoa.getId(),
-                pessoa.getCliente() != null ? pessoa.getCliente().getId() : null,
+                ClienteMapper.toDto(pessoa.getCliente()),
                 pessoa.getNome(),
                 pessoa.getCpf(),
                 pessoa.getTelefone(),
@@ -41,18 +41,20 @@ public class PessoaMapper {
      * DTO -> Entidade
      */
     public static Pessoa fromDto(PessoaDto dto) {
-        if (dto == null) return null;
+        return fromDto(dto, null);
+    }
 
-        Pessoa pessoa = new Pessoa();
-        // Em Records, acessamos como métodos: dto.id() em vez de dto.getId()
-        pessoa.setId(dto.id());
-
-        if (dto.clienteId() != null) {
-            Cliente cliente = new Cliente();
-            cliente.setId(dto.clienteId());
-            pessoa.setCliente(cliente);
+    public static Pessoa fromDto(PessoaDto dto, Pessoa pessoa) {
+        if (dto == null || ObjectUtils.isEmpty(dto)) {
+            return null;
         }
 
+        if(pessoa == null) {
+            pessoa = new Pessoa();
+        }
+
+        pessoa.setId(dto.id());
+        pessoa.setCliente(ClienteMapper.fromDto(dto.cliente(), pessoa.getCliente()));
         pessoa.setNome(dto.nome());
         pessoa.setCpf(dto.cpf());
         pessoa.setTelefone(dto.telefone());

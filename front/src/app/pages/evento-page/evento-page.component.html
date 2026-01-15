@@ -172,7 +172,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <input #fileInput type="file" accept=".csv" class="hidden"
-                                       (change)="onFileSelect($event)"/>
+                                       (change)="onImportaArquivoCsv($event)"/>
                                 <button pButton type="button"
                                         [label]="progressoTarefaDto.progresso ? 'Processando...' : 'Importar arq csv'"
                                         [icon]="progressoTarefaDto.progresso ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
@@ -182,8 +182,8 @@
                                 </button>
                                 <button pButton label="Enviar e-mail" icon="pi pi-envelope"
                                         class="p-button-success p-button-outlined mr-2"
-                                        (click)="enviarEmails()"
-                                        [loading]="enviandoEmails"
+                                        (click)="onEnviarEmails()"
+                                        [loading]="progressoTarefaDto.progresso"
                                         [disabled]="vm.mode !== modeType.Edit">
                                 </button>
                             </div>
@@ -251,6 +251,7 @@
                                  [rows]="10"
                                  [rowsPerPageOptions]="[10, 20, 50, 100]"
                                  [lazy]="false"
+                                 [showMessageDefault]="false"
                                  (onEditDialogOpen)="onEditingStartPessoa($event)"
                                  (onSaving)="onSavingPessoa($event)"
                                  (onDeleting)="onDeletingPessoa($event)">
@@ -269,7 +270,10 @@
                                     </p-tablist>
                                     <p-tabpanels>
                                         <p-tabpanel value="0">
-                                            <ei-item dataField="pessoa" label="Nome" editorType="template"></ei-item>
+                                            <ei-item dataField="pessoa.nome" label="Nome" editorType="template"></ei-item>
+                                            <ei-item dataField="pessoa.cpf" label="Cpf" editorType="template"></ei-item>
+                                            <ei-item dataField="pessoa.telefone" label="Telefone" editorType="template"></ei-item>
+                                            <ei-item dataField="pessoa.email" label="e-Mail" editorType="template"></ei-item>
                                             <ei-item dataField="status" label="Status" editorType="template"></ei-item>
                                         </p-tabpanel>
                                         <p-tabpanel value="1">
@@ -308,26 +312,30 @@
                             </eo-form>
                         </eo-editing>
 
-                        <ei-column dataField="pessoa" caption="Pessoa" cellTemplate="pessoaCellTemplate"
-                                   editCellTemplate="pessoaEditCellTemplate"></ei-column>
-                        <ei-column dataField="pessoa.cpf" caption="CPF" cellTemplate="cpfCellTemplate"></ei-column>
-                        <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate"
-                                   cellTemplate="statusCellTemplate"></ei-column>
-                        <ei-column dataField="jaEscolheu" caption="Já escolheu"
-                                   cellTemplate="jaEscolheuTpl"></ei-column>
-                        <ei-column dataField="nomeMagicNumber" caption="Link mágico"
-                                   cellTemplate="magicLinkCell"></ei-column>
-                        <ei-column dataField="nomeMagicNumber" caption="Ações"
-                                   cellTemplate="acoesCellTemplate"></ei-column>
+                        <ei-column dataField="pessoa.nome" caption="Pessoa" editCellTemplate="inputEditCellTemplate"></ei-column>
+                        <ei-column dataField="pessoa.cpf" caption="CPF" editCellTemplate="inputEditCellTemplate">></ei-column>
+                        <ei-column dataField="pessoa.telefone" editCellTemplate="inputEditCellTemplate" [visible]="false"></ei-column>
+                        <ei-column dataField="pessoa.email" editCellTemplate="inputEditCellTemplate" [visible]="false"></ei-column>
+                        <ei-column dataField="status" caption="Status" editCellTemplate="statusEditCellTemplate" cellTemplate="statusCellTemplate"></ei-column>
+                        <ei-column dataField="jaEscolheu" caption="Já escolheu" cellTemplate="jaEscolheuTpl"></ei-column>
+                        <ei-column dataField="nomeMagicNumber" caption="Link mágico" cellTemplate="magicLinkCell"></ei-column>
+                        <ei-column dataField="nomeMagicNumber" caption="Ações" cellTemplate="acoesCellTemplate"></ei-column>
 
-                        <ng-template eTemplate="pessoaCellTemplate" let-data="data">{{ data.nome }}</ng-template>
-                        <ng-template eTemplate="cpfCellTemplate" let-data="data">{{ data?.cpf || '-' }}</ng-template>
                         <ng-template eTemplate="statusCellTemplate" let-data="data">{{ statusEnumType[data].descricao }}</ng-template>
 
                         <ng-template eTemplate="jaEscolheuTpl" let-data="data">
                             <span [title]="data ? 'Já escolheu' : 'Ainda não'">{{ data ? '✔' : '✖' }}</span>
                         </ng-template>
 
+                        <ng-template eTemplate="inputEditCellTemplate" let-dataField="dataField">
+                            <input type="text"
+                                   pInputText
+                                   class="w-full"
+                                   [ngModel]="gridPessoas.getFormItemValue(dataField)"
+                                   (ngModelChange)="gridPessoas.setFormItemValue(dataField, $event)" />
+                        </ng-template>
+
+                        <!--
                         <ng-template eTemplate="pessoaEditCellTemplate" let-row>
                             <p-select class="w-full" [(ngModel)]="row.pessoa" [options]="pessoasSugestoes"
                                       optionLabel="nome" dataKey="id" [filter]="true" filterBy="nome"
@@ -338,9 +346,14 @@
                             </p-select>
                         </ng-template>
 
+-->
+
                         <ng-template eTemplate="statusEditCellTemplate" let-data="data">
-                            <enum-select class="w-full" [enumObject]="statusEnumType" [ngModel]="data.status"
-                                         (ngModelChange)="data.status = $event" [ngModelOptions]="{standalone:true}">
+                            <enum-select class="w-full"
+                                         [enumObject]="statusEnumType"
+                                         [ngModel]="data.status"
+                                         (ngModelChange)="data.status = $event"
+                                         [ngModelOptions]="{standalone:true}">
                             </enum-select>
                         </ng-template>
 

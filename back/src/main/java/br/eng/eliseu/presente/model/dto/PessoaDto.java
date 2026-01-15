@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public record PessoaDto(
         Long id,
 
-        Long clienteId,
+        ClienteDto cliente,
 
         String nome,
         String cpf,

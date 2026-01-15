@@ -11,6 +11,7 @@ GRANT CREATE ON DATABASE presente_db TO presente_user;
 
 -- Mude para presente_db mas ainda com superUsuario
 
+DROP SCHEMA IF EXISTS presente_sh CASCADE;
 CREATE SCHEMA IF NOT EXISTS presente_sh ;
 GRANT USAGE ON SCHEMA presente_sh TO presente_user;
 GRANT CREATE ON SCHEMA presente_sh TO presente_user;
@@ -77,10 +78,14 @@ drop table teste ;
 SELECT pid, query, state, wait_event_type, wait_event
 FROM pg_stat_activity
 WHERE query LIKE '%update%evento%' AND state != 'idle';
-
 -- 2. Mate os processos que estão tentando atualizar a tabela (substitua o PID pelo número encontrado acima)
 -- Repita para os PIDs que parecerem "presos"
-SELECT pg_terminate_backend(59944);
+SELECT pg_terminate_backend(96591);
+
+-- Unique index da tabela
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'pessoa';
 
 -- ##########################################################
 select * from flyway_schema_history  ;
@@ -108,15 +113,17 @@ AND query ILIKE '%pessoa%'
 AND pid <> pg_backend_pid();
 REINDEX INDEX presente_sh.uq_pessoa_email;
 
-select * from pessoa ;
+select * from pessoa where id <= 10;
+
+select telefone, count(*) from pessoa group by telefone having count(*) > 1;
 reindex table presente_sh.pessoa;
--- delete from pessoa where id>=3;
+-- delete from pessoa where id=10;
 
 select * from cliente ;
 
 select * from evento ;
 
-select * from evento_pessoa ;
+select * from evento_pessoa where pessoa_id = 10;
 select * from evento_pessoa where pessoa_id < 3;
 select * from evento_produto ;
 select * from evento_escolha ;
@@ -136,6 +143,14 @@ delete from evento_pessoa where pessoa_id>=3 ;
 select * from evento_produto ;
 select * from evento_escolha ;
 
+delete from evento_escolha;
+delete from pessoa;
+TRUNCATE TABLE evento_pessoa RESTART IDENTITY CASCADE;
+TRUNCATE TABLE pessoa RESTART IDENTITY CASCADE;
+
+ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_cpf;
+ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_email;
+ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_telefone;
 
 select
     e.nome as nomeEvento, e.descricao, e.status as statusEvento, e.inicio, e.fim_previsto, e.fim,
@@ -176,11 +191,6 @@ INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (1, 'Marrom', '#7a
 INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (2, 'Camursa', '#b5a45b', 'rgba(181, 164, 91, 1)', 0);
 INSERT INTO cor (id, nome, cor_hex, cor_rgba, version) VALUES (3, 'Vermelho', '#9c2828', 'rgba(156, 40, 40, 1)', 0);
 
-
-INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (1, 'admin', '$2a$10$PemMUY1FAWLRTKc7eSieAey4d0dBySXvSUK6YpHGCcMS0aphSoTC2', 'ADMIN', 'ATIVO', '2026-01-12 15:01:17.940662', '2026-01-12 15:01:17.940662', 0);
-INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (2, 'cliente_mmo', '$2a$10$F5UJhXQZVXIBUTmBlkFjMe/XG..fh57u8/xAG3iThPJ8yFz1mfynu', 'CLIENTE', 'ATIVO', '2026-01-12 15:10:50.608350', '2026-01-12 15:10:50.608350', 0);
-INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (3, 'cliente_useb', '$2a$10$V9rz7YIpPuhnRYQCr33IROBc8yud92rIZSi9aPfYHs0lqHQAChnT2', 'CLIENTE', 'ATIVO', '2026-01-12 15:11:06.519004', '2026-01-12 15:11:06.519004', 0);
-
 INSERT INTO produto (id, nome, descricao, preco, criado_em, alterado_em, status, version) VALUES (1, 'Sandalia ', '', null, '2026-01-12 15:09:33.014900', '2026-01-12 15:09:33.014900', 'ATIVO', 0);
 INSERT INTO produto (id, nome, descricao, preco, criado_em, alterado_em, status, version) VALUES (2, 'Sandalia', '', null, '2026-01-12 15:10:28.124630', '2026-01-12 15:10:28.124630', 'ATIVO', 0);
 
@@ -193,3 +203,18 @@ INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantida
 INSERT INTO produto_estoque (id, produto_id, cor_id, tamanho_id, preco, quantidade, status, criado_em, alterado_em, version) VALUES (6, 2, 2, 2, 0.00, 3.00, 'ATIVO', '2026-01-12 15:10:28.812973', '2026-01-12 15:10:28.812973', 0);
 
 
+-- INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (1, 'admin', '$2a$10$PemMUY1FAWLRTKc7eSieAey4d0dBySXvSUK6YpHGCcMS0aphSoTC2', 'ADMIN', 'ATIVO', '2026-01-12 15:01:17.940662', '2026-01-12 15:01:17.940662', 0);
+INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (2, 'cliente_mmo', '$2a$10$F5UJhXQZVXIBUTmBlkFjMe/XG..fh57u8/xAG3iThPJ8yFz1mfynu', 'CLIENTE', 'ATIVO', '2026-01-12 15:10:50.608350', '2026-01-12 15:10:50.608350', 0);
+INSERT INTO usuario (id, username, password_hash, papel, status, criado_em, alterado_em, version) VALUES (3, 'cliente_useb', '$2a$10$V9rz7YIpPuhnRYQCr33IROBc8yud92rIZSi9aPfYHs0lqHQAChnT2', 'CLIENTE', 'ATIVO', '2026-01-12 15:11:06.519004', '2026-01-12 15:11:06.519004', 0);
+
+INSERT INTO cliente (id, nome, email, telefone, usuario_id, anotacoes, criado_em, alterado_em, status, version) VALUES (1, 'MMO - Missao Mineira Oeste', 'mo@gmail.com', '034 984 094 101', 2, '', '2026-01-12 18:52:17.659112', '2026-01-12 18:52:17.659112', 'ATIVO', 0);
+INSERT INTO cliente (id, nome, email, telefone, usuario_id, anotacoes, criado_em, alterado_em, status, version) VALUES (2, 'USeb - Uniao Sudeste Brasileira', 'useb@gmail', '0340984 094 101', 3, '', '2026-01-12 18:52:55.680392', '2026-01-12 18:52:55.680392', 'ATIVO', 0);
+
+INSERT INTO evento (
+id, nome, descricao, cliente_id,
+status, inicio, fim_previsto, fim, criado_em, alterado_em, version,
+prog_status, prog_atual, prog_total, prog_label)
+VALUES (
+1, 'Presente do dia do professor', 'Festa do dia do professor', 1,
+'ATIVO', '2026-01-13 00:53:00.000000', '2026-01-17 00:53:00.000000', null, '2026-01-12 18:56:51.839195', '2026-01-14 11:58:37.008091', 112,
+'CONCLUIDO', 0, 1000, 'progressArquivo');

@@ -14,8 +14,17 @@ public interface EventoRepository extends JpaRepository<Evento, Long>, JpaSpecif
 
     // Evita fetch join de múltiplas coleções para não duplicar registros
     // Carrega o cliente e deixa as coleções (pessoas, produtos) serem buscadas via SUBSELECT (configurado na entidade)
-    @Query("select e from Evento e left join fetch e.cliente c where e.id = :id")
-    Optional<Evento> findByIdExpandedAll(@Param("id") Long id);
+//    @Query("select e from Evento e left join fetch e.cliente c where e.id = :id")
+    @Query("""
+        select e 
+        from Evento e 
+        join fetch e.cliente c
+        left join fetch e.eventoPessoas ep 
+        left join fetch ep.pessoa 
+        where 1=1 
+        and e.id = :eventoId
+        """)
+    Optional<Evento> findByIdExpandedAll(Long eventoId);
 
     @Modifying
     @Transactional

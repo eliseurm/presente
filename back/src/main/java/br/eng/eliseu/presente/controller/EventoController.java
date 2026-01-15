@@ -102,13 +102,13 @@ public class EventoController {
     @PostMapping("/{id}/importar-csv")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<ProgressoTarefaDto> importarArquivoCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        ProgressoTarefaDto resultado = eventoService.importarArquivoPessoasCsv(id, file);
+        ProgressoTarefaDto resultado = eventoService.iniciaImportarArquivoCsv(id, file);
         return ResponseEntity.ok(resultado);
     }
 
     @PostMapping("/{id}/enviar-emails")
     public ResponseEntity<ProgressoTarefaDto> enviarEmails(@PathVariable Long id) {
-        ProgressoTarefaDto resultado = eventoService.enviarEmailsAssincrono(id);
+        ProgressoTarefaDto resultado = eventoService.iniciaEnvioEmails(id);
         return ResponseEntity.ok(resultado);
     }
 
@@ -146,13 +146,20 @@ public class EventoController {
     public static record AddPessoaRequest(Long pessoaId, StatusEnum status) {}
     public static record UpdateStatusRequest(StatusEnum status) {}
 
-    @PostMapping("/{id}/pessoas")
+    @PostMapping("/{id}/eventoPessoa")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoPessoa> adicionarOuAtualizarPessoa(@PathVariable("id") Long eventoId,@RequestBody AddPessoaRequest req) {
-        if (req == null || req.pessoaId() == null) {
+    public ResponseEntity<EventoPessoaDto> adicionarOuAtualizarPessoa(@PathVariable("id") Long eventoId, @RequestBody EventoPessoaDto dto) {
+        if (dto == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(eventoService.addOrUpdatePessoa(eventoId, req.pessoaId(), req.status()));
+
+        try {
+            EventoPessoa ep = eventoService.addOrUpdateEventoPessoa(eventoId, dto);
+            dto = EventoPessoaMapper.toDto(ep);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}/pessoas/{eventoPessoaId}")

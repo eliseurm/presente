@@ -2,6 +2,7 @@ import {Tamanho} from "@/shared/model/tamanho";
 import {TamanhoDto} from "@/shared/model/dto/tamanho-dto";
 
 export class TamanhoMapper {
+
     static toDto(entity: Tamanho): TamanhoDto {
         return { ...entity };
     }

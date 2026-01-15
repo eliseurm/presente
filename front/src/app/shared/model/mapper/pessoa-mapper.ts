@@ -3,18 +3,20 @@
 import {PessoaDto} from "@/shared/model/dto/pessoa-dto";
 import {Pessoa} from "@/shared/model/pessoa";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
+import {ProdutoDto} from "@/shared/model/dto/produto-dto";
+import {ClienteMapper} from "@/shared/model/mapper/cliente-mapper";
 
 export class PessoaMapper {
 
     /**
      * Entidade -> DTO (Prepara dados vindo da API para o componente)
      */
-    static toDTO(entity: any): PessoaDto | undefined{
-        if (!entity) return undefined;
+    static toDTO(entity: any): PessoaDto {
+        if (!entity) return {} as PessoaDto;
 
         return {
             id: entity.id,
-            clienteId: entity.cliente ? entity.cliente.id : null,
+            cliente: ClienteMapper.toDto(entity.cliente),
             nome: entity.nome,
             cpf: entity.cpf,
             telefone: entity.telefone,
@@ -33,8 +35,8 @@ export class PessoaMapper {
     /**
      * DTO -> Entidade (Prepara dados do formulário para enviar à API)
      */
-    static fromDTO(dto: PessoaDto): Pessoa | undefined {
-        if (!dto) return undefined;
+    static fromDTO(dto: PessoaDto): Pessoa {
+        if (!dto) return new Pessoa();
 
         const pessoa = new Pessoa();
 
@@ -42,8 +44,8 @@ export class PessoaMapper {
         Object.assign(pessoa, dto);
 
         // Trata a conversão de clienteId (number) para o objeto cliente ({id: number})
-        if (dto.clienteId) {
-            pessoa.cliente = { id: dto.clienteId };
+        if (dto.cliente) {
+            pessoa.cliente = ClienteMapper.fromDto(dto.cliente);
         }
         else {
             pessoa.cliente = undefined;

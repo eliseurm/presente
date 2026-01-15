@@ -2,7 +2,8 @@
 
 -- 1) Adicionar coluna senha (<=8) em pessoa
 ALTER TABLE IF EXISTS presente_sh.pessoa
-    ADD COLUMN IF NOT EXISTS senha VARCHAR(8);
+    ADD COLUMN IF NOT EXISTS senha VARCHAR(8),
+    ADD COLUMN IF NOT EXISTS cpf VARCHAR(11);
 
 -- 2) Normalizar dados existentes para permitir criação de índices únicos
 -- 2.1) Normalizar email: trim + lower
@@ -57,6 +58,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pessoa_email
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pessoa_telefone
     ON presente_sh.pessoa (telefone)
     WHERE telefone IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pessoa_cpf
+    ON presente_sh.pessoa (cpf)
+    WHERE cpf IS NOT NULL;
 
 -- 4) Adicionar numero_magico em evento_pessoa (<=8)
 ALTER TABLE IF EXISTS presente_sh.evento_pessoa

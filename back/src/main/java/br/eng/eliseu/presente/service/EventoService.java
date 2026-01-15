@@ -6,6 +6,7 @@ import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
 import br.eng.eliseu.presente.model.filter.EventoReportFilter;
 import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
+import br.eng.eliseu.presente.model.mapper.PessoaMapper;
 import br.eng.eliseu.presente.repository.ClienteRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.repository.PessoaRepository;
@@ -30,13 +31,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
@@ -80,36 +81,59 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     // ================= Vínculos: Pessoas =================
 
     @Transactional
-    public EventoPessoa addOrUpdatePessoa(Long eventoId, Long pessoaId, StatusEnum status) {
+    public EventoPessoa addOrUpdateEventoPessoa(Long eventoId, EventoPessoaDto eventoPessoaDto) {
+
+        if(ObjectUtils.isEmpty(eventoPessoaDto)){
+            return null;
+        }
+
+        // 1. Busca o Evento (Pai)
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
 
-        Pessoa pessoa = pessoaRepository.findById(pessoaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pessoa não encontrada: " + pessoaId));
+        EventoPessoa eventoPessoa;
 
-        if (evento.getEventoPessoas() == null) {
-            evento.setEventoPessoas(new ArrayList<>());
+        // 2. Lógica para EventoPessoa (A relação entre Evento e Pessoa)
+        if (eventoPessoaDto.getId() != null) {
+            // Se tem ID, buscamos a existente para atualizar (Merge manual)
+
+            EventoPessoaFilter filter = new EventoPessoaFilter();
+            filter.setId(eventoPessoaDto.getId());
+            eventoPessoa = eventoPessoaRepository.findByIdWithPessoa(filter)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Associação não encontrada: " + eventoPessoaDto.getId()));
+
+            // Merge do dto
+            eventoPessoa = EventoPessoaMapper.fromDto(eventoPessoaDto, eventoPessoa);
+        }
+        else {
+            // Se não tem ID, criamos uma nova instância e associamos ao evento
+            eventoPessoa = EventoPessoaMapper.fromDto(eventoPessoaDto);
+            eventoPessoa.setEvento(evento);
+
+
+            Pessoa pessoa;
+            if (eventoPessoaDto.getPessoa() != null && eventoPessoaDto.getPessoa().id() != null) {
+                // Busca a pessoa no banco para garantir que temos a versão com o campo '@Version' correto
+                pessoa = pessoaRepository.findById(eventoPessoaDto.getPessoa().id())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pessoa não encontrada, id: " + eventoPessoaDto.getPessoa().id()));
+
+                // Merge manual da pessoa
+                pessoa = PessoaMapper.fromDto(eventoPessoaDto.getPessoa(), pessoa);
+            }
+            else {
+                // Se for uma pessoa totalmente nova (sem ID no DTO da pessoa)
+                pessoa = PessoaMapper.fromDto(eventoPessoaDto.getPessoa());
+                if(pessoa != null) {
+                    pessoa = pessoaRepository.save(pessoa);
+                }
+            }
+
+            eventoPessoa.setPessoa(pessoa);
+
         }
 
-        // procura vínculo existente por pessoa
-        EventoPessoa vinculo = evento.getEventoPessoas().stream()
-                .filter(ep -> ep.getPessoa() != null && Objects.equals(ep.getPessoa().getId(), pessoa.getId()))
-                .findFirst()
-                .orElse(null);
-
-        if (vinculo == null) {
-            vinculo = EventoPessoa.builder()
-                    .evento(evento)
-                    .pessoa(pessoa)
-                    .status(status)
-                    .build();
-            evento.getEventoPessoas().add(vinculo);
-        } else {
-            vinculo.setStatus(status);
-        }
-
-        eventoRepository.save(evento);
-        return vinculo;
+        eventoPessoa = eventoPessoaRepository.save(eventoPessoa);
+        return eventoPessoa;
     }
 
     @Transactional
@@ -451,6 +475,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return opt;
     }
 
+/*
     private void normalizarAssociacoes(Evento entidade) {
         if (entidade == null) return;
 
@@ -487,6 +512,65 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             }
             entidade.setEventoProdutos(normalizadas);
             // back-reference será ajustada no prepararParaAtualizacao para a entidadeExistente
+        }
+    }
+*/
+
+    private void normalizarAssociacoes(Evento evento) {
+        // 1. CLIENTE: Use getReferenceById para evitar SELECT desnecessário e resolver o erro de Version null
+        if (evento.getCliente() != null && evento.getCliente().getId() != null) {
+            evento.setCliente(clienteRepository.getReferenceById(evento.getCliente().getId()));
+        }
+
+        // 2. PESSOAS: Busca em lote (Bulk Fetch) - Reduz N selects para apenas 1
+        if (evento.getEventoPessoas() != null && !evento.getEventoPessoas().isEmpty()) {
+            List<Long> pessoaIds = evento.getEventoPessoas().stream()
+                    .map(ep -> ep.getPessoa().getId())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            // Busca todas as pessoas de uma vez e coloca num mapa para acesso rápido (O(1))
+            Map<Long, Pessoa> pessoasMap = pessoaRepository.findAllById(pessoaIds).stream()
+                    .collect(Collectors.toMap(Pessoa::getId, p -> p));
+
+            evento.getEventoPessoas().forEach(ep -> {
+                ep.setEvento(evento);
+                if (ep.getPessoa() != null && ep.getPessoa().getId() != null) {
+                    Pessoa p = pessoasMap.get(ep.getPessoa().getId());
+                    if (p != null) {
+                        p.setNome(ep.getPessoa().getNome());
+                        p.setCpf(ep.getPessoa().getCpf());
+                        p.setEmail(ep.getPessoa().getEmail());
+                        p.setTelefone(ep.getPessoa().getTelefone());
+
+                        ep.setPessoa(p);
+                    };
+                }
+//                if (ep.getNomeMagicNumber() == null) {
+//                    ep.setNomeMagicNumber(UUID.randomUUID().toString());
+//                }
+            });
+        }
+
+        // 3. PRODUTOS: Mesma lógica de lote
+        if (evento.getEventoProdutos() != null && !evento.getEventoProdutos().isEmpty()) {
+            List<Long> produtoIds = evento.getEventoProdutos().stream()
+                    .map(ep -> ep.getProduto().getId())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            Map<Long, Produto> produtosMap = produtoRepository.findAllById(produtoIds).stream()
+                    .collect(Collectors.toMap(Produto::getId, p -> p));
+
+            evento.getEventoProdutos().forEach(ep -> {
+                ep.setEvento(evento);
+                if (ep.getProduto() != null && ep.getProduto().getId() != null) {
+                    Produto prod = produtosMap.get(ep.getProduto().getId());
+                    if (prod != null) ep.setProduto(prod);
+                }
+            });
         }
     }
 
@@ -935,13 +1019,13 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return JasperExportManager.exportReportToPdf(print);
     }
 
-    public ProgressoTarefaDto importarArquivoPessoasCsv(Long eventoId, MultipartFile file) {
+    public ProgressoTarefaDto iniciaImportarArquivoCsv(Long eventoId, MultipartFile file) {
         List<String> logsIniciais = new ArrayList<>();
 
         if (file == null || file.isEmpty()) {
             logsIniciais.add("O arquivo está vazio ou não foi enviado.");
             return ProgressoTarefaDto.builder()
-                    .status("CONCLUIDO")
+                    .status("ERRO")
                     .logErros(logsIniciais)
                     .build();
         }
@@ -957,7 +1041,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             if (todasAsLinhas.size() <= 1) {
                 logsIniciais.add("Arquivo sem dados (apenas cabeçalho ou vazio).");
                 return ProgressoTarefaDto.builder()
-                        .status("CONCLUIDO")
+                        .status("ERRO")
                         .logErros(logsIniciais)
                         .build();
             }
@@ -983,165 +1067,15 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                     .total(todasAsLinhas.size() - 1)
                     .build();
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             logsIniciais.add("Falha ao ler arquivo: " + e.getMessage());
             return ProgressoTarefaDto.builder()
-                    .status("CONCLUIDO")
+                    .status("ERRO")
                     .logErros(logsIniciais)
                     .build();
         }
     }
-
-/*
-    private void executarProcessamentoCsv(Long eventoId, List<String> todasAsLinhas) {
-        // Buscamos o evento novamente para garantir que temos uma instância gerenciada nesta Thread
-        Evento evento = eventoRepository.findById(eventoId).orElse(null);
-        if (evento == null) return;
-
-        Cliente cliente = evento.getCliente();
-        List<String> logs = new ArrayList<>();
-        int adicionados = 0;
-
-
-
-        try {
-            // 1. Processamento do Cabeçalho
-            String headerLine = todasAsLinhas.get(0).replace("\uFEFF", "");
-            String separador = headerLine.contains(";") ? ";" : ",";
-            String[] headers = headerLine.split(separador);
-
-            Map<String, Integer> mapaColunas = new HashMap<>();
-            for (int i = 0; i < headers.length; i++) {
-                mapaColunas.put(headers[i].trim().toLowerCase(), i);
-            }
-
-            // Busco todas as pessoas
-            List<Pessoa> pessoaList = pessoaRepository.findByCliente(cliente);
-            Map<String, Pessoa> pessoaMap = pessoaList.stream()
-                    .collect(Collectors.toMap(
-                            Pessoa::getCpf,
-                            p -> p,
-                            (existente, novo) -> existente));
-
-            List<EventoPessoa> eventoPessoaList = eventoPessoaRepository.findByEventoId(eventoId);
-            Map<Long, EventoPessoa> eventoPessoaMap = eventoPessoaList.stream()
-                    .filter(ep -> ep.getPessoa() != null) // Segurança contra dados órfãos
-                    .collect(Collectors.toMap(
-                            ep -> ep.getPessoa().getId(),
-                            ep -> ep,
-                            (existente, novo) -> existente
-                    ));
-
-            List<Pessoa> lotePessoas = new ArrayList<>();
-            List<EventoPessoa> loteVinculos = new ArrayList<>();
-
-            // 2. Loop de Dados (começa em 1 para pular cabeçalho)
-            for (int i = 1; i < todasAsLinhas.size(); i++) {
-                String lineStr = todasAsLinhas.get(i);
-                if (lineStr.trim().isEmpty()) continue;
-
-                String[] cols = lineStr.split(separador, -1);
-
-                // Extração de valores
-                String nome = obterValor(cols, mapaColunas, "nome");
-                String cpfRaw = obterValor(cols, mapaColunas, "cpf");
-                String telefone = obterValor(cols, mapaColunas, "telefone");
-                String email = obterValor(cols, mapaColunas, "email");
-                String organoNivel1 = obterValor(cols, mapaColunas, "uniao");
-                String organoNivel2 = obterValor(cols, mapaColunas, "associacao");
-                String organoNivel3 = obterValor(cols, mapaColunas, "escola_igreja");
-                String localTrabalho = obterValor(cols, mapaColunas, "localtrabalho");
-
-                // Validações Básicas
-                if (nome.isEmpty()) {
-                    logs.add("Linha " + (i + 1) + ": Coluna 'Nome' está vazia.");
-                    eventoRepository.atualizarApenasProgresso(eventoId, i);
-                    continue;
-                }
-
-                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
-                if (cpfNumerico.length() < 11) {
-                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
-                }
-
-                if (cpfNumerico.length() != 11) {
-                    logs.add("Linha " + (i + 1) + ": CPF incorreto (" + cpfRaw + ").");
-                    eventoRepository.atualizarApenasProgresso(eventoId, i);
-                    continue;
-                }
-
-                // Persistência da Pessoa
-                try {
-//                    Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
-                    Pessoa pessoa = pessoaMap.get(cpfNumerico);
-                    if (pessoa == null) {
-                        pessoa = Pessoa.builder()
-                                .nome(nome)
-                                .cpf(cpfNumerico)
-                                .telefone(telefone)
-                                .email(email)
-                                .cliente(cliente)
-                                .status(StatusEnum.ATIVO)
-                                .build();
-                        lotePessoas.add(pessoa);
-//                        pessoa = pessoaRepository.save(pessoa);
-                    }
-
-                    // Vínculo ao Evento
-                    EventoPessoa ep = eventoPessoaMap.get(pessoa.getId());
-                    if (ep!=null) {
-                        logs.add("Linha " + (i + 1) + ": Pessoa já cadastrada (" + nome + ").");
-                    }
-                    else {
-                        EventoPessoa vinculo = EventoPessoa.builder()
-                                .evento(evento)
-                                .pessoa(pessoa)
-                                .status(StatusEnum.ATIVO)
-                                .organoNivel1(organoNivel1)
-                                .organoNivel2(organoNivel2)
-                                .organoNivel3(organoNivel3)
-                                .localTrabalho(localTrabalho)
-                                .build();
-                        loteVinculos.add(vinculo);
-//                        eventoPessoaRepository.save(vinculo);
-                        adicionados++;
-
-                    }
-                }
-                catch (Exception e) {
-                    logs.add("Linha " + (i + 1) + ": Erro ao processar registro: " + e.getMessage());
-                }
-
-                if (loteVinculos.size() >= 50 || i == todasAsLinhas.size() - 1) {
-                    pessoaRepository.saveAll(lotePessoas);
-                    pessoaRepository.flush();
-
-                    eventoPessoaRepository.saveAll(loteVinculos);
-                    eventoPessoaRepository.flush();
-
-                    lotePessoas.clear();
-                    loteVinculos.clear();
-
-                    // Atualiza o progresso no banco apenas no fim do lote
-                    eventoRepository.atualizarApenasProgresso(eventoId, i);
-
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-
-                }
-
-            }
-
-            // 3. Finalização
-            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);
-
-        } catch (Exception e) {
-            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);        }
-    }
-*/
 
     private void executarProcessamentoCsv(Long eventoId, List<String> todasAsLinhas) {
         // 1. Setup Inicial
@@ -1337,11 +1271,13 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             // 6. Finalização
             eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", todasAsLinhas.size() - 1);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             eventoRepository.finalizarProgresso(eventoId, "ERRO", 0);
         }
     }
 
+/*
     @Async // Faz o método rodar em uma thread separada
     @Transactional
     public ProgressoTarefaDto enviarEmailsAssincrono(Long eventoId) {
@@ -1400,24 +1336,123 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .build();
 
     }
+*/
 
-    private void enviarEmailIndividual(EventoPessoa ep, Evento evento) throws MessagingException {
-        Context context = new Context();
-        context.setVariable("nome", ep.getPessoa().getNome());
-        context.setVariable("eventoNome", evento.getNome());
-        // Ajuste a URL conforme o seu domínio de frontend
-        context.setVariable("linkMagico", "http://localhost:8080/presente/" + ep.getNomeMagicNumber());
+    public ProgressoTarefaDto iniciaEnvioEmails(Long eventoId) {
+        // 1. Busca o evento e valida as pessoas (fora da thread para resposta rápida)
+        Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
 
-        String body = templateEngine.process("carta_convite", context);
+        if (evento.getEventoPessoas() == null || evento.getEventoPessoas().isEmpty()) {
+            return ProgressoTarefaDto.builder()
+                    .status("CONCLUIDO")
+                    .logErros(List.of("Não há pessoas vinculadas a este evento."))
+                    .build();
+        }
 
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+        // 2. Inicializa o estado no banco (essencial para o getStatusProgresso funcionar)
+        evento.setProgLabel("progressEmail");
+        evento.setProgStatus("PROCESSANDO");
+        evento.setProgTotal(evento.getEventoPessoas().size());
+        evento.setProgAtual(0);
+        eventoRepository.saveAndFlush(evento);
 
-        helper.setTo(ep.getPessoa().getEmail());
-        helper.setSubject("Convite Especial: " + evento.getNome());
-        helper.setText(body, true);
+        // 3. Dispara a thread manual (mesmo objeto usado no CSV)
+        thread = new Thread(() -> {
+            executarProcessamentoEnvioEmails(eventoId);
+        });
+        thread.start();
 
-        mailSender.send(mimeMessage);
+        // 4. Retorna imediatamente para o front-end iniciar o polling
+        return ProgressoTarefaDto.builder()
+                .status("PROCESSANDO")
+                .atual(0)
+                .total(evento.getEventoPessoas().size())
+                .build();
+    }
+
+    private void executarProcessamentoEnvioEmails(Long eventoId) {
+        // Busca o evento dentro da thread para garantir que os dados estejam frescos
+        Evento evento = eventoRepository.findByIdExpandedAll(eventoId).orElse(null);
+        if (evento == null) return;
+
+        List<EventoPessoa> eventoPessoaList = evento.getEventoPessoas();
+        List<String> logs = new ArrayList<>();
+
+        try {
+            for (int i = 0; i < eventoPessoaList.size(); i++) {
+
+                // VERIFICAÇÃO CRÍTICA: Permite que o método pararProgresso() interrompa o envio
+                if (thread.isInterrupted()) {
+                    eventoRepository.finalizarProgresso(eventoId, "INTERROMPIDO", i);
+                    return;
+                }
+
+                EventoPessoa ep = eventoPessoaList.get(i);
+
+                if (ep.getPessoa() != null) {
+                    // Validações antes de tentar o envio
+                    if (ep.getPessoa().getEmail() == null || ep.getPessoa().getEmail().isEmpty()) {
+                        logs.add("Sem e-mail cadastrado: "+ep.getPessoa().getNome());
+                    }
+                    else if (ep.getNomeMagicNumber() == null || ep.getNomeMagicNumber().isEmpty()) {
+                        logs.add("Sem Número Mágico: "+ep.getPessoa().getNome());
+                    }
+                    else {
+                        try {
+                            // Envia o e-mail (Método privado que você já possui)
+                            enviarEmailIndividual(ep, evento, logs);
+                        }
+                        catch (Exception e) {
+                            logs.add("Erro ao enviar para " + ep.getPessoa().getEmail() + ": " + e.getMessage());
+                        }
+                    }
+                }
+
+                // Atualiza o progresso no banco a cada iteração
+                eventoRepository.atualizarApenasProgresso(eventoId, i + 1);
+
+                // Pequeno respiro opcional para não sobrecarregar o servidor de SMTP
+                try { Thread.sleep(500); } catch (InterruptedException ex) { thread.interrupt(); }
+            }
+
+            // Finaliza o progresso como concluído
+            eventoRepository.finalizarProgresso(eventoId, "CONCLUIDO", eventoPessoaList.size());
+
+        }
+        catch (Exception e) {
+            eventoRepository.finalizarProgresso(eventoId, "ERRO", 0);
+        }
+    }
+
+    private void enviarEmailIndividual(EventoPessoa ep, Evento evento, List<String> logs) {
+        try {
+            Context context = new Context();
+            context.setVariable("nome", ep.getPessoa().getNome());
+            context.setVariable("eventoNome", evento.getNome());
+            context.setVariable("linkMagico", "http://localhost:8080/presente/" + ep.getNomeMagicNumber());
+
+            String body = templateEngine.process("carta_convite", context);
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+
+            helper.setTo(ep.getPessoa().getEmail());
+            helper.setSubject("Convite Especial: " + evento.getNome());
+            helper.setText(body, true);
+
+            mailSender.send(mimeMessage);
+
+            // Log de sucesso opcional
+            System.out.println("E-mail enviado com sucesso para: " + ep.getPessoa().getEmail());
+            logs.add("SUCESSO: email enviado ( " + ep.getPessoa().getEmail() + " )");
+
+        }
+        catch (MailException | MessagingException e) {
+            // Aqui você captura o erro e vê a mensagem no console
+            System.err.println("FALHA AO ENVIAR EMAIL para " + ep.getPessoa().getEmail() + ": " + e.getMessage());
+            logs.add("ERRO: email ( " + ep.getPessoa().getEmail() + " ) : " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -1461,10 +1496,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         // Se não parou de fato, o status no banco deve ser "CANCELANDO"
         // para o usuário saber que o sistema ainda está limpando os recursos.
-        String statusFinal = parouDeFato ? "INTERROMPIDO" : "CANCELANDO";
+        String statusFinal = parouDeFato ? "INTERROMPIDO" : "PARANDO";
 
-        // O status "CANCELANDO" bloqueia o início de uma nova importação no seu Front?
-        // Se sim, é a melhor escolha.
         eventoRepository.finalizarProgresso(eventoId, statusFinal, 0);
 
         Evento evento = eventoRepository.findById(eventoId).orElseThrow();

@@ -54,7 +54,9 @@ import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {Mode} from "@/shared/crud/crud.mode";
 import {ConfirmDialog} from "primeng/confirmdialog";
 import {ProgressBar} from "primeng/progressbar";
-import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto"; // Certifique-se que este arquivo existe
+import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
+import {EventoPessoaDto} from "@/shared/model/dto/evento-pessoa-dto";
+import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -135,7 +137,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     // ======= Controles de Importação e Logs =======
     inputArquivoSelecionado: any;
     importacaoLogs: string[] = [];
-    enviandoEmails = false;
     progressoTarefaDto: ProgressoTarefaDto = new ProgressoTarefaDto();
     timerStatus: any;
 
@@ -187,105 +188,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.carregarOpcoes();
     }
 
-    private verificaProgresso() {
-        // Vejo se tem algum processo rodando
-        this.eventoService.getStatusProgresso(this.vm.model.id).subscribe({
-            next: res => {
-                Object.assign(this.progressoTarefaDto, res);
-
-                if (res.status === 'PROCESSANDO') {
-                    this.progressoTarefaDto.progresso = true;
-                    // Se não houver um timer rodando, cria um para perguntar de novo em 3 segundos
-                    if (!this.timerStatus) {
-                        this.timerStatus = setInterval(() => this.verificaProgresso(), 1000);
-                    }
-                }
-                else {
-                    this.progressoTarefaDto.progresso = false;
-                    if (this.timerStatus) {
-                        clearInterval(this.timerStatus);
-                        this.timerStatus = null;
-                    }
-
-                    if (res.progressoId === 'progressArquivo') {
-                        this.finalizaImportacaoCsv(res);
-                    }
-
-                }
-            },
-            error: (err) => {
-                console.error(err);
-            }
-        });
-    }
-
-// =========================================================================
-    //  IMPORTAÇÃO CSV
-    // =========================================================================
-    onFileSelect(event: any) {
-        const file = event.target.files[0];
-        if (file) {
-        // this.inputArquivoSelecionado = event.target as HTMLInputElement;
-        // if (this.inputArquivoSelecionado.files && this.inputArquivoSelecionado.files.length > 0) {
-        //     const file = this.inputArquivoSelecionado.files[0];
-            const eventoId = this.vm.model?.id;
-
-            if (!eventoId) {
-                this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Salve o evento antes de importar.' });
-                return;
-            }
-
-            this.progressoTarefaDto.progresso = true;
-            this.importacaoLogs = [];
-
-            this.eventoService.iniciaImportacaoArquivoCsv(eventoId, file).subscribe({
-                next: (res: any) => {
-                    this.verificaProgresso();
-
-                },
-                error: (err) => {
-                    this.progressoTarefaDto.progresso = false;
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erro Fatal',
-                        detail: err?.error?.message || 'Falha ao enviar arquivo.'
-                    });
-                    this.inputArquivoSelecionado.value = '';
-                }
-            });
-
-            event.target.value = '';
-        }
-    }
-
-    limparLogs() {
-        this.importacaoLogs = [];
-        this.abaAtiva = 'pessoa';
-    }
-
-    // =========================================================================
-    //  GRID PESSOAS: FILTRO E PAGINAÇÃO (SERVER-SIDE)
-    // =========================================================================
-
-    // Chamado pela Grid automaticamente (paginação, ordenação)
-/*
-    onLazyLoadPessoas(event: any) {
-        if(!this.vm.model.id) return;
-
-        const page = Math.floor((event.first || 0) / (event.rows || 10));
-        const size = event.rows || 10;
-
-        this.filterEventoPessoa.page = page;
-        this.filterEventoPessoa.size = size;
-
-        this.buscarPessoasDoBackend();
-    }
-
-    filtrarPessoasBackend() {
-        this.filterEventoPessoa.page = 0; // Volta para 1ª página na nova busca
-        this.buscarPessoasDoBackend();
-    }
-*/
 
 
     // Chamado pelos inputs de texto (Nome/CPF)
@@ -364,10 +266,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.buscarPessoasDoBackend();
     }
 
-    // =========================================================================
-    //  CRUD PESSOA (ADICIONAR/EDITAR/REMOVER)
-    // =========================================================================
-
     onOpenAddPessoas() {
         this.pessoasSelecionadas = [];
         let clienteId: number | undefined = (this.vm.filter as any)?.clienteId;
@@ -407,6 +305,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     onConfirmAddPessoas() {
         const selecionados = this.pessoasSelecionadas || [];
+/*
         if (!selecionados.length) return;
 
         let status = this.statusSelecionado;
@@ -422,7 +321,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         // Chama API para adicionar um a um
         const observables = selecionados.map((p) => {
             if (eventoId != null && p.id != null) {
-                this.eventoService.addOrUpdatePessoa(eventoId, p.id, status);
+                this.eventoService.addOrUpdateEventoPessoa(eventoId, p.id, status);
             }
         });
 
@@ -437,34 +336,23 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao adicionar algumas pessoas.' });
             }
         });
+*/
     }
 
     onSavingPessoa(event: any) {
         // Grid Lazy: Salvar vai direto ao backend
         const row: any = event?.data || {};
 
-        const selected = row._pessoaObj ?? row.pessoa;
-        const pessoaId = typeof selected === 'object' ? selected?.id : selected;
-
-        if (!pessoaId) {
-            event.cancel = true;
-            return;
-        }
-
-        let status = row.status;
-        if (status && typeof status === 'object') {
-            status = status.key ?? status.name;
-        }
 
         const eventoId = this.vm.model.id!;
 
-        this.eventoService.addOrUpdatePessoa(eventoId, pessoaId, status).subscribe({
+        this.eventoService.addOrUpdateEventoPessoa(eventoId, row).subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Salvo', detail: 'Registro atualizado.' });
+                this.messageService.add({ severity: 'success', summary: 'Salvo', detail: 'Registro atualizado e Gravado.' });
                 // Não precisa recarregar se for apenas update visual, mas para segurança:
                 // this.buscarPessoasDoBackend();
             },
-            error: () => {
+            error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao salvar.' });
                 event.cancel = true;
             }
@@ -549,10 +437,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             }
         });
     }
-
-    // =========================================================================
-    //  OUTRAS ABAS (GERAL / PRODUTO) E AUXILIARES
-    // =========================================================================
 
     onEventoLazyLoad(event: any) {
         const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
@@ -857,61 +741,111 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.filterSearchSubject.next();
     }
 
-
     override ngOnDestroy(): void {
         super.ngOnDestroy();
         this.filterSearchSubject.complete();
     }
 
-    enviarEmails() {
+
+
+    onImportaArquivoCsv(event: any) {
+        const file = event.target.files[0];
+        if (file) {
+            // this.inputArquivoSelecionado = event.target as HTMLInputElement;
+            // if (this.inputArquivoSelecionado.files && this.inputArquivoSelecionado.files.length > 0) {
+            //     const file = this.inputArquivoSelecionado.files[0];
+            const eventoId = this.vm.model?.id;
+
+            if (!eventoId) {
+                this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Salve o evento antes de importar.' });
+                return;
+            }
+
+            this.progressoTarefaDto.progresso = true;
+            this.importacaoLogs = [];
+
+            this.eventoService.iniciaImportacaoArquivoCsv(eventoId, file).subscribe({
+                next: (res: any) => {
+                    this.verificaProgresso();
+
+                },
+                error: (err) => {
+                    this.progressoTarefaDto.progresso = false;
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Erro Fatal',
+                        detail: err?.error?.message || 'Falha ao enviar arquivo.'
+                    });
+                    this.inputArquivoSelecionado.value = '';
+                }
+            });
+
+            event.target.value = '';
+        }
+    }
+
+    onEnviarEmails() {
         this.confirmationService.confirm({
             message: 'Deseja enviar o e-mail de convite para todas as pessoas ativas deste evento? Antes de enviar, salve todas as alterações',
             header: 'Confirmar Envio',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.enviandoEmails = true;
+
+                this.progressoTarefaDto.progresso = true;
+
                 this.eventoService.iniciaEnvioEmails(this.vm.model.id).subscribe({
                     next: () => {
-                        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'O processo de envio foi iniciado.' });
-                        this.enviandoEmails = false;
+                        this.verificaProgresso();
+                        // this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'O processo de envio foi iniciado.' });
+                        // this.enviandoEmails = false;
                     },
-                    error: () => {
-                        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao iniciar envio.' });
-                        this.enviandoEmails = false;
+                    error: (err) => {
+                        this.progressoTarefaDto.progresso = false;
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Erro Fatal',
+                            detail: err?.error?.message || 'Falha ao enviar arquivo.'
+                        });
                     }
                 });
             }
         });
     }
 
-    protected getValueProgresso() {
-        if(!this.progressoTarefaDto.percentual) {
-            return 0;
-        }
-
-        return this.progressoTarefaDto.percentual;
-    }
-
-    protected pararProcesso() {
-        this.eventoService.pararProgresso(this.vm.model.id).subscribe({
+    private verificaProgresso() {
+        // Vejo se tem algum processo rodando
+        this.eventoService.getStatusProgresso(this.vm.model.id).subscribe({
             next: res => {
                 Object.assign(this.progressoTarefaDto, res);
 
-                this.progressoTarefaDto.progresso = false;
-                if (res.progressoId === 'progressArquivo') {
-                    this.finalizaImportacaoCsv(res);
+                if (res.status === 'PROCESSANDO') {
+                    this.progressoTarefaDto.progresso = true;
+                    // Se não houver um timer rodando, cria um para perguntar de novo em 3 segundos
+                    if (!this.timerStatus) {
+                        this.timerStatus = setInterval(() => this.verificaProgresso(), 1000);
+                    }
                 }
+                else {
+                    this.progressoTarefaDto.progresso = false;
+                    if (this.timerStatus) {
+                        clearInterval(this.timerStatus);
+                        this.timerStatus = null;
+                    }
 
-                if (this.timerStatus) {
-                    clearInterval(this.timerStatus);
-                    this.timerStatus = null;
+                    if (res.progressoId === 'progressArquivo') {
+                        this.finalizaImportacaoCsv(res);
+                    }
+
+                    if (res.progressoId === 'progressEmail') {
+                        this.finalizaEnvioEmails(res);
+                    }
+
                 }
             },
             error: (err) => {
                 console.error(err);
             }
         });
-
     }
 
     private finalizaImportacaoCsv(res: ProgressoTarefaDto) {
@@ -946,4 +880,72 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
         this.inputArquivoSelecionado = '';
     }
+
+    private finalizaEnvioEmails(res: ProgressoTarefaDto) {
+        this.progressoTarefaDto.progresso = false;
+        const adicionados = res?.total ?? 0;
+        const logs = res?.logErros ?? [];
+
+        if (adicionados > 0) {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Sucesso',
+                detail: `${adicionados} e-Mails enviados com sucesso.`
+            });
+        }
+        else if (logs.length === 0) {
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Info',
+                detail: 'Nem um e-Mail foi enviado.'
+            });
+        }
+
+        if (logs.length > 0) {
+            this.importacaoLogs = logs;
+            this.abaAtiva = 'log'; // Troca aba para mostrar erro
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Erros no envio de e-Mail',
+                detail: 'Verifique a aba de Log.'
+            });
+        }
+
+    }
+
+    protected limparLogs() {
+        this.importacaoLogs = [];
+        this.abaAtiva = 'pessoa';
+    }
+
+    protected getValueProgresso() {
+        if(!this.progressoTarefaDto.percentual) {
+            return 0;
+        }
+
+        return this.progressoTarefaDto.percentual;
+    }
+
+    protected pararProcesso() {
+        this.eventoService.pararProgresso(this.vm.model.id).subscribe({
+            next: res => {
+                Object.assign(this.progressoTarefaDto, res);
+
+                this.progressoTarefaDto.progresso = false;
+                if (res.progressoId === 'progressArquivo') {
+                    this.finalizaImportacaoCsv(res);
+                }
+
+                if (this.timerStatus) {
+                    clearInterval(this.timerStatus);
+                    this.timerStatus = null;
+                }
+            },
+            error: (err) => {
+                console.error(err);
+            }
+        });
+
+    }
+
 }

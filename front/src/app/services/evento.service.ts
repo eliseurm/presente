@@ -19,6 +19,7 @@ import {EventoPessoaFilter} from "@/shared/model/filter/evento-pessoa-filter";
 import {PageResponse} from "@/shared/model/page-response";
 import {EventoReportFilter} from "@/shared/model/filter/evento-report-filter";
 import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
+import {Pessoa} from "@/shared/model/pessoa";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -28,12 +29,10 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         super(http);
     }
 
-    addOrUpdatePessoa(eventoId: number, pessoaId: number, status: string): Observable<EventoPessoa> {
-        // O Controller espera um objeto JSON { pessoaId: ..., status: ... }
-        return this.http.post<EventoPessoa>(`${this.apiUrl}/${eventoId}/pessoas`, {
-            pessoaId: pessoaId,
-            status: status
-        });
+    addOrUpdateEventoPessoa(eventoId: number, eventoPessoa: EventoPessoa): Observable<EventoPessoa> {
+        const eventoPessoaDto: EventoPessoaDto = EventoPessoaMapper.toDTO(eventoPessoa);
+
+        return this.http.post<EventoPessoa>(`${this.apiUrl}/${eventoId}/eventoPessoa`, eventoPessoaDto);
     }
 
     removerPessoaVinculo(eventoId: number, eventoPessoaId: number): Observable<void> {
@@ -97,10 +96,10 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         }
         return this.http.post<PageResponse<EventoPessoaDto>>(`${this.apiUrl}/${filter.eventoId}/eventoPessoaList`, filter)
             .pipe(
-                map((pageDto: PageResponse<EventoPessoaDto>) => {
-                    const contentMapped: EventoPessoa[] = EventoPessoaMapper.listFromDto(pageDto.content);
+                map((page: PageResponse<EventoPessoaDto>) => {
+                    const contentMapped: EventoPessoa[] = EventoPessoaMapper.listFromDto(page.content);
                     return {
-                        ...pageDto,
+                        ...page,
                         content: contentMapped
                     };
                 })

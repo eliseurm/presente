@@ -31,20 +31,24 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
 
     boolean existsByEventoAndPessoa(Evento evento, Pessoa pessoa);
 
-    @Query("""
+    static final String QUERY_COM_PESSOA = """
         select ep 
         from EventoPessoa ep 
         join fetch ep.pessoa p 
         join fetch p.cliente
         where 1=1 
-        and ep.evento.id = :#{#filtro.eventoId}
+        and (:#{#filtro.id} is null or ep.id = :#{#filtro.id})
+        and (:#{#filtro.eventoId} is null or ep.evento.id = :#{#filtro.eventoId})
         and (:#{#filtro.pessoaNome} is null or lower(ep.pessoa.nome) like lower(concat('%', :#{#filtro.pessoaNome}, '%'))) 
         and (:#{#filtro.pessoaCpf} is null or ep.pessoa.cpf like concat('%', :#{#filtro.pessoaCpf}, '%')) 
         and (:#{#filtro.pessoaEmail} is null or lower(ep.pessoa.email) like lower(concat('%', :#{#filtro.pessoaEmail}, '%')))
         and (:#{#filtro.pessoaTelefone} is null or lower(ep.pessoa.telefone) like lower(concat('%', :#{#filtro.pessoaTelefone}, '%')))
-
-        """)
+        """;
+    @Query(QUERY_COM_PESSOA)
     Page<EventoPessoa> findByEventoIdWithPessoa(@Param("filtro") EventoPessoaFilter filtro, Pageable pageable);
+
+    @Query(QUERY_COM_PESSOA)
+    Optional<EventoPessoa> findByIdWithPessoa(@Param("filtro") EventoPessoaFilter filtro);
 
     @Query("""
             SELECT new br.eng.eliseu.presente.model.dto.EventoRelatorioDto(

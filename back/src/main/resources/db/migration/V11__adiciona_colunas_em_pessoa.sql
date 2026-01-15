@@ -1,7 +1,6 @@
 -- Cria a coluna
 ALTER TABLE IF EXISTS presente_sh.pessoa
-    ADD COLUMN IF NOT EXISTS cliente_id BIGINT,
-    ADD COLUMN IF NOT EXISTS cpf VARCHAR(11)
+    ADD COLUMN IF NOT EXISTS cliente_id BIGINT
 ;
 
 -- Seta valor para registros já existentes

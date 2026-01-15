@@ -10,4 +10,6 @@ export class EventoPessoa {
     nomeMagicNumber?: string;
     // Somente leitura: indica se a pessoa já possui uma escolha ATIVA neste evento
     jaEscolheu?: boolean;
+
+    version?: number
 }
