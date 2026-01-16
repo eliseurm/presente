@@ -83,6 +83,10 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
     // Fonte alternativa para somatórios (ex.: total geral, ignorando paginação)
     @Input() summaryDataSource?: any[];
     @Input() showMessageDefault: boolean = true;
+    // Multiplas selecoes
+    @Input() showSelection: boolean = false;
+    @Input() selection: any[] = [];
+    @Output() selectionChange = new EventEmitter<any[]>();
 
     @ContentChild(EoSomatoriaComponent) summaryContainer?: EoSomatoriaComponent;
     // Precisa capturar itens mesmo quando aninhados dentro de <eo-somatoria>
@@ -144,6 +148,11 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
     // Emit row double-click events to consumer
     onRowDoubleClick(rowData: any) {
         this.rowDblClick.emit(rowData);
+    }
+
+    onSelectionChange(value: any[]) {
+        this.selection = value;
+        this.selectionChange.emit(this.selection);
     }
 
     get visibleColumns() {

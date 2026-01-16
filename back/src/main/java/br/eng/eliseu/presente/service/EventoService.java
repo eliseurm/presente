@@ -155,22 +155,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return vinculo;
     }
 
-    @Transactional
-    public void removePessoaVinculo(Long eventoId, Long eventoPessoaId) {
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado: " + eventoId));
-
-        if (evento.getEventoPessoas() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo de pessoa não encontrado no evento");
-        }
-
-        boolean removed = evento.getEventoPessoas().removeIf(ep -> Objects.equals(ep.getId(), eventoPessoaId));
-        if (!removed) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vínculo pessoa não encontrado: " + eventoPessoaId);
-        }
-        eventoRepository.save(evento); // orphanRemoval cuidará da deleção
-    }
-
     // ================= Vínculos: Produtos =================
 
     @Transactional
@@ -605,25 +589,25 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     }
 
     @Override
-    protected void prepararParaCriacao(Evento entidade) {
-        entidade.setId(null);
-        normalizarAssociacoes(entidade);
+    protected void prepararParaCriacao(Evento nova) {
+        nova.setId(null);
+        normalizarAssociacoes(nova);
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Evento entidade, Evento entidadeExistente) {
+    protected void prepararParaAtualizacao(Long id, Evento nova, Evento entidadeExistente) {
         // Primeiro normaliza associações no objeto "entidade" para obter referências gerenciadas
-        normalizarAssociacoes(entidade);
+        normalizarAssociacoes(nova);
 
         // Atualiza campos simples e referências já normalizadas
-        entidadeExistente.setNome(entidade.getNome());
-        entidadeExistente.setDescricao(entidade.getDescricao());
-        entidadeExistente.setCliente(entidade.getCliente());
-        entidadeExistente.setAnotacoes(entidade.getAnotacoes());
-        entidadeExistente.setInicio(entidade.getInicio());
-        entidadeExistente.setFimPrevisto(entidade.getFimPrevisto());
-        entidadeExistente.setFim(entidade.getFim());
-        entidadeExistente.setStatus(entidade.getStatus());
+        entidadeExistente.setNome(nova.getNome());
+        entidadeExistente.setDescricao(nova.getDescricao());
+        entidadeExistente.setCliente(nova.getCliente());
+        entidadeExistente.setAnotacoes(nova.getAnotacoes());
+        entidadeExistente.setInicio(nova.getInicio());
+        entidadeExistente.setFimPrevisto(nova.getFimPrevisto());
+        entidadeExistente.setFim(nova.getFim());
+        entidadeExistente.setStatus(nova.getStatus());
         // Sincroniza coleções sem usar clear()+add(), evitando inserções duplicadas e violação de unique constraint
         // ===== Pessoas (List) =====
         if (entidadeExistente.getEventoPessoas() == null) {
@@ -636,8 +620,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             if (pessoaId != null) mapExistentesPorPessoa.put(pessoaId, ep);
         }
         Map<Long, EventoPessoa> mapNovosPorPessoa = new LinkedHashMap<>();
-        if (entidade.getEventoPessoas() != null) {
-            for (EventoPessoa epNovo : entidade.getEventoPessoas()) {
+        if (nova.getEventoPessoas() != null) {
+            for (EventoPessoa epNovo : nova.getEventoPessoas()) {
                 if (epNovo == null || epNovo.getPessoa() == null || epNovo.getPessoa().getId() == null) continue;
                 mapNovosPorPessoa.put(epNovo.getPessoa().getId(), epNovo);
             }
@@ -683,8 +667,8 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             if (prodId != null) mapExistentesPorProduto.put(prodId, ep);
         }
         Map<Long, EventoProduto> mapNovosPorProduto = new LinkedHashMap<>();
-        if (entidade.getEventoProdutos() != null) {
-            for (EventoProduto eprodNovo : entidade.getEventoProdutos()) {
+        if (nova.getEventoProdutos() != null) {
+            for (EventoProduto eprodNovo : nova.getEventoProdutos()) {
                 if (eprodNovo == null || eprodNovo.getProduto() == null || eprodNovo.getProduto().getId() == null) continue;
                 mapNovosPorProduto.put(eprodNovo.getProduto().getId(), eprodNovo);
             }

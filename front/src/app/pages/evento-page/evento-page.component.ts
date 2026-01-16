@@ -116,6 +116,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     loadingPessoas: boolean = false;
 
     pessoasGridDisplay: any[] = [];
+    selectedPessoas: any[] = [];
     filterEventoPessoa: EventoPessoaFilter = new EventoPessoaFilter();
     private filterSearchSubject = new Subject<void>();
 
@@ -132,8 +133,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     // ======= Popup Custom de Adição de Pessoas =======
     addPessoasDialogVisible = false;
     pessoasPossiveis: Pessoa[] = [];
-    pessoasSelecionadas: Pessoa[] = [];
-    statusSelecionado: any = null;
+    pessoasSelecionadasPopup: Pessoa[] = [];
+    statusSelecionadoPopup: any = null;
 
     // ======= Controles de Importação e Logs =======
     inputArquivoSelecionado: any;
@@ -170,10 +171,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.filterEventoPessoa.page = 0;
         this.filterEventoPessoa.size = 10;
 
-        // Configure um timer para o filtro de eventoPessoas
-        this.filterSearchSubject.pipe(
-            debounceTime(2000)
-        ).subscribe(() => {
+        // Busca do filtro de pessoas (aba pessoas)
+        this.filterSearchSubject.pipe(debounceTime(2000)).subscribe(() => {
             this.filtrarPessoasLocalmente(); // Chama sua função de filtro
         });
 
@@ -191,7 +190,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
 
 
-    // Chamado pelos inputs de texto (Nome/CPF)
     filtrarPessoasLocalmente() {
         let lista: EventoPessoa[] = this.vm.model.eventoPessoas || [];
 
@@ -220,7 +218,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.filterEventoPessoa.totalItens = this.pessoasGridDisplay.length;
     }
 
-    // Executa a busca na API
     buscarPessoasDoBackend() {
         this.loadingPessoas = true;
         this.filterEventoPessoa.eventoId = this.vm.model?.id;
@@ -267,8 +264,9 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         this.buscarPessoasDoBackend();
     }
 
-    onOpenAddPessoas() {
-        this.pessoasSelecionadas = [];
+
+    onPopupPessoaAbre() {
+        this.pessoasSelecionadasPopup = [];
         let clienteId: number | undefined = (this.vm.filter as any)?.clienteId;
         const mc = (this.vm.model as any)?.cliente;
         if (!clienteId && mc) {
@@ -299,17 +297,16 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         });
     }
 
-    onCancelAddPessoas() {
+    onPopupPessoaCancela() {
         this.addPessoasDialogVisible = false;
-        this.pessoasSelecionadas = [];
+        this.pessoasSelecionadasPopup = [];
     }
 
-    onConfirmAddPessoas() {
-        const selecionados = this.pessoasSelecionadas || [];
-/*
+    onPopupPessoaSalva() {
+        const selecionados = this.pessoasSelecionadasPopup || [];
         if (!selecionados.length) return;
 
-        let status = this.statusSelecionado;
+        let status = this.statusSelecionadoPopup;
         if (status && typeof status === 'object') {
             status = status.key ?? status.name ?? status;
         }
@@ -330,79 +327,16 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Adicionado', detail: `${selecionados.length} pessoas adicionadas.` });
                 this.addPessoasDialogVisible = false;
-                this.pessoasSelecionadas = [];
+                this.pessoasSelecionadasPopup = [];
                 this.buscarPessoasDoBackend(); // Recarrega grid do servidor
             },
             error: () => {
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao adicionar algumas pessoas.' });
             }
         });
-*/
     }
 
-    onSavingPessoa(event: any) {
-        // Grid Lazy: Salvar vai direto ao backend
-        const row: any = event?.data || {};
-
-
-        const eventoId = this.vm.model.id!;
-
-/*
-        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).subscribe({
-            next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Salvo', detail: 'Registro atualizado e Gravado.' });
-                // Não precisa recarregar se for apenas update visual, mas para segurança:
-                // this.buscarPessoasDoBackend();
-            },
-            error: (err) => {
-                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao salvar.' });
-
-                // Retornamos false para o Grid saber que NÃO deve fechar o popup. (equivale ao 'event.cancel = true')
-                return of(false);
-            }
-        });
-*/
-
-        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).pipe(
-            map(res => {
-                // Se chegou aqui, a API salvou com sucesso.
-                // O Grid vai fechar o popup e atualizar a lista.
-                return true;
-            }),
-            catchError(err => {
-                const errorBody = err.error;
-                let msg = errorBody?.message;
-                if (errorBody?.errors?.length > 0) {
-                    errorBody?.errors.forEach((e:any) => {
-                        msg += (', '+e.error);
-                    });
-                }
-
-                // Injeta a mensagem no evento para o e-data-grid exibir no popup
-                event.validationMessage = msg || "Erro ao salvar registro.";
-
-                return of(false); // Impede o fechamento do popup
-            })
-        );
-    }
-
-    onDeletingPessoa(event: any) {
-        const row: any = event?.data || {};
-        const eventoId = this.vm.model?.id;
-        if (!eventoId || !row.id) return;
-
-        this.eventoService.removerPessoaVinculo(eventoId, row.id).subscribe({
-            next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Removido', detail: 'Pessoa removida do evento.' });
-                this.buscarPessoasDoBackend(); // Refresh essencial após delete em lazy grid
-            },
-            error: () => {
-                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao remover.' });
-            }
-        });
-    }
-
-    onEditingStartPessoa(event: any) {
+    onEditaEventoPessoa(event: any) {
         let data: any = event?.data || {};
         data._tab = 'geral';
         try {
@@ -447,31 +381,98 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
     }
 
-    onPessoaLimpar(row: any) {
-        row.pessoa = null;
+
+    onSalvaEventoPessoa(event: any) {
+        const row: any = event?.data || {};
+        const eventoId = this.vm.model.id!;
+
+        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).pipe(
+            map(res => {
+                // Se chegou aqui, a API salvou com sucesso.
+                // O Grid vai fechar o popup e atualizar a lista.
+                return true;
+            }),
+            catchError(err => {
+                const errorBody = err.error;
+                let msg = errorBody?.message;
+                if (errorBody?.errors?.length > 0) {
+                    errorBody?.errors.forEach((e:any) => {
+                        msg += (', '+e.error);
+                    });
+                }
+
+                // Injeta a mensagem no evento para o e-data-grid exibir no popup
+                event.validationMessage = msg || "Erro ao salvar registro.";
+
+                return of(false); // Impede o fechamento do popup
+            })
+        );
     }
 
-    searchPessoas(event: any) {
-        const query = (event?.filter || '').trim();
-        let clienteId = this.abstractVM.getClienteId();
-        if (!clienteId) return;
-        this.pessoaService.findPessoaPorCliente(clienteId, query || undefined).subscribe({
-            next: (list) => {
-                this.pessoasSugestoes = list || [];
+    onDeletaEventoPessoa(event: any) {
+        const row: any = event?.data || {};
+        const eventoId = this.vm.model?.id;
+        if (!eventoId || !row.id) return;
+
+        this.eventoService.eventoPessoaDeleteLote(eventoId, [row.id]).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Removido', detail: 'Pessoa removida do evento.' });
+                this.buscarPessoasDoBackend(); // Refresh essencial após delete em lazy grid
             },
-            error: (_) => {
-                this.pessoasSugestoes = [];
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao remover.' });
             }
         });
     }
 
+    onDeletaEventoPessoaBloco() {
+        this.confirmationService.confirm({
+            message: `Deseja excluir as ${this.selectedPessoas.length} pessoas selecionadas?`,
+            header: 'Confirmação',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Sim',
+            rejectLabel: 'Não',
+            accept: () => {
+                const eventoId = this.vm.model?.id;
+                const ids = this.selectedPessoas.map(p => p.id);
+
+                // Chama o serviço para excluir no back-end
+                this.eventoService.eventoPessoaDeleteLote(eventoId, ids).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Salvo',
+                            detail: 'Pessoas removidas com sucesso'
+                        });
+
+                        // Remove localmente da grid para não precisar recarregar tudo
+                        this.pessoasGridDisplay = this.pessoasGridDisplay.filter((p: any) => !ids.includes(p.id));
+                        this.selectedPessoas = []; // Limpa a seleção
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Erro',
+                            detail: 'Não foi possível excluir as pessoas.'
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+
     onEventoLazyLoad(event: any) {
+        this.loading = true;
         const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
         this.vm.filter.size = size;
         this.vm.filter.order = ['id,asc'];
         this.vm.doFilter().subscribe({
+            next: (list) => {
+                this.loading = false;
+            },
             error: (err) => this.handleListError(err)
         });
     }
@@ -906,6 +907,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
 
         this.inputArquivoSelecionado = '';
+        this.buscarPessoasDoBackend();
     }
 
     private finalizaEnvioEmails(res: ProgressoTarefaDto) {
@@ -943,14 +945,6 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     protected limparLogs() {
         this.importacaoLogs = [];
         this.abaAtiva = 'pessoa';
-    }
-
-    protected getValueProgresso() {
-        if(!this.progressoTarefaDto.percentual) {
-            return 0;
-        }
-
-        return this.progressoTarefaDto.percentual;
     }
 
     protected pararProcesso() {

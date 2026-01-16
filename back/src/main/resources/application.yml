@@ -86,7 +86,7 @@ spring:
 logging:
   level:
     org:
-      hibernate.orm.jdbc.bind: TRACE
+      hibernate.orm.jdbc.bind: INFO
       springframework:
         security: DEBUG
 #        mail: INFO

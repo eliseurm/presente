@@ -49,26 +49,26 @@ public class UsuarioService extends AbstractCrudService<Usuario, Long, UsuarioFi
     }
 
     @Override
-    protected void prepararParaCriacao(Usuario entidade) {
-        entidade.setId(null);
+    protected void prepararParaCriacao(Usuario nova) {
+        nova.setId(null);
         // Se senha em texto puro foi informada, gerar o hash
-        if (entidade.getSenha() != null && !entidade.getSenha().isBlank()) {
-            entidade.setPasswordHash(passwordEncoder.encode(entidade.getSenha()));
+        if (nova.getSenha() != null && !nova.getSenha().isBlank()) {
+            nova.setPasswordHash(passwordEncoder.encode(nova.getSenha()));
         }
         // Se nenhuma senha foi informada e não há hash, define uma senha padrão temporária
-        if (entidade.getPasswordHash() == null || entidade.getPasswordHash().isBlank()) {
-            entidade.setPasswordHash(passwordEncoder.encode("123456"));
+        if (nova.getPasswordHash() == null || nova.getPasswordHash().isBlank()) {
+            nova.setPasswordHash(passwordEncoder.encode("123456"));
         }
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Usuario entidade, Usuario entidadeExistente) {
-        entidadeExistente.setUsername(entidade.getUsername());
-        entidadeExistente.setPapel(entidade.getPapel());
-        entidadeExistente.setStatus(entidade.getStatus());
+    protected void prepararParaAtualizacao(Long id, Usuario nova, Usuario entidadeExistente) {
+        entidadeExistente.setUsername(nova.getUsername());
+        entidadeExistente.setPapel(nova.getPapel());
+        entidadeExistente.setStatus(nova.getStatus());
         // Atualiza o hash apenas se uma nova senha foi enviada
-        if (entidade.getSenha() != null && !entidade.getSenha().isBlank()) {
-            entidadeExistente.setPasswordHash(passwordEncoder.encode(entidade.getSenha()));
+        if (nova.getSenha() != null && !nova.getSenha().isBlank()) {
+            entidadeExistente.setPasswordHash(passwordEncoder.encode(nova.getSenha()));
         }
     }
 }

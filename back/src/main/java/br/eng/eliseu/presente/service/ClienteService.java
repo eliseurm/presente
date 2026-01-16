@@ -55,23 +55,23 @@ public class ClienteService extends AbstractCrudService<Cliente, Long, ClienteFi
     }
 
     @Override
-    protected void prepararParaCriacao(Cliente entidade) {
-        entidade.setId(null);
+    protected void prepararParaCriacao(Cliente nova) {
+        nova.setId(null);
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Cliente entidade, Cliente entidadeExistente) {
+    protected void prepararParaAtualizacao(Long id, Cliente nova, Cliente entidadeExistente) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth != null && auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
 
-        entidadeExistente.setNome(entidade.getNome());
-        entidadeExistente.setEmail(entidade.getEmail());
-        entidadeExistente.setTelefone(entidade.getTelefone());
-        entidadeExistente.setAnotacoes(entidade.getAnotacoes());
+        entidadeExistente.setNome(nova.getNome());
+        entidadeExistente.setEmail(nova.getEmail());
+        entidadeExistente.setTelefone(nova.getTelefone());
+        entidadeExistente.setAnotacoes(nova.getAnotacoes());
         // Somente adminsistrador altera usuario e status
         if (isAdmin) {
-            entidadeExistente.setUsuario(entidade.getUsuario());
-            entidadeExistente.setStatus(entidade.getStatus());
+            entidadeExistente.setUsuario(nova.getUsuario());
+            entidadeExistente.setStatus(nova.getStatus());
         }
     }
 }

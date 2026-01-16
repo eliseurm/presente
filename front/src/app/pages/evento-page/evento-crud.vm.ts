@@ -173,4 +173,5 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
         const minute = pad(d.getMinutes());
         return `${year}-${month}-${day}T${hour}:${minute}`;
     }
+
 }

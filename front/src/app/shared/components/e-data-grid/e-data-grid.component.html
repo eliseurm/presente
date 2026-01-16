@@ -45,10 +45,16 @@
             [totalRecords]="totalRecords"
             [lazy]="lazy"
             (onLazyLoad)="handleLazyLoad($event)"
-            styleClass="p-datatable-striped">
+            styleClass="p-datatable-striped"
+            [(selection)]="selection"
+            (selectionChange)="onSelectionChange($event)"
+        >
 
-            <ng-template pTemplate="header">
+            <ng-template pTemplate="header" let-columns>
                 <tr>
+                    <th style="width: 4rem" *ngIf="showSelection">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                    </th>
                     <th *ngFor="let col of visibleColumns">
                         {{ col.caption || col.dataField }}
                     </th>
@@ -58,8 +64,11 @@
                 </tr>
             </ng-template>
 
-            <ng-template pTemplate="body" let-rowData>
-                <tr (dblclick)="onRowDoubleClick(rowData)">
+            <ng-template pTemplate="body" let-columns="columns" let-rowData>
+                <tr [pSelectableRow]="rowData">
+                    <td *ngIf="showSelection">
+                        <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
+                    </td>
                     <td *ngFor="let col of visibleColumns">
                         <span class="p-column-title">{{ col.caption || col.dataField }}</span>
                         <ng-container *ngIf="!col.cellTemplate; else customCell">

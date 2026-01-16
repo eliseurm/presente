@@ -35,11 +35,6 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.post<EventoPessoa>(`${this.apiUrl}/${eventoId}/eventoPessoa`, eventoPessoaDto);
     }
 
-    removerPessoaVinculo(eventoId: number, eventoPessoaId: number): Observable<void> {
-        // O Controller espera DELETE /evento/{id}/pessoas/{eventoPessoaId}
-        return this.http.delete<void>(`${this.apiUrl}/${eventoId}/pessoas/${eventoPessoaId}`);
-    }
-
     addOrUpdateProduto(eventoId: number, produtoId: number, status: string): Observable<EventoProduto> {
         // O Controller espera um objeto JSON { produtoId: ..., status: ... }
         return this.http.post<EventoProduto>(`${this.apiUrl}/${eventoId}/produtos`, {
@@ -77,12 +72,11 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.get<EventoEscolhaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/historico`);
     }
 
-    getEventoPessoa(eventoId: number|undefined): Observable<EventoPessoa[]> {
+    eventoPessoaDeleteLote(eventoId: number | undefined, eventoPessoaIdList: number[]): Observable<{ total: number; deletados: number }> {
         if(!eventoId){
-            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
+            return throwError(() => new Error('O ID do evento é obrigatório.'));
         }
-        return this.http.get<EventoPessoaDto[]>(`${this.apiUrl}/${eventoId}/pessoas/list`)
-            .pipe(map((dtos: EventoPessoaDto[]) => EventoPessoaMapper.listFromDto(dtos)));
+        return this.http.delete<{ total: number; deletados: number }>(`${this.apiUrl}/${eventoId}/eventoPessoaDeleteLota`, {body: eventoPessoaIdList});
     }
 
     getEventoProduto(eventoId: number): Observable<EventoProduto[]> {

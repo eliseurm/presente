@@ -34,11 +34,7 @@ export abstract class BaseCrudService<T extends { id?: any; version?: number }, 
     }
 
     deletarEmLote(ids: number[]): Observable<{ total: number; deletados: number }> {
-        return this.http.request<{ total: number; deletados: number }>(
-            'delete',
-            `${this.apiUrl}/batch`,
-            { body: ids }
-        );
+        return this.http.request<{ total: number; deletados: number }>('delete', `${this.apiUrl}/batch`, { body: ids });
     }
 
     getById(id: any, expand?: string | string[]): Observable<D> {

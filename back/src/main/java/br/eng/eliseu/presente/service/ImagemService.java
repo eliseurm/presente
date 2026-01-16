@@ -41,16 +41,16 @@ public class ImagemService extends AbstractCrudService<Imagem, Long, ImagemFilte
     }
 
     @Override
-    protected void prepararParaCriacao(Imagem entidade) {
-        entidade.setId(null);
+    protected void prepararParaCriacao(Imagem nova) {
+        nova.setId(null);
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Imagem entidade, Imagem entidadeExistente) {
-        entidadeExistente.setNome(entidade.getNome());
-        entidadeExistente.setUrl(entidade.getUrl());
-        if (entidade.getArquivo() != null && entidade.getArquivo().length > 0) {
-            entidadeExistente.setArquivo(entidade.getArquivo());
+    protected void prepararParaAtualizacao(Long id, Imagem nova, Imagem entidadeExistente) {
+        entidadeExistente.setNome(nova.getNome());
+        entidadeExistente.setUrl(nova.getUrl());
+        if (nova.getArquivo() != null && nova.getArquivo().length > 0) {
+            entidadeExistente.setArquivo(nova.getArquivo());
         }
     }
 }

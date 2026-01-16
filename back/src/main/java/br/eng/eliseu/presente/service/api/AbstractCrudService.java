@@ -22,8 +22,11 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     protected abstract JpaRepository<T, ID> getRepository();
     protected abstract JpaSpecificationExecutor<T> getSpecificationExecutor();
     protected abstract Specification<T> buildSpecification(F filtro);
-    protected abstract void prepararParaCriacao(T entidade);
-    protected abstract void prepararParaAtualizacao(ID id, T entidade, T entidadeExistente);
+    protected abstract void prepararParaCriacao(T nova);
+    protected abstract void prepararParaAtualizacao(ID id, T nova, T entidadeExistente);
+    protected List<Predicate> buildBasePredicates(F filtro) {
+        return new ArrayList<>();
+    }
 
     @Override
     public Page<T> listar(F filtro) {
@@ -115,18 +118,29 @@ public abstract class AbstractCrudService<T, ID, F extends BaseFilter> implement
     }
 
     @Override
+    @Transactional
     public int deletarEmLote(List<ID> ids) {
-        int deletados = 0;
-        for (ID id : ids) {
-            if (getRepository().existsById(id)) {
-                getRepository().deleteById(id);
-                deletados++;
-            }
+        if (ids == null || ids.isEmpty()) {
+            return 0;
         }
-        return deletados;
+
+        int tamanhoLote = 500; // Tamanho seguro para a maioria dos bancos
+        int totalDeletado = 0;
+
+        // Divide a lista em sublistas de 500
+        for (int i = 0; i < ids.size(); i += tamanhoLote) {
+            int fim = Math.min(i + tamanhoLote, ids.size());
+            List<ID> lote = ids.subList(i, fim);
+
+            // Executa o delete para este lote
+            getRepository().deleteAllByIdInBatch(lote);
+            totalDeletado += lote.size();
+
+            // Opcional: force o flush para liberar memória se a lista for realente extrema
+            // getEntityManager().flush();
+        }
+
+        return totalDeletado;
     }
 
-    protected List<Predicate> buildBasePredicates(F filtro) {
-        return new ArrayList<>();
-    }
 }

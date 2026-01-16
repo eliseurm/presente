@@ -99,29 +99,29 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
     }
 
     @Override
-    protected void prepararParaCriacao(Produto entidade) {
-        entidade.setId(null);
-        anexarReferencias(entidade);
+    protected void prepararParaCriacao(Produto nova) {
+        nova.setId(null);
+        anexarReferencias(nova);
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long id, Produto entidade, Produto entidadeExistente) {
+    protected void prepararParaAtualizacao(Long id, Produto nova, Produto entidadeExistente) {
         // 1. Carrega referências de imagens (mantém sua lógica atual)
-        anexarReferencias(entidade);
+        anexarReferencias(nova);
 
         // 2. Atualiza campos simples
-        entidadeExistente.setNome(entidade.getNome());
-        entidadeExistente.setDescricao(entidade.getDescricao());
-        entidadeExistente.setPreco(entidade.getPreco());
-        entidadeExistente.setStatus(entidade.getStatus());
+        entidadeExistente.setNome(nova.getNome());
+        entidadeExistente.setDescricao(nova.getDescricao());
+        entidadeExistente.setPreco(nova.getPreco());
+        entidadeExistente.setStatus(nova.getStatus());
 
         // CORREÇÃO DA VERSÃO (Do problema anterior, mantenha isso!)
-        if (entidade.getVersion() != null) {
-            entidadeExistente.setVersion(entidade.getVersion());
+        if (nova.getVersion() != null) {
+            entidadeExistente.setVersion(nova.getVersion());
         }
 
         // 3. Imagens (ManyToMany geralmente aceita set, mas é bom manter o padrão se der erro depois)
-        entidadeExistente.setImagens(entidade.getImagens());
+        entidadeExistente.setImagens(nova.getImagens());
 
         // --- CORREÇÃO DO ERRO ORPHAN REMOVAL AQUI ---
         // NUNCA faça entidadeExistente.setEstoques(...) se usar orphanRemoval=true.
@@ -134,8 +134,8 @@ public class ProdutoService extends AbstractCrudService<Produto, Long, ProdutoFi
         entidadeExistente.getEstoques().clear();
 
         // B. Adiciona os novos itens, garantindo o vínculo com o Pai
-        if (entidade.getEstoques() != null) {
-            entidade.getEstoques().forEach(item -> {
+        if (nova.getEstoques() != null) {
+            nova.getEstoques().forEach(item -> {
                 // Garante que o filho aponte para o pai gerenciado
                 item.setProduto(entidadeExistente);
                 // Adiciona na coleção gerenciada existente

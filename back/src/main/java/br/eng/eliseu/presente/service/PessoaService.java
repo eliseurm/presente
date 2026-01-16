@@ -72,9 +72,9 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
     }
 
     @Override
-    protected void prepararParaCriacao(Pessoa entidade) {
+    protected void prepararParaCriacao(Pessoa nova) {
 
-        entidade.setId(null);
+        nova.setId(null);
     }
 
     @Override

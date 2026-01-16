@@ -45,15 +45,15 @@ public class CorService extends AbstractCrudService<Cor, Long, CorFilter> {
     }
 
     @Override
-    protected void prepararParaCriacao(Cor entidade) {
-        entidade.setId(null);
+    protected void prepararParaCriacao(Cor nova) {
+        nova.setId(null);
     }
 
     @Override
-    protected void prepararParaAtualizacao(Long aLong, Cor entidade, Cor entidadeExistente) {
-        entidadeExistente.setNome(entidade.getNome());
-        entidadeExistente.setCorHex(entidade.getCorHex());
-        entidadeExistente.setCorRgbA(entidade.getCorRgbA());
+    protected void prepararParaAtualizacao(Long aLong, Cor nova, Cor entidadeExistente) {
+        entidadeExistente.setNome(nova.getNome());
+        entidadeExistente.setCorHex(nova.getCorHex());
+        entidadeExistente.setCorRgbA(nova.getCorRgbA());
     }
 
 }

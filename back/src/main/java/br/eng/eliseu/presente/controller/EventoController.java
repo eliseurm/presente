@@ -13,6 +13,7 @@ import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
 import br.eng.eliseu.presente.repository.EventoPessoaRepository;
 import br.eng.eliseu.presente.repository.EventoProdutoRepository;
 import br.eng.eliseu.presente.repository.EventoRepository;
+import br.eng.eliseu.presente.service.EventoPessoaService;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -37,9 +38,16 @@ public class EventoController {
     private final EventoProdutoMapper eventoProdutoMapper;
     private final EventoService eventoService;
     private final EventoEscolhaRepository eventoEscolhaRepository;
-    private final EventoPessoaRepository eventoPessoaRepository;
+//    private final EventoPessoaRepository eventoPessoaRepository;
+    private final EventoPessoaService eventoPessoaService;
     private final EventoProdutoRepository eventoProdutoRepository;
-    private final EventoRepository eventoRepository;
+
+    public record UpdateStatusRequest(StatusEnum status) {}
+    public record AddProdutoRequest(Long produtoId, StatusEnum status) {}
+    public record IniciarRequest(String baseUrl) {}
+
+
+
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or (#filtro != null and #filtro.clienteId != null and @authService.isLinkedToClient(#filtro.clienteId))")
@@ -99,6 +107,8 @@ public class EventoController {
         ));
     }
 
+
+
     @PostMapping("/{id}/importar-csv")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
     public ResponseEntity<ProgressoTarefaDto> importarArquivoCsv(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
@@ -126,12 +136,6 @@ public class EventoController {
 
 
 
-//    @GetMapping("/{id}/pessoas")
-//    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-//    public ResponseEntity<Page<EventoPessoaDto>> listarPessoas(@PathVariable("id") Long eventoId, @ModelAttribute PessoaFilter filtro, @PageableDefault(size = 10) Pageable pageable ) {
-//        return ResponseEntity.ok(eventoService.listarPessoasPaginado(eventoId, filtro, pageable));
-//    }
-
     @PostMapping("/{eventoId}/eventoPessoaList")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
     public ResponseEntity<Page<EventoPessoaDto>> listEventoPessoaPaginado(@PathVariable("eventoId") Long eventoId, @RequestBody EventoPessoaFilter filtro ) {
@@ -139,12 +143,6 @@ public class EventoController {
         filtro.setEventoId(eventoId);
         return ResponseEntity.ok(eventoService.listEventoPessoasPaginado(filtro));
     }
-
-
-    // ======= Endpoints de vínculo: Pessoas =======
-
-    public static record AddPessoaRequest(Long pessoaId, StatusEnum status) {}
-    public static record UpdateStatusRequest(StatusEnum status) {}
 
     @PostMapping("/{id}/eventoPessoa")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
@@ -169,16 +167,18 @@ public class EventoController {
         return ResponseEntity.ok(eventoService.updatePessoaVinculo(eventoId, eventoPessoaId, req.status()));
     }
 
-    @DeleteMapping("/{id}/pessoas/{eventoPessoaId}")
-    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<Void> removerPessoa(@PathVariable("id") Long eventoId, @PathVariable Long eventoPessoaId) {
-        eventoService.removePessoaVinculo(eventoId, eventoPessoaId);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/{id}/eventoPessoaDeleteLota")
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<Map<String, Object>> removerPessoa(@PathVariable("id") Long eventoId, @RequestBody List<Long> eventoPessoaIdList) {
+        int deletados = eventoPessoaService.deletarEmLote(eventoPessoaIdList);
+        return ResponseEntity.ok(Map.of(
+                "total", eventoPessoaIdList.size(),
+                "deletados", deletados
+        ));
+
     }
 
-    // ======= Endpoints de vínculo: Produtos =======
 
-    public static record AddProdutoRequest(Long produtoId, StatusEnum status) {}
 
     @PostMapping("/{id}/produtos")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
@@ -203,9 +203,7 @@ public class EventoController {
         return ResponseEntity.noContent().build();
     }
 
-    // ======= Controle do Evento: Iniciar / Parar =======
 
-    public static record IniciarRequest(String baseUrl) {}
 
     @PostMapping("/{id}/iniciar")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
@@ -226,7 +224,7 @@ public class EventoController {
         return ResponseEntity.ok(eventoService.pararEvento(id));
     }
 
-    // ======= Escolhas por Pessoa (somente quando editar a pessoa) =======
+
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/ultima")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
@@ -258,7 +256,7 @@ public class EventoController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<EventoPessoaDto>> getEventoPessoa(@PathVariable("id") Long eventoId) {
 
-        List<EventoPessoa> entidade = eventoPessoaRepository.findByEventoId(eventoId);
+        List<EventoPessoa> entidade = eventoPessoaService.buscaEventoPessoaList(eventoId);
 
         Set<Long> pessoasQueJaEscolheram = Optional
                 .ofNullable(eventoEscolhaRepository.findByEvento_IdAndStatus(eventoId, StatusEnum.ATIVO))

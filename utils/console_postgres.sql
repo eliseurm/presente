@@ -123,7 +123,7 @@ select * from cliente ;
 
 select * from evento ;
 
-select * from evento_pessoa where pessoa_id = 10;
+select * from evento_pessoa ;
 select * from evento_pessoa where pessoa_id < 3;
 select * from evento_produto ;
 select * from evento_escolha ;
@@ -135,22 +135,6 @@ from evento e
 join cliente c on e.cliente_id=c.id
 ;
 
-
-select a from Evento a ;
-
-select * from evento_pessoa where pessoa_id<=3 ;
-delete from evento_pessoa where pessoa_id>=3 ;
-select * from evento_produto ;
-select * from evento_escolha ;
-
-delete from evento_escolha;
-delete from pessoa;
-TRUNCATE TABLE evento_pessoa RESTART IDENTITY CASCADE;
-TRUNCATE TABLE pessoa RESTART IDENTITY CASCADE;
-
-ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_cpf;
-ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_email;
-ALTER TABLE pessoa DROP CONSTRAINT IF EXISTS uk_pessoa_telefone;
 
 select
     e.nome as nomeEvento, e.descricao, e.status as statusEvento, e.inicio, e.fim_previsto, e.fim,
@@ -218,3 +202,9 @@ VALUES (
 1, 'Presente do dia do professor', 'Festa do dia do professor', 1,
 'ATIVO', '2026-01-13 00:53:00.000000', '2026-01-17 00:53:00.000000', null, '2026-01-12 18:56:51.839195', '2026-01-14 11:58:37.008091', 112,
 'CONCLUIDO', 0, 1000, 'progressArquivo');
+
+INSERT INTO evento_produto (id, evento_id, produto_id, status, version) VALUES (1, 1, 1, 'ATIVO', 0);
+INSERT INTO evento_produto (id, evento_id, produto_id, status, version) VALUES (2, 1, 2, 'ATIVO', 0);
+
+
+

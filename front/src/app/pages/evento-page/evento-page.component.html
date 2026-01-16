@@ -14,6 +14,7 @@
     <div crud-list-grid class="w-full">
         <e-data-grid
             [dataSource]="vm.dataSource"
+            [loading]="loading"
             [paginator]="true"
             [rows]="vm.filter.size || 10"
             [rowsPerPageOptions]="[10,20,50,100]"
@@ -191,9 +192,15 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <button pButton type="button" label="Refresh" icon="pi pi-refresh"
-                                        (click)="onRefreshGridPessoas()"></button>
+                                        (click)="onRefreshGridPessoas()"
+                                ></button>
                                 <button pButton type="button" label="Adicionar" icon="pi pi-plus"
-                                        (click)="onOpenAddPessoas()"></button>
+                                        (click)="onPopupPessoaAbre()"
+                                ></button>
+                                <button pButton type="button" label="Excluir" icon="pi pi-trash" severity="danger"
+                                        [disabled]="!selectedPessoas.length"
+                                        (click)="onDeletaEventoPessoaBloco()"
+                                ></button>
                             </div>
                         </div>
 
@@ -254,9 +261,12 @@
                                  [rowsPerPageOptions]="[10, 20, 50, 100]"
                                  [lazy]="false"
                                  [showMessageDefault]="false"
-                                 (onEditDialogOpen)="onEditingStartPessoa($event)"
-                                 (onSaving)="onSavingPessoa($event)"
-                                 (onDeleting)="onDeletingPessoa($event)">
+                                 (onEditDialogOpen)="onEditaEventoPessoa($event)"
+                                 (onSaving)="onSalvaEventoPessoa($event)"
+                                 (onDeleting)="onDeletaEventoPessoa($event)"
+                                 [showSelection]="true"
+                                 [(selection)]="selectedPessoas"
+                    >
 
                         <eo-editing mode="popup" [allowAdding]="false" [allowUpdating]="true" [allowDeleting]="true"
                                     [confirmDelete]="true">
@@ -337,19 +347,6 @@
                                    (ngModelChange)="gridPessoas.setFormItemValue(dataField, $event)" />
                         </ng-template>
 
-                        <!--
-                        <ng-template eTemplate="pessoaEditCellTemplate" let-row>
-                            <p-select class="w-full" [(ngModel)]="row.pessoa" [options]="pessoasSugestoes"
-                                      optionLabel="nome" dataKey="id" [filter]="true" filterBy="nome"
-                                      (onFilter)="searchPessoas($event)" [showClear]="true"
-                                      (onClear)="onPessoaLimpar(row.pessoa)"
-                                      [ngModelOptions]="{standalone:true}" placeholder="Selecionar pessoa"
-                                      appendTo="body">
-                            </p-select>
-                        </ng-template>
-
--->
-
                         <ng-template eTemplate="statusEditCellTemplate" let-data="data">
                             <enum-select class="w-full"
                                          [enumObject]="statusEnumType"
@@ -362,7 +359,8 @@
                         <ng-template eTemplate="magicLinkCell" let-data='data'>
                             @if (data) {
                                 <a [href]="buildTokenLink(data)" target="_blank" rel="noopener">{{ data }}</a>
-                            } @else {
+                            }
+                            @else {
                                 <span class="text-xs opacity-60">—</span>
                             }
                         </ng-template>
@@ -376,7 +374,9 @@
 
                     </e-data-grid>
 
-                    <p-dialog [(visible)]="addPessoasDialogVisible" [modal]="true" [dismissableMask]="false"
+                    <p-dialog [(visible)]="addPessoasDialogVisible"
+                              [modal]="true"
+                              [dismissableMask]="false"
                               [closable]="true"
                               header="Adicionar Pessoas"
                               [style]="{width: '900px'}"
@@ -392,7 +392,7 @@
                                            [multiple]="true"
                                            [checkbox]="true"
                                            [metaKeySelection]="false"
-                                           [(ngModel)]="pessoasSelecionadas"
+                                           [(ngModel)]="pessoasSelecionadasPopup"
                                            name="pessoasSelecionadas">
                                 </p-listbox>
                                 <small class="opacity-70">Somente pessoas não listadas são exibidas.</small>
@@ -401,7 +401,7 @@
                                 <label class="block">Status</label>
                                 <enum-select class="w-full"
                                              [enumObject]="statusEnumType"
-                                             [(ngModel)]="statusSelecionado"
+                                             [(ngModel)]="statusSelecionadoPopup"
                                              name="statusSelecionado"
                                 ></enum-select>
                             </div>
@@ -410,11 +410,11 @@
                         <ng-template pTemplate="footer">
                             <div class="flex w-full gap-2 justify-end flex-col sm:flex-row">
                                 <button pButton type="button" label="Cancelar" class="p-button-text"
-                                        (click)="onCancelAddPessoas()"></button>
+                                        (click)="onPopupPessoaCancela()"></button>
                                 <button pButton type="button" label="Adicionar Selecionados" icon="pi pi-check"
                                         class="p-button-success"
-                                        [disabled]="pessoasSelecionadas.length === 0 || !statusSelecionado"
-                                        (click)="onConfirmAddPessoas()"></button>
+                                        [disabled]="pessoasSelecionadasPopup.length === 0 || !statusSelecionadoPopup"
+                                        (click)="onPopupPessoaSalva()"></button>
                             </div>
                         </ng-template>
                     </p-dialog>
