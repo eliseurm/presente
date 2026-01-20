@@ -20,6 +20,7 @@ import {PageResponse} from "@/shared/model/page-response";
 import {EventoReportFilter} from "@/shared/model/filter/evento-report-filter";
 import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
 import {Pessoa} from "@/shared/model/pessoa";
+import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -29,7 +30,7 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         super(http);
     }
 
-    addOrUpdateEventoPessoa(eventoId: number, eventoPessoa: EventoPessoa): Observable<EventoPessoa> {
+    updateEventoPessoa(eventoId: number, eventoPessoa: EventoPessoa): Observable<EventoPessoa> {
         const eventoPessoaDto: EventoPessoaDto = EventoPessoaMapper.toDTO(eventoPessoa);
 
         return this.http.post<EventoPessoa>(`${this.apiUrl}/${eventoId}/eventoPessoa`, eventoPessoaDto);

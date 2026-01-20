@@ -14,12 +14,12 @@ export class EventoEscolhaMapper {
             id: entity.id!,
             dataEscolha: entity.dataEscolha ? entity.dataEscolha.toISOString() : '',
             alteradoEm: entity.alteradoEm ? entity.alteradoEm.toISOString() : '',
-            status: entity.status!,
+            status: StatusEnum.toKey(entity.status),
 
             // Mapeamento de Evento
             eventoId: entity.evento?.id!,
             eventoNome: entity.evento?.nome || '',
-            eventoStatus: entity.evento?.status!,
+            eventoStatus: StatusEnum.toKey(entity.evento?.status),
 
             // Mapeamento de Pessoa
             pessoaId: entity.pessoa?.id!,
@@ -31,7 +31,7 @@ export class EventoEscolhaMapper {
             produtoId: entity.produto?.id!,
             produtoNome: entity.produto?.nome || '',
             produtoDescricao: entity.produto?.descricao || '',
-            produtoStatus: entity.produto?.status || StatusEnum.ATIVO,
+            produtoStatus: StatusEnum.toKey(entity.produto?.status || StatusEnum.ATIVO),
 
             // Mapeamento de Cor
             corId: entity.cor?.id!,

@@ -307,9 +307,9 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         if (!selecionados.length) return;
 
         let status = this.statusSelecionadoPopup;
-        if (status && typeof status === 'object') {
-            status = status.key ?? status.name ?? status;
-        }
+        // if (status && typeof status === 'object') {
+        //     status = status.key ?? status.name ?? status;
+        // }
         if (!status) {
             this.messageToastAddAndShow('Selecione o Status', 'Atenção', 'warn');
             return;
@@ -319,18 +319,24 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         // Chama API para adicionar um a um
         const observables = selecionados.map((p) => {
             if (eventoId != null && p.id != null) {
-                this.eventoService.addOrUpdateEventoPessoa(eventoId, p.id, status);
+                let ep: EventoPessoa = new EventoPessoa();
+                ep.pessoa = { id: p.id } as Pessoa;
+                ep.status = status;
+                return this.eventoService.updateEventoPessoa(eventoId, ep);
             }
+            return of(null)
         });
 
-        forkJoin(observables).subscribe({
+        const validObservables = observables.filter(obs => obs !== undefined);
+
+        forkJoin(validObservables).subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Adicionado', detail: `${selecionados.length} pessoas adicionadas.` });
+                this.messageService.add({ severity: 'success', summary: 'Salvo', detail: `${selecionados.length} pessoas adicionadas e Gravadas.` });
                 this.addPessoasDialogVisible = false;
                 this.pessoasSelecionadasPopup = [];
                 this.buscarPessoasDoBackend(); // Recarrega grid do servidor
             },
-            error: () => {
+            error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao adicionar algumas pessoas.' });
             }
         });
@@ -382,11 +388,11 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     }
 
 
-    onSalvaEventoPessoa(event: any) {
+    onSalvingEditEventoPessoa(event: any) {
         const row: any = event?.data || {};
         const eventoId = this.vm.model.id!;
 
-        event.asyncResult = this.eventoService.addOrUpdateEventoPessoa(eventoId, row).pipe(
+        event.asyncResult = this.eventoService.updateEventoPessoa(eventoId, row).pipe(
             map(res => {
                 // Se chegou aqui, a API salvou com sucesso.
                 // O Grid vai fechar o popup e atualizar a lista.

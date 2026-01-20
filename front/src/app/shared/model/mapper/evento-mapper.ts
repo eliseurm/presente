@@ -21,7 +21,7 @@ export class EventoMapper {
             id: dto.id,
             nome: dto.nome,
             descricao: dto.descricao,
-            status: dto.status,
+            status: StatusEnum.toKey(dto.status),
             anotacoes: dto.anotacoes,
             version: dto.version,
 
@@ -51,16 +51,11 @@ export class EventoMapper {
     public static toDTO(evento: Evento): EventoDto | undefined{
         if (!evento) return undefined;
 
-        let statusFinal: any = evento.status;
-        if (evento.status && typeof evento.status === 'object') {
-            statusFinal = (evento.status as any).key ?? (evento.status as any).name ?? evento.status;
-        }
-
         return {
             id: evento.id,
             nome: evento.nome,
             descricao: evento.descricao,
-            status: statusFinal,
+            status: StatusEnum.toKey(evento.status),
             anotacoes: evento.anotacoes,
             version: evento.version,
 

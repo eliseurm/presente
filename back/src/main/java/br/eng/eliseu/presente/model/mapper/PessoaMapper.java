@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,32 +45,33 @@ public class PessoaMapper {
         return fromDto(dto, null);
     }
 
-    public static Pessoa fromDto(PessoaDto dto, Pessoa pessoa) {
+    public static Pessoa fromDto(PessoaDto dto, Pessoa pessoaExistente) {
         if (dto == null || ObjectUtils.isEmpty(dto)) {
             return null;
         }
 
-        if(pessoa == null) {
-            pessoa = new Pessoa();
-        }
+        // Criamos uma nova variável final que recebe ou a existente ou uma nova
+        final Pessoa pessoaFinal = (pessoaExistente != null) ? pessoaExistente : new Pessoa();
 
-        pessoa.setId(dto.id());
-        pessoa.setCliente(ClienteMapper.fromDto(dto.cliente(), pessoa.getCliente()));
-        pessoa.setNome(dto.nome());
-        pessoa.setCpf(dto.cpf());
-        pessoa.setTelefone(dto.telefone());
-        pessoa.setEmail(dto.email());
-        pessoa.setEndereco(dto.endereco());
-        pessoa.setComplemento(dto.complemento());
-        pessoa.setCidade(dto.cidade());
-        pessoa.setEstado(dto.estado());
-        pessoa.setCep(dto.cep());
-        pessoa.setSenha(dto.senha());
-        pessoa.setStatus(dto.status());
-        pessoa.setCriadoEm(dto.criadoEm());
-        pessoa.setAlteradoEm(dto.alteradoEm());
+        // Agora a Lambda funciona porque a variável 'pessoa' é final
+        Optional.ofNullable(dto.cliente())
+                .ifPresent(c -> pessoaFinal.setCliente(ClienteMapper.fromDto(c, pessoaFinal.getCliente())));
 
-        return pessoa;
+        Optional.ofNullable(dto.nome()).ifPresent(pessoaFinal::setNome);
+        Optional.ofNullable(dto.cpf()).ifPresent(pessoaFinal::setCpf);
+        Optional.ofNullable(dto.telefone()).ifPresent(pessoaFinal::setTelefone);
+        Optional.ofNullable(dto.email()).ifPresent(pessoaFinal::setEmail);
+        Optional.ofNullable(dto.endereco()).ifPresent(pessoaFinal::setEndereco);
+        Optional.ofNullable(dto.complemento()).ifPresent(pessoaFinal::setComplemento);
+        Optional.ofNullable(dto.cidade()).ifPresent(pessoaFinal::setCidade);
+        Optional.ofNullable(dto.estado()).ifPresent(pessoaFinal::setEstado);
+        Optional.ofNullable(dto.cep()).ifPresent(pessoaFinal::setCep);
+        Optional.ofNullable(dto.senha()).ifPresent(pessoaFinal::setSenha);
+        Optional.ofNullable(dto.status()).ifPresent(pessoaFinal::setStatus);
+        Optional.ofNullable(dto.criadoEm()).ifPresent(pessoaFinal::setCriadoEm);
+        Optional.ofNullable(dto.alteradoEm()).ifPresent(pessoaFinal::setAlteradoEm);
+
+        return pessoaFinal;
     }
 
     /**

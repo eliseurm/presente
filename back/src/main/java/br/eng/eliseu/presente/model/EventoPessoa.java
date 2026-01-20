@@ -34,7 +34,7 @@ public class EventoPessoa {
     private StatusEnum status;
 
     // Armazena o token completo no formato: primeiroNome_code8 (ex.: Maria_A1B2C3D4)
-    @Column(name = "numero_magico", length = 64)
+    @Column(name = "numero_magico", length = 64, unique = true)
     private String nomeMagicNumber;
 
     @Column(name = "organo_nivel_1", length = 100)

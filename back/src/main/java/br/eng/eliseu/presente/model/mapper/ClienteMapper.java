@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -34,29 +35,31 @@ public class ClienteMapper {
         return fromDto(dto, null);
     }
 
-    public static Cliente fromDto(ClienteDto dto, Cliente cliente) {
+    public static Cliente fromDto(ClienteDto dto, Cliente clienteExistente) {
         if (dto == null) return null;
 
-        if(cliente == null) {
-            cliente = new Cliente();
-        }
+        // Define a variável final para ser usada com segurança dentro das lambdas
+        final Cliente clienteFinal = (clienteExistente != null) ? clienteExistente : new Cliente();
 
-        cliente.setId(dto.id());
-        cliente.setNome(dto.nome());
-        cliente.setEmail(dto.email());
-        cliente.setTelefone(dto.telefone());
-        cliente.setAnotacoes(dto.anotacoes());
-        cliente.setStatus(dto.status());
-        cliente.setCriadoEm(dto.criadoEm());
-        cliente.setAlteradoEm(dto.alteradoEm());
-        cliente.setVersion(dto.version()); // Garante que a versão volte para a entidade
+        // Mapeamento do objeto Usuario usando Lambda e a variável final 'cliente'
+        Optional.ofNullable(dto.usuario())
+                .filter(u -> !ObjectUtils.isEmpty(u))
+                .ifPresent(u -> clienteFinal.setUsuario(UsuarioMapper.fromDto(u)));
 
-        if(dto.usuario() != null && !ObjectUtils.isEmpty(dto.usuario())) {
-            cliente.setUsuario(UsuarioMapper.fromDto(dto.usuario()));
-        }
+        // Mapeamento condicional (só seta se o valor no DTO não for nulo)
+        Optional.ofNullable(dto.id()).ifPresent(clienteFinal::setId);
+        Optional.ofNullable(dto.nome()).ifPresent(clienteFinal::setNome);
+        Optional.ofNullable(dto.email()).ifPresent(clienteFinal::setEmail);
+        Optional.ofNullable(dto.telefone()).ifPresent(clienteFinal::setTelefone);
+        Optional.ofNullable(dto.anotacoes()).ifPresent(clienteFinal::setAnotacoes);
+        Optional.ofNullable(dto.status()).ifPresent(clienteFinal::setStatus);
+        Optional.ofNullable(dto.criadoEm()).ifPresent(clienteFinal::setCriadoEm);
+        Optional.ofNullable(dto.alteradoEm()).ifPresent(clienteFinal::setAlteradoEm);
+        Optional.ofNullable(dto.version()).ifPresent(clienteFinal::setVersion);
 
-        return cliente;
+        return clienteFinal;
     }
+
 
     public static List<ClienteDto> toDtoList(List<Cliente> entities) {
         if (entities == null) return List.of();

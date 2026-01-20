@@ -18,15 +18,10 @@ export class EventoProdutoMapper {
 
         const produto = dto.produto ? ProdutoMapper.fromDto(dto.produto) : new Produto();
 
-        let statusEnum: any = dto.status;
-        if (typeof dto.status === 'string') {
-            statusEnum = StatusEnum[dto.status as keyof typeof StatusEnum] ?? dto.status;
-        }
-
         return {
             id: dto.id,
             produto: produto,
-            status: statusEnum as StatusEnum,
+            status: StatusEnum.toKey(dto.status),
         };
     }
 
@@ -41,15 +36,10 @@ export class EventoProdutoMapper {
         const produtoDto = model.produto ? ProdutoMapper.toDto(model.produto) : undefined;
 
 
-        let statusFinal: any = model.status;
-        if (model.status && typeof model.status === 'object') {
-            statusFinal = (model.status as any).key ?? (model.status as any).name ?? model.status;
-        }
-
         return {
             id: model.id,
             produto: produtoDto,
-            status: statusFinal as StatusEnum,
+            status: StatusEnum.toKey(model.status),
         };
     }
 

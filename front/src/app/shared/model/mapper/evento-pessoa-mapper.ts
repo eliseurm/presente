@@ -20,7 +20,7 @@ export class EventoPessoaMapper {
         return {
             id: dto.id,
             pessoa: pessoa,
-            status: dto.status,
+            status: StatusEnum.toKey(dto.status),
             nomeMagicNumber: dto.nomeMagicNumber,
             jaEscolheu: dto.jaEscolheu,
             version: dto.version
@@ -39,7 +39,7 @@ export class EventoPessoaMapper {
         return {
             id: model.id,
             pessoa: PessoaMapper.toDTO(model.pessoa),
-            status: model.status as StatusEnum,
+            status: StatusEnum.toKey(model.status),
             nomeMagicNumber: model.nomeMagicNumber,
             jaEscolheu: model.jaEscolheu,
             version: model.version

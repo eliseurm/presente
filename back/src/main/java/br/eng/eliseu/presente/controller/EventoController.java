@@ -44,6 +44,7 @@ public class EventoController {
 
     public record UpdateStatusRequest(StatusEnum status) {}
     public record AddProdutoRequest(Long produtoId, StatusEnum status) {}
+    public record AddERequest(Long produtoId, StatusEnum status) {}
     public record IniciarRequest(String baseUrl) {}
 
 
@@ -144,9 +145,9 @@ public class EventoController {
         return ResponseEntity.ok(eventoService.listEventoPessoasPaginado(filtro));
     }
 
-    @PostMapping("/{id}/eventoPessoa")
+    @PostMapping("/{eventoId}/eventoPessoa")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#eventoId)")
-    public ResponseEntity<EventoPessoaDto> adicionarOuAtualizarPessoa(@PathVariable("id") Long eventoId, @RequestBody EventoPessoaDto dto) {
+    public ResponseEntity<EventoPessoaDto> adicionarOuAtualizarPessoa(@PathVariable("eventoId") Long eventoId, @RequestBody EventoPessoaDto dto) {
         if (dto == null) {
             return ResponseEntity.badRequest().build();
         }

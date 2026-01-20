@@ -5,6 +5,7 @@ import {Pessoa} from "@/shared/model/pessoa";
 import {EventoPessoa} from "@/shared/model/evento-pessoa";
 import {ProdutoDto} from "@/shared/model/dto/produto-dto";
 import {ClienteMapper} from "@/shared/model/mapper/cliente-mapper";
+import {StatusEnum} from "@/shared/model/enum/status.enum";
 
 export class PessoaMapper {
 
@@ -21,7 +22,7 @@ export class PessoaMapper {
             cpf: entity.cpf,
             telefone: entity.telefone,
             email: entity.email,
-            status: entity.status,
+            status: StatusEnum.toKey(entity.status),
             endereco: entity.endereco,
             complemento: entity.complemento,
             cidade: entity.cidade,

@@ -17,6 +17,7 @@ public class EventoPessoaDto {
     private PessoaDto pessoa;
 
     private StatusEnum status;
+
     private String nomeMagicNumber; // token
 
     // Somente leitura: indica se a pessoa já possui uma escolha ATIVA neste evento
