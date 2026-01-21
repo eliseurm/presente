@@ -62,6 +62,7 @@
             <p-tabpanels>
 
                 <p-tabpanel value="geral">
+<!--
                     @if (vm.model.id) {
                         <div class="flex gap-2 items-center mb-2">
                             <button pButton type="button" label="Iniciar"
@@ -86,6 +87,7 @@
                             }
                         </div>
                     }
+-->
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="flex flex-col gap-2 w-full md:w-3/4">
@@ -174,22 +176,19 @@
                     <div class="flex flex-col gap-3 mb-3">
                         <div class="flex items-center justify-between">
                             <div>
-                                <input #fileInput type="file" accept=".csv" class="hidden"
-                                       (change)="onImportaArquivoCsv($event)"/>
-                                <button pButton type="button"
-                                        [label]="progressoTarefaDto.progresso ? 'Processando...' : 'Importar arq csv'"
-                                        [icon]="progressoTarefaDto.progresso ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
-                                        class="p-button-outlined"
-                                        [disabled]="progressoTarefaDto.progresso"
-                                        (click)="fileInput.click()">
-                                </button>
-                                <button pButton label="Enviar e-mail" icon="pi pi-envelope"
-                                        class="p-button-success p-button-outlined mr-2"
-                                        (click)="onEnviarEmails()"
-                                        [loading]="progressoTarefaDto.progresso"
-                                        [disabled]="vm.mode !== modeType.Edit">
-                                </button>
-                            </div>
+                                <div>
+                                    <input #fileInput type="file" accept=".csv" class="hidden"
+                                           (change)="onImportaArquivoCsv($event)"/>
+
+                                    <p-menu #menuPessoas [model]="itemsMenuPessoas" [popup]="true"></p-menu>
+
+                                    <button pButton type="button"
+                                            (click)="menuPessoas.toggle($event)"
+                                            icon="pi pi-bars"
+                                            label="Ações"
+                                            class="p-button-outlined p-button-secondary">
+                                    </button>
+                                </div>                            </div>
                             <div class="flex items-center gap-2">
                                 <button pButton type="button" label="Refresh" icon="pi pi-refresh"
                                         (click)="onRefreshGridPessoas()"
@@ -219,37 +218,62 @@
                             </div>
                         }
 
-                        <div class="flex flex-col gap-3 p-3 border rounded surface-ground bg-gray-50">
-                            <div class="flex flex-wrap gap-2 items-center w-full">
-                                <span class="p-input-icon-left flex-1 min-w-[200px]">
-                                    <i class="pi pi-search"></i>
-                                    <input pInputText type="search" class="w-full p-inputtext-sm"
-                                           placeholder="Buscar por Nome..."
-                                           [(ngModel)]="filterEventoPessoa.pessoaNome"
-                                           (input)="onSearchInput()"
-                                           (search)="filtrarPessoasLocalmente()"/>
-                                </span>
+                        <p-panel header="Filtros de Pessoas" [toggleable]="true" [collapsed]="true" class="mb-3">
+                            <div class="flex flex-col gap-3 p-3 border rounded surface-ground bg-gray-50">
+                                <div class="flex flex-wrap gap-2 items-center w-full">
+            <span class="p-input-icon-left flex-1 min-w-[200px]">
+                <i class="pi pi-search"></i>
+                <input pInputText type="search" class="w-full p-inputtext-sm"
+                       placeholder="Buscar por Nome..."
+                       [(ngModel)]="filterEventoPessoa.pessoaNome"
+                       (input)="onSearchInput()"
+                       (search)="filtrarPessoasLocalmente()"/>
+            </span>
 
-                                <span class="p-input-icon-left flex-1 min-w-[200px]">
-                                    <i class="pi pi-id-card"></i>
-                                    <input pInputText type="search" class="w-full p-inputtext-sm"
-                                           placeholder="Buscar por CPF..."
-                                           [(ngModel)]="filterEventoPessoa.pessoaCpf"
-                                           (input)="onSearchInput()"
-                                           (search)="filtrarPessoasLocalmente()"/>
-                                </span>
+                                    <span class="p-input-icon-left flex-1 min-w-[200px]">
+                <i class="pi pi-id-card"></i>
+                <input pInputText type="search" class="w-full p-inputtext-sm"
+                       placeholder="Buscar por CPF..."
+                       [(ngModel)]="filterEventoPessoa.pessoaCpf"
+                       (input)="onSearchInput()"
+                       (search)="filtrarPessoasLocalmente()"/>
+            </span>
+                                </div>
 
-                                <button pButton type="button" icon="pi pi-filter"
-                                        class="p-button-outlined"
-                                        pTooltip="Filtrar"
-                                        (click)="filtrarPessoasLocalmente()">
-                                </button>
+                                <div class="flex flex-wrap gap-4 items-center w-full mt-2">
+
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-semibold text-gray-600">Já fizeram escolha?</label>
+                                        <p-selectButton [options]="opcoesTriState"
+                                                        [(ngModel)]="filterEventoPessoa.jaEscolheu"
+                                                        (onChange)="filtrarPessoasLocalmente()"
+                                                        styleClass="p-selectbutton-sm">
+                                        </p-selectButton>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-semibold text-gray-600">Tem link mágico?</label>
+                                        <p-selectButton [options]="opcoesTriState"
+                                                        [(ngModel)]="filterEventoPessoa.temLinkMagico"
+                                                        (onChange)="filtrarPessoasLocalmente()"
+                                                        styleClass="p-selectbutton-sm">
+                                        </p-selectButton>
+                                    </div>
+
+                                    <div class="flex-1 text-right self-end">
+                                        <button pButton type="button" icon="pi pi-filter"
+                                                class="p-button-outlined"
+                                                pTooltip="Filtrar"
+                                                (click)="filtrarPessoasLocalmente()">
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="w-full text-left text-sm text-gray-500 font-medium border-t pt-2">
+                                    Total: {{ filterEventoPessoa.totalItens }}
+                                </div>
                             </div>
-
-                            <div class="w-full text-left text-sm text-gray-500 font-medium">
-                                Total: {{ filterEventoPessoa.totalItens }}
-                            </div>
-                        </div>
+                        </p-panel>
 
                     </div>
 

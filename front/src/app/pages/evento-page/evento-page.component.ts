@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, ElementRef, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -55,9 +55,10 @@ import {Mode} from "@/shared/crud/crud.mode";
 import {ConfirmDialog} from "primeng/confirmdialog";
 import {ProgressBar} from "primeng/progressbar";
 import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
-import {EventoPessoaDto} from "@/shared/model/dto/evento-pessoa-dto";
-import {EventoPessoaMapper} from "@/shared/model/mapper/evento-pessoa-mapper";
-import {catchError} from "rxjs/operators"; // Certifique-se que este arquivo existe
+import {catchError} from "rxjs/operators";
+import {Menu} from "primeng/menu";
+import {Panel} from "primeng/panel";
+import {SelectButton} from "primeng/selectbutton"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -93,7 +94,10 @@ import {catchError} from "rxjs/operators"; // Certifique-se que este arquivo exi
         EiItemComponent,
         Paginator,
         ConfirmDialog,
-        ProgressBar
+        ProgressBar,
+        Menu,
+        Panel,
+        SelectButton
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: ['./evento-page.component.scss', '../../shared/components/crud-base/crud-base.component.scss'],
@@ -101,6 +105,8 @@ import {catchError} from "rxjs/operators"; // Certifique-se que este arquivo exi
 })
 @CrudMetadata('EventoPageComponent', [Evento, EventoFilter])
 export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter> {
+
+    @ViewChild('fileInput') fileInput!: ElementRef;
 
     // Opções Gerais
     clientesOptions: Cliente[] = [];
@@ -146,6 +152,26 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         { key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome' },
         { key: 'clienteId', label: 'Cliente', type: 'select', options: [] },
         {key: 'status', label: 'Status', type: 'enum', placeholder: 'Selecione o status', enumObject: StatusEnum, optionLabel: 'descricao'}    ];
+
+    protected filterFieldsPessoa: FilterField[] = [
+        { key: 'pessoaNome', label: 'Nome', type: 'text' },
+        { key: 'pessoaCpf', label: 'CPF', type: 'text' },
+        { key: 'jaEscolheu', label: 'Já fizeram escolha', type: 'boolean' },
+        { key: 'temLinkMagico', label: 'Já tem link mágico', type: 'boolean' }
+    ];
+
+    protected itemsMenuPessoas = [
+        { label: 'Importar arq CSV', icon: 'pi pi-upload', command: () => this.fileInput.nativeElement.click() },
+        { label: 'Criar Link Mágico', icon: 'pi pi-sparkles', command: () => this.criarLinksMagicos() },
+        { label: 'Enviar Convite (email)', icon: 'pi pi-envelope', command: () => this.onEnviarEmails() },
+        // { label: 'Enviar Convite (whatsapp)', icon: 'pi pi-whatsapp', command: () => this.enviarWhatsapp() }
+    ];
+
+    protected opcoesTriState = [
+        { label: 'Todos', value: null },
+        { label: 'Sim', value: true },
+        { label: 'Não', value: false }
+    ];
 
     constructor(
         messageService: MessageService,
@@ -208,6 +234,17 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             lista = lista.filter(item => {
                 const cpf = (item.pessoa?.cpf || '').replace(/\D/g, '');
                 return cpf.includes(cpfBusca);
+            });
+        }
+
+        if (this.filterEventoPessoa.jaEscolheu !== null) {
+            lista = lista.filter(item => item.jaEscolheu === this.filterEventoPessoa.jaEscolheu);
+        }
+
+        if (this.filterEventoPessoa.temLinkMagico !== null) {
+            lista = lista.filter(item => {
+                const temLink = !!(item.nomeMagicNumber && item.nomeMagicNumber.trim() !== '');
+                return temLink === this.filterEventoPessoa.temLinkMagico;
             });
         }
 
@@ -510,34 +547,46 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         return '';
     }
 
-    onIniciarEvento() {
+    criarLinksMagicos() {
         const id = this.vm.model?.id;
         if (!id) {
             this.messageToastAddAndShow('Grave o evento antes de iniciar.');
             return;
         }
-        const baseUrl = this.getPublicBaseUrl();
-        this.eventoService.iniciarEvento(id as number, baseUrl).subscribe({
-            next: (res) => {
-                const n = res?.gerados ?? 0;
-                this.abstractVM.preencherDetalhes(this.vm.model).subscribe({
-                    next: (modelAtualizado) => {
-                        this.vm.model = modelAtualizado;
-                        this.vm.refreshModel.next();
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Evento iniciado',
-                            detail: `${n} link(s) gerados`
+
+        this.confirmationService.confirm({
+            message: 'Deseja gerar links mágicos para quem ainda não possui?',
+            header: 'Confirmar Ação',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                // Chama o serviço para criar links apenas se não existirem (conforme regra 4)
+                const baseUrl = this.getPublicBaseUrl();
+                this.eventoService.iniciarEvento(id as number, baseUrl).subscribe({
+                    next: (res) => {
+                        const n = res?.gerados ?? 0;
+                        this.abstractVM.preencherDetalhes(this.vm.model).subscribe({
+                            next: (modelAtualizado) => {
+                                this.vm.model = modelAtualizado;
+                                this.vm.refreshModel.next();
+                                this.messageService.add({
+                                    severity: 'success',
+                                    summary: 'Evento iniciado',
+                                    detail: `${n} link(s) gerados`
+                                });
+                            },
+                            error: (err) => this.vm.messageToastShow(err)
                         });
                     },
-                    error: (err) => this.vm.messageToastShow(err)
+                    error: (err) => {
+                        const msg = err?.error?.message || 'Falha ao iniciar o evento.';
+                        this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
+                    }
                 });
-            },
-            error: (err) => {
-                const msg = err?.error?.message || 'Falha ao iniciar o evento.';
-                this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
             }
+
         });
+
+
     }
 
     onPausarEvento() {

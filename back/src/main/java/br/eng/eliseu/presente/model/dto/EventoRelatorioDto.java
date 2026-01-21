@@ -10,8 +10,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor // Este construtor é o que o Hibernate usará no "new EventoRelatorioDto(...)"
 public class EventoRelatorioDto {
 
     // Dados do Evento

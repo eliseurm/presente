@@ -157,6 +157,10 @@ export class EventoReportComponent implements OnInit {
         if (event) {
             const nomeSugestao = `relatorio_${event.arquivoPadrao}`;
             this.filter.nomeArquivo = this.formatarNomeArquivo(nomeSugestao);
+
+            if (event.key === 'EVENTO_PRODUTOS_SELECIONADOS') {
+                this.filter.jaEscolheu = 1; // 1 = Sim (conforme definido no seu evento-report-filter.ts)
+            }
         }
     }
 

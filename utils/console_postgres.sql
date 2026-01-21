@@ -90,7 +90,7 @@ WHERE tablename = 'pessoa';
 -- ##########################################################
 select * from flyway_schema_history  ;
 
-delete from flyway_schema_history where installed_rank >= 11 ;
+delete from flyway_schema_history where installed_rank >= 4 ;
 
 INSERT INTO presente_sh.usuario (id, username, password_hash, papel, status, criado_em, alterado_em) VALUES (1, 'admin', '$2a$10$UX68K.ZTOT4YiWIDMRONXONP3mV9vyYdlKfT.a7hbk.0IkykAfvN2', 'ADMINISTRADOR', 'ATIVO', '2025-11-12 09:46:52.613582', '2025-11-12 09:46:52.613582');
 
@@ -126,7 +126,13 @@ select * from evento ;
 select * from evento_pessoa ;
 select * from evento_pessoa where pessoa_id < 3;
 select * from evento_produto ;
-select * from evento_escolha ;
+select *
+from evento_escolha ee
+join evento_pessoa on ee.pessoa_id = evento_pessoa.pessoa_id and ee.evento_id = evento_pessoa.evento_id
+where 1=1
+and ee.evento_id = 2
+and ee.dt_escolha = (select max(sub.dt_escolha) from evento_escolha sub where sub.evento_id = ee.evento_id and sub.pessoa_id = ee.pessoa_id)
+;
 
 select * from chave_magica ;
 
@@ -154,8 +160,9 @@ left join tamanho tam on es.tamanho_id = tam.id
 left join cor cor on es.cor_id = cor.id
 where 1=1
 and e.id = 2
-and ( :jaEscolheuParam = -1 or (case when es.id is not null then 1 else 0 end = :jaEscolheuParam ))
+-- and ( :jaEscolheuParam = -1 or (case when es.id is not null then 1 else 0 end = :jaEscolheuParam ))
 ;
+
 
 
 

@@ -1,6 +1,7 @@
 const _EventoReportEnum = {
     EVENTO_PESSOAS_INFO: {key: 'EVENTO_PESSOAS_INFO', descricao: 'Relaçao de Pessoas neste Evento', arquivoPadrao: 'evento_pessoas_info.pdf'},
-    EVENTO_ETIQUETAS_CORREIOS: {key: 'EVENTO_ETIQUETAS_CORREIOS', descricao: 'Gerar etiquetas de Destino', arquivoPadrao: 'etiquetas_destino.pdf'}
+    EVENTO_ETIQUETAS_CORREIOS: {key: 'EVENTO_ETIQUETAS_CORREIOS', descricao: 'Gerar etiquetas de Destino', arquivoPadrao: 'etiquetas_destino.pdf'},
+    EVENTO_PRODUTOS_SELECIONADOS: {key: 'EVENTO_PRODUTOS_SELECIONADOS', descricao: 'Consolidado dos Produtos Selecionados', arquivoPadrao: 'produtos_consolidados.pdf'}
 } as const;
 
 export type EventoReportEnum = (typeof _EventoReportEnum)[keyof typeof _EventoReportEnum];

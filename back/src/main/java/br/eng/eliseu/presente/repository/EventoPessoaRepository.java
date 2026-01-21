@@ -4,6 +4,7 @@ import br.eng.eliseu.presente.model.Evento;
 import br.eng.eliseu.presente.model.EventoPessoa;
 import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.StatusEnum;
+import br.eng.eliseu.presente.model.dto.EventoProdutoConsolidadoDto;
 import br.eng.eliseu.presente.model.dto.EventoRelatorioDto;
 import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
 import br.eng.eliseu.presente.model.filter.EventoReportFilter;
@@ -72,5 +73,24 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
             AND (:#{#filtro.jaEscolheu} = -1 OR (:#{#filtro.jaEscolheu} = 1 AND es.id IS NOT NULL) OR (:#{#filtro.jaEscolheu} = 0 AND es.id IS NULL))
            """)
     List<EventoRelatorioDto> findByEventoIdWithFilter(@Param("filtro") EventoReportFilter filtro);
+
+    @Query("""
+            select new br.eng.eliseu.presente.model.dto.EventoProdutoConsolidadoDto( 
+            pr.nome, pr.descricao, pr.preco, c.nome, t.tamanho, count(*) 
+            ) 
+            from EventoEscolha ee 
+            join EventoPessoa ep on ee.evento = ep.evento and ee.pessoa = ep.pessoa
+            join ee.evento e 
+            join e.cliente cl 
+            join ee.produto pr 
+            join ee.cor c 
+            join ee.tamanho t 
+            where 1=1 
+            and ee.dataEscolha = (select max(sub.dataEscolha) from EventoEscolha sub where sub.evento = ee.evento and sub.pessoa = ee.pessoa and sub.status = 'ATIVO') 
+            and ee.evento.id = :#{#filtro.eventoId} 
+            and e.cliente.id = :#{#filtro.clienteId} 
+            group by pr.nome, pr.descricao, pr.preco, c.nome, t.tamanho 
+            """)
+    List<EventoProdutoConsolidadoDto> findByEventoIdProdutosConsolidados(@Param("filtro") EventoReportFilter filtro);
 
 }

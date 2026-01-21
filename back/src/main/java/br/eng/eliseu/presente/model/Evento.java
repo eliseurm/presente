@@ -49,10 +49,13 @@ public class Evento {
 
     @Column(name = "prog_status")
     private String progStatus;
+
     @Column(name = "prog_atual")
     private int progAtual;
+
     @Column(name = "prog_total")
     private int progTotal;
+
     @Column(name = "prog_label")
     private String progLabel;
 

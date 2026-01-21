@@ -18,4 +18,7 @@ public class EventoPessoaFilter extends BaseFilter {
     private String pessoaEmail;
     private String pessoaTelefone;
 
+    private Boolean jaEscolheu;
+    private Boolean temLinkMagico;
+
 }

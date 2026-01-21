@@ -3,7 +3,7 @@
 alter table produto add column status_new varchar(20);
 
 -- Aplica a lógica: true -> ATIVO, false -> ENCERRADO
-update produto set status_new = case when status = true then 'ATIVO' else 'ENCERRADO' end;
+update produto set status_new = case when status = 'true' or status = 't' or status = '1' then 'ATIVO' else 'ENCERRADO' end;
 
 -- Remove a coluna booleana antiga e renomeia a nova
 alter table produto drop column status;

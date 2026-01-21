@@ -521,14 +521,15 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             evento.getEventoPessoas().forEach(ep -> {
                 ep.setEvento(evento);
                 if (ep.getPessoa() != null && ep.getPessoa().getId() != null) {
-                    Pessoa p = pessoasMap.get(ep.getPessoa().getId());
-                    if (p != null) {
-                        p.setNome(ep.getPessoa().getNome());
-                        p.setCpf(ep.getPessoa().getCpf());
-                        p.setEmail(ep.getPessoa().getEmail());
-                        p.setTelefone(ep.getPessoa().getTelefone());
+                    Pessoa existente = pessoasMap.get(ep.getPessoa().getId());
+                    if (existente != null) {
+                        // so seto se tiver valor em ep.pessoa
+                        Optional.ofNullable(ep.getPessoa().getNome()).ifPresent(existente::setNome);
+                        Optional.ofNullable(ep.getPessoa().getCpf()).ifPresent(existente::setCpf);
+                        Optional.ofNullable(ep.getPessoa().getTelefone()).ifPresent(existente::setTelefone);
+                        Optional.ofNullable(ep.getPessoa().getEmail()).ifPresent(existente::setEmail);
 
-                        ep.setPessoa(p);
+                        ep.setPessoa(existente);
                     };
                 }
 //                if (ep.getNomeMagicNumber() == null) {
@@ -770,9 +771,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return base + String.valueOf(digito1) + String.valueOf(digito2);
     }
 
-    /**
-     * Método auxiliar que realiza o cálculo do Módulo 11.
-     */
     private static int calcularDigitoRotina(String str, int pesoInicial) {
         int soma = 0;
         int peso = pesoInicial;
@@ -790,136 +788,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return (resto < 2) ? 0 : 11 - resto;
     }
 
-/*
-    @Transactional
-    public ImportacaoResultadoDto importarPessoasCsv(Long eventoId, MultipartFile file) {
-        List<String> logs = new ArrayList<>();
-        int adicionados = 0;
-
-        if (file == null || file.isEmpty()) {
-            logs.add("O arquivo está vazio ou não foi enviado.");
-            return ImportacaoResultadoDto.builder().adicionados(0).logErros(logs).build();
-        }
-
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new RuntimeException("Evento não encontrado."));
-        Cliente cliente = evento.getCliente();
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            int linhaNum = 0;
-
-            // Se o CSV tiver cabeçalho, descomente:
-            // br.readLine();
-
-            while ((line = br.readLine()) != null) {
-                linhaNum++;
-                if (line.trim().isEmpty()) continue;
-
-                String[] cols = line.split(","); // Ajuste para ";" se necessário
-
-                if (cols.length < 4) {
-                    logs.add("Linha " + linhaNum + ": Falta de informação (Esperado: Nome, CPF, Telefone, Email).");
-                    continue;
-                }
-
-                String nome = cols[0].trim();
-                String cpfRaw = cols[1].trim();
-                String telefone = cols[2].trim();
-                String email = cols[3].trim();
-
-                // Validações
-                if (nome.isEmpty()) {
-                    logs.add("Linha " + linhaNum + ": Nome está vazio.");
-                    continue;
-                }
-
-                String cpfNumerico = cpfRaw.replaceAll("\\D", "");
-                if (cpfNumerico.length() != 11) {
-                    logs.add("Linha " + linhaNum + ": CPF incorreto (" + cpfRaw + "). Deve ter 11 dígitos.");
-                    continue;
-                }
-
-                if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                    logs.add("Linha " + linhaNum + ": Email incorreto (" + email + ").");
-                    continue;
-                }
-
-                String telNumerico = telefone.replaceAll("\\D", "");
-                if (telNumerico.length() < 8 || telNumerico.length() > 15) {
-                    logs.add("Linha " + linhaNum + ": Telefone incorreto (" + telefone + ").");
-                    continue;
-                }
-
-                // Busca ou Cria Pessoa
-                Pessoa pessoa = pessoaRepository.findByCpf(cpfNumerico).orElse(null);
-
-                if (pessoa == null) {
-                    if (pessoaRepository.findByEmail(email).isPresent()) {
-                        logs.add("Linha " + linhaNum + ": Email já utilizado por outra pessoa (" + email + ").");
-                        continue;
-                    }
-                    try {
-                        pessoa = Pessoa.builder()
-                                .nome(nome)
-                                .cpf(cpfNumerico)
-                                .telefone(telefone)
-                                .email(email)
-                                .cliente(cliente)
-                                .status(StatusEnum.ATIVO)
-                                .build();
-                        pessoa = pessoaRepository.save(pessoa);
-                    } catch (Exception e) {
-                        logs.add("Linha " + linhaNum + ": Erro ao salvar pessoa (dados duplicados).");
-                        continue;
-                    }
-                }
-
-                // Vincula ao Evento
-                if (eventoPessoaRepository.existsByEventoAndPessoa(evento, pessoa)) {
-                    logs.add("Linha " + linhaNum + ": CPF já cadastrado neste evento (" + cpfRaw + ").");
-                    continue;
-                }
-
-                EventoPessoa vinculo = EventoPessoa.builder()
-                        .evento(evento)
-                        .pessoa(pessoa)
-                        .status(StatusEnum.ATIVO)
-                        .build();
-                eventoPessoaRepository.save(vinculo);
-                adicionados++;
-            }
-        } catch (IOException e) {
-            logs.add("Erro fatal ao ler arquivo: " + e.getMessage());
-        }
-
-        return ImportacaoResultadoDto.builder()
-                .adicionados(adicionados)
-                .logErros(logs)
-                .build();
-    }
-*/
-
-
-/*
-    public int importarPessoasCsv(Long eventoId, MultipartFile file) {
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new RuntimeException("Evento não encontrado: " + eventoId));
-
-        List<EventoPessoa> adicionados = parseCsvEventoPessoa(file).stream()
-                .map(ep -> {
-                    ep.setEvento(evento);
-                    // Substitui se já existir mesma pessoa no evento
-                    evento.getEventoPessoas().removeIf(existing -> existing.getPessoa().getId().equals(ep.getPessoa().getId()));
-                    evento.getEventoPessoas().add(ep);
-                    return ep;
-                })
-                .collect(Collectors.toList());
-
-        eventoRepository.save(evento);
-        return adicionados.size();
-    }
-*/
 
     private List<EventoPessoa> parseCsvEventoPessoa(MultipartFile file) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -956,50 +824,68 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
-    public byte[] gerarRelatorioPdf(EventoReportFilter filter) throws Exception {
+
+    public byte[] geraRelatorioEventoPessoa(EventoReportFilter filter) throws Exception {
 
         // 1. BUSCAR DADOS (Simulação - adapte para sua busca real com Specifications)
         Evento evento = eventoRepository.findById(filter.getEventoId())
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
 
-        // Busque as pessoas baseado nos filtros (jaEscolheu, clienteId, etc)
-//        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEvento_Id(filter.getEventoId());
-//        List<EventoPessoa> pessoas = eventoPessoaRepository.findByEventoIdWithPessoa(filter);
-        filter.setJaEscolheu(filter.getJaEscolheu());
-        List<EventoRelatorioDto> relatorio = eventoPessoaRepository.findByEventoIdWithFilter(filter);
+        Date dataInicioEvento = null;
+        if (evento.getInicio() != null) {
+            dataInicioEvento = Date.from(evento.getInicio().atZone(ZoneId.systemDefault()).toInstant());
+        }
 
+
+        Map<String, Object> params = new HashMap<>();
         InputStream stream = null;
+        JRBeanCollectionDataSource dataSource = null;
+
         if("EVENTO_PESSOAS_INFO".equals(filter.getNomeRelatorio())){
+            filter.setJaEscolheu(filter.getJaEscolheu());
+            List<EventoRelatorioDto> dados1 = eventoPessoaRepository.findByEventoIdWithFilter(filter);
+
             stream = getClass().getResourceAsStream("/relatorios/evento_pessoa_info.jrxml");
+
+            dataSource = new JRBeanCollectionDataSource(dados1);
+
+            params.put("TITULO", "Relatório: " + evento.getNome());
+            params.put("DATA_INICIO", dataInicioEvento);
+            params.put("NOME_CLIENTE", evento.getCliente() != null ? evento.getCliente().getNome() : "");
+
         }
         else if("EVENTO_ETIQUETAS_CORREIOS".equals(filter.getNomeRelatorio())){
-            stream = getClass().getResourceAsStream("/relatorios/evento_etiqueta.jrxml");
-        }
+            filter.setJaEscolheu(filter.getJaEscolheu());
+            List<EventoRelatorioDto> dados2 = eventoPessoaRepository.findByEventoIdWithFilter(filter);
 
-        if (stream == null) {
-            throw new RuntimeException("Arquivo .jrxml não encontrado em /resources/relatorios/");
+            stream = getClass().getResourceAsStream("/relatorios/evento_etiqueta.jrxml");
+
+            dataSource = new JRBeanCollectionDataSource(dados2);
+
+            params.put("TITULO", "Relatório: " + evento.getNome());
+            params.put("DATA_INICIO", dataInicioEvento);
+            params.put("NOME_CLIENTE", evento.getCliente() != null ? evento.getCliente().getNome() : "");
+
+        }
+        else if("EVENTO_PRODUTOS_SELECIONADOS".equals(filter.getNomeRelatorio())){
+
+            List<EventoProdutoConsolidadoDto> dados = eventoPessoaRepository.findByEventoIdProdutosConsolidados(filter);
+
+            stream = getClass().getResourceAsStream("/relatorios/evento_produtos_consolidados.jrxml");
+
+            dataSource = new JRBeanCollectionDataSource(dados);
+
+            params.put("EVENTO_NOME", evento.getNome());
+            params.put("EVENTO_DESC", evento.getDescricao());
+            params.put("DATA_INICIO", dataInicioEvento);
+            params.put("RELATORIO_TITULO", "Consolidado de Produtos Selecionados");
+
         }
 
         JasperReport report = JasperCompileManager.compileReport(stream);
 
-        // 3. PREENCHER PARÂMETROS
-        Date dataInicioConvertida = null;
-        if (evento.getInicio() != null) {
-            dataInicioConvertida = Date.from(evento.getInicio().atZone(ZoneId.systemDefault()).toInstant());
-        }
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("TITULO", "Relatório: " + evento.getNome());
-        params.put("DATA_INICIO", dataInicioConvertida);
-        params.put("NOME_CLIENTE", evento.getCliente() != null ? evento.getCliente().getNome() : "");
-
-        // 4. CRIAR O DATASOURCE (A lista de pessoas)
-        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(relatorio);
-
-        // 5. GERAR O PRINT (Juntar Template + Parâmetros + Dados)
         JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);
 
-        // 6. EXPORTAR PARA PDF (Byte Array)
         return JasperExportManager.exportReportToPdf(print);
     }
 
@@ -1261,66 +1147,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
-/*
-    @Async // Faz o método rodar em uma thread separada
-    @Transactional
-    public ProgressoTarefaDto enviarEmailsAssincrono(Long eventoId) {
-
-        List<String> logs = new ArrayList<>();
-        int enviados = 0;
-
-        Evento evento = eventoRepository.findById(eventoId).orElseThrow();
-        List<EventoPessoa> eventoPessoaList = evento.getEventoPessoas();
-
-        // Inicializa o estado no banco
-        evento.setProgLabel("progressEmail");
-        evento.setProgStatus("PROCESSANDO");
-        evento.setProgTotal(eventoPessoaList.size());
-        evento.setProgAtual(0);
-        eventoRepository.saveAndFlush(evento);
-
-        for (int i = 0; i < eventoPessoaList.size(); i++) {
-
-            EventoPessoa ep = eventoPessoaList.get(i);
-
-            if (ep.getPessoa() != null) {
-                if (ep.getPessoa().getEmail()==null || ep.getPessoa().getEmail().isEmpty()) {
-                    logs.add(ep.getPessoa().getNome()+" nao tem e-mail cadastrado");
-                    continue;
-                }
-                if (ep.getNomeMagicNumber()==null || ep.getNomeMagicNumber().isEmpty()) {
-                    logs.add(ep.getPessoa().getNome()+" nao tem Numero Magico cadastrado");
-                    continue;
-                }
-
-                try {
-                    enviarEmailIndividual(ep, evento);
-
-                    // ATUALIZA O BANCO A CADA PASSO
-                    // Usamos saveAndFlush para garantir que o progresso seja persistido IMEDIATAMENTE
-                    evento.setProgAtual(i + 1);
-                    eventoRepository.saveAndFlush(evento);
-                } catch (Exception e) {
-                    System.err.println("Erro ao enviar para: " + ep.getPessoa().getEmail());
-                }
-
-                enviados++;
-            }
-        }
-
-        // Finaliza
-        evento.setProgStatus("CONCLUIDO");
-        eventoRepository.saveAndFlush(evento);
-
-        return ProgressoTarefaDto.builder()
-                .status(evento.getProgStatus())
-                .atual(evento.getProgAtual())
-                .total(evento.getProgTotal())
-                .logErros(logs)
-                .build();
-
-    }
-*/
 
     public ProgressoTarefaDto iniciaEnvioEmails(Long eventoId) {
         // 1. Busca o evento e valida as pessoas (fora da thread para resposta rápida)

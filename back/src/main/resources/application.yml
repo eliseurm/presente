@@ -14,8 +14,10 @@ spring:
   # --- CONFIGURAÇÃO DE BANCO DE DADOS (Sempre ativa por padrão) ---
   datasource:
     # Tenta ler das variáveis de ambiente, se não houver, usa o Supabase como fallback
-    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres?currentSchema=presente_sh}}
-    username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:postgres.abmlvyrmenbevbdzwhse}}
+#    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres?currentSchema=presente_sh}}
+#    username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:postgres.abmlvyrmenbevbdzwhse}}
+    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/presente_db?currentSchema=presente_sh}}
+    username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:presente_user}}
     password: ${DB_PASS:${SPRING_DATASOURCE_PASSWORD:Presente_pwd#123}}
     hikari:
       maximum-pool-size: 10

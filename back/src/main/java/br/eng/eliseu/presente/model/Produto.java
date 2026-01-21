@@ -28,7 +28,11 @@ public class Produto {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
+
+    @Column(name = "criado_em")
     private LocalDateTime criadoEm;
+
+    @Column(name = "alterado_em")
     private LocalDateTime alteradoEm;
 
     @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

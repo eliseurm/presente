@@ -1,0 +1,36 @@
+<!-- Created with Jaspersoft Studio version 7.0.1.final using JasperReports Library version 7.0.1-573496633c2b4074e32f433154b543003f7d2498  -->
+<jasperReport name="produtos_consolidados" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="d6e32d13-094d-4762-8419-f53676e82813">
+	<field name="nomeProduto" class="java.lang.String"/>
+	<field name="descricao" class="java.lang.String"/>
+	<field name="preco" class="java.math.BigDecimal"/>
+	<field name="cor" class="java.lang.String"/>
+	<field name="tamanho" class="java.lang.String"/>
+	<field name="quantidade" class="java.lang.Long"/>
+	<variable name="SomaQuantidadeGrupo" resetType="Group" calculation="Sum" resetGroup="ProdutoGroup" class="java.lang.Long">
+		<expression><![CDATA[$F{quantidade}]]></expression>
+	</variable>
+	<group name="ProdutoGroup">
+		<expression><![CDATA[$F{nomeProduto}]]></expression>
+		<groupHeader>
+			<band height="30">
+				<element kind="textField" uuid="c2b7c4d8-4f81-4246-8869-72f10647c5d9" x="0" y="5" width="555" height="20" fontSize="12.0" bold="true">
+					<expression><![CDATA[$F{nomeProduto} + " - " + $F{descricao}]]></expression>
+				</element>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="30">
+				<element kind="textField" uuid="b19280d4-1a2d-4874-a690-3372c0500192" x="0" y="5" width="555" height="20" bold="true" hTextAlign="Right">
+					<expression><![CDATA["Quantidade total para " + $F{nomeProduto} + ": " + $V{SomaQuantidadeGrupo}]]></expression>
+				</element>
+			</band>
+		</groupFooter>
+	</group>
+	<detail>
+		<band height="20">
+			<element kind="textField" uuid="f9302821-657d-4197-8973-774643093285" x="20" y="0" width="535" height="15">
+				<expression><![CDATA["Tamanho: " + $F{tamanho} + " | Cor: " + $F{cor} + " | Qtd: " + $F{quantidade}]]></expression>
+			</element>
+		</band>
+	</detail>
+</jasperReport>

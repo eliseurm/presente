@@ -12,6 +12,9 @@ export class EventoPessoaFilter extends BaseFilter {
     pessoaEmail?: string;
     pessoaTelefone?: string;
 
+    jaEscolheu: boolean | null = null;
+    temLinkMagico: boolean | null = null;
+
     constructor(init?: Partial<EventoPessoaFilter>) {
         super();
         Object.assign(this, init);

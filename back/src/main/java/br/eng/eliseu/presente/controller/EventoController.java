@@ -10,9 +10,7 @@ import br.eng.eliseu.presente.model.mapper.EventoMapper;
 import br.eng.eliseu.presente.model.mapper.EventoPessoaMapper;
 import br.eng.eliseu.presente.model.mapper.EventoProdutoMapper;
 import br.eng.eliseu.presente.repository.EventoEscolhaRepository;
-import br.eng.eliseu.presente.repository.EventoPessoaRepository;
 import br.eng.eliseu.presente.repository.EventoProdutoRepository;
-import br.eng.eliseu.presente.repository.EventoRepository;
 import br.eng.eliseu.presente.service.EventoPessoaService;
 import br.eng.eliseu.presente.service.EventoService;
 import lombok.RequiredArgsConstructor;
@@ -287,7 +285,7 @@ public class EventoController {
     @PostMapping("/relatorio/pdf")
     public ResponseEntity<byte[]> gerarRelatorio(@RequestBody EventoReportFilter filter) {
         try {
-            byte[] pdfBytes = eventoService.gerarRelatorioPdf(filter);
+            byte[] pdfBytes = eventoService.geraRelatorioEventoPessoa(filter);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+filter.getNomeArquivo())
