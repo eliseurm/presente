@@ -30,8 +30,9 @@ export const appRoutes: Routes = [
     { path: 'login-form', redirectTo: '/auth/login', pathMatch: 'full' },
 
     // Rota pública do presente por token (link estável sem parâmetros adicionais)
-    { path: 'presente/:token', loadComponent: () => import('@/presente-page/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
+    { path: 'presente/:token', loadComponent: () => import('@/presente-page/presente-escolha/presente-escolha.component').then(m => m.PresenteEscolhaComponent) },
     { path: 'presente/erro', loadComponent: () => import('@/presente-page/presente-erro.component').then(m => m.PresenteErroComponent) },
+    { path: 'presente', loadComponent: () => import('@/presente-page/presente-login/presente-login.component').then(m => m.PresenteLoginComponent) },
 
     { path: 'auth', canActivate: [AuthGuardService], loadChildren: () => import('./app/pages/auth/auth.routes') },
 

@@ -6,7 +6,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import { PresenteService } from './presente.service';
+import { PresenteService } from '../presente.service';
 import { ProdutoComponent } from '@/presente-page/produto-component/produto-component';
 import { PresenteTopbarComponent } from '@/presente-page/presente-top-bar-component/presente-top-bar-component';
 import { finalize } from 'rxjs';

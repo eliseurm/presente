@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -321,5 +323,70 @@ public class PresenteController {
                 .orElse(ResponseEntity.notFound().<Resource>build());
     }
 
+
+
+
+    @GetMapping("/niveis/{nivel}")
+    public ResponseEntity<List<String>> getNiveis(@PathVariable Integer nivel) {
+        List<String> lista;
+        switch (nivel) {
+            case 1 -> lista = eventoPessoaRepository.findDistinctOrganoNivel1ByEventoAtivo();
+            case 2 -> lista = eventoPessoaRepository.findDistinctOrganoNivel2ByEventoAtivo();
+            case 3 -> lista = eventoPessoaRepository.findDistinctOrganoNivel3ByEventoAtivo();
+            default -> lista = List.of();
+        }
+        return ResponseEntity.ok(lista);
+    }
+
+    // --- 2. VALIDAR DADO INDIVIDUALMENTE ---
+    @GetMapping("/validar")
+    public ResponseEntity<Boolean> validarDado(
+            @RequestParam String campo,
+            @RequestParam String valor
+    ) {
+        boolean valido = false;
+        try {
+            switch (campo) {
+                case "nome" -> valido = eventoPessoaRepository.existsByPessoaNomeContainingIgnoreCaseAndEvento_Status(valor, StatusEnum.ATIVO);
+                case "cpf" -> valido = eventoPessoaRepository.existsByPessoaCpfAndEvento_Status(valor, StatusEnum.ATIVO);
+                case "nascimento" -> {
+                    // Espera formato dd/MM/yyyy do front
+                    LocalDate data = LocalDate.parse(valor, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    valido = eventoPessoaRepository.existsByPessoaNascimentoAndEvento_Status(data, StatusEnum.ATIVO);
+                }
+            }
+        } catch (Exception e) {
+            valido = false; // Erro de parse data, etc.
+        }
+        return ResponseEntity.ok(valido);
+    }
+
+    // --- 3. LOGIN (Recuperar Token) ---
+    public record LoginRequest(String organoNivel1, String organoNivel2, String organoNivel3, String nome, String cpf, String nascimento) {}
+
+    @PostMapping("/login")
+    public ResponseEntity<?> realizarLogin(@RequestBody LoginRequest req) {
+        try {
+            LocalDate dataNasc = LocalDate.parse(req.nascimento(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+            EventoPessoa ep = eventoPessoaRepository.findPessoaLogin(
+                    req.organoNivel1(),
+                    req.organoNivel2(),
+                    req.organoNivel3(),
+                    req.nome(),
+                    req.cpf(),
+                    dataNasc
+            ).orElse(null);
+
+            if (ep != null) {
+                // Retorna o "Magic Number" que é o token da URL
+                return ResponseEntity.ok(Map.of("token", ep.getNomeMagicNumber()));
+            } else {
+                return ResponseEntity.status(401).body("Dados não conferem com nenhum registro ativo.");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao processar dados de login.");
+        }
+    }
 
 }

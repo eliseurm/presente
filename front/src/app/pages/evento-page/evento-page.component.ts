@@ -627,7 +627,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     buildTokenLink(token?: string): string {
         if (!token) return '#';
-        return `${this.getPublicBaseUrl()}/presente/${encodeURIComponent(token)}`;
+        return `${this.getPublicBaseUrl()}/${encodeURIComponent(token)}`;
     }
 
     abrirPresente(token?: string) {
@@ -770,7 +770,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     }
 
     private getPublicBaseUrl(): string {
-        return window.location.origin;
+        return `${window.location.origin}/presente`;
     }
 
     private toDateOrNull(val: string | Date | null | undefined): Date | null {
@@ -868,15 +868,24 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     }
 
     onEnviarEmails() {
+        if(this.selectedPessoas.length === 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Atençao',
+                detail: 'Selecione pelo menos uma pessoa para enviar o email.'
+            });
+            return;
+        };
         this.confirmationService.confirm({
-            message: 'Deseja enviar o e-mail de convite para todas as pessoas ativas deste evento? Antes de enviar, salve todas as alterações',
+            message: `Deseja enviar o e-mail de convite para todas as ${this.selectedPessoas.length} pessoas selecionadas? Antes de enviar, salve todas as alterações`,
             header: 'Confirmar Envio',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
 
                 this.progressoTarefaDto.progresso = true;
+                const ids = this.selectedPessoas.map(p => p.id);
 
-                this.eventoService.iniciaEnvioEmails(this.vm.model.id).subscribe({
+                this.eventoService.iniciaEnvioEmails(this.vm.model.id, this.getPublicBaseUrl(), ids).subscribe({
                     next: () => {
                         this.verificaProgresso();
                         // this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'O processo de envio foi iniciado.' });

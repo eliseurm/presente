@@ -43,7 +43,8 @@ public class EventoController {
     public record UpdateStatusRequest(StatusEnum status) {}
     public record AddProdutoRequest(Long produtoId, StatusEnum status) {}
     public record AddERequest(Long produtoId, StatusEnum status) {}
-    public record IniciarRequest(String baseUrl) {}
+    public record UrlRequest(String baseUrl) {}
+    public record EmailRequest(String baseUrl, List<Long> ids) {}
 
 
 
@@ -116,8 +117,13 @@ public class EventoController {
     }
 
     @PostMapping("/{id}/enviar-emails")
-    public ResponseEntity<ProgressoTarefaDto> enviarEmails(@PathVariable Long id) {
-        ProgressoTarefaDto resultado = eventoService.iniciaEnvioEmails(id);
+    @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
+    public ResponseEntity<ProgressoTarefaDto> enviarEmails(@PathVariable Long id, @RequestBody(required = false) EmailRequest req) {
+        if(req == null) return ResponseEntity.badRequest().build();
+
+        String baseUrl = req.baseUrl()!=null ? req.baseUrl() : null;
+        List<Long> ids = req.ids()!=null ? req.ids() : null;
+        ProgressoTarefaDto resultado = eventoService.iniciaEnvioEmails(id, ids, baseUrl);
         return ResponseEntity.ok(resultado);
     }
 
@@ -206,7 +212,7 @@ public class EventoController {
 
     @PostMapping("/{id}/iniciar")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<Map<String, Object>> iniciar(@PathVariable("id") Long id, @RequestBody(required = false) IniciarRequest req) {
+    public ResponseEntity<Map<String, Object>> iniciar(@PathVariable("id") Long id, @RequestBody(required = false) UrlRequest req) {
         String baseUrl = req != null ? req.baseUrl() : null;
         return ResponseEntity.ok(eventoService.iniciarEvento(id, baseUrl));
     }

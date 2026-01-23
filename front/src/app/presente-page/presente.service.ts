@@ -26,11 +26,6 @@ export class PresenteService {
         return this.http.get<{ anteriores: any[] }>(url);
     }
 
-    // salvarEscolha(escolha: any): Observable<any> {
-    //     const url = `${this.getBase()}/presente/salvar`;
-    //     return this.http.post<any>(url, escolha);
-    // }
-
     salvarEscolha(escolha: any): Observable<any> {
         const url = `${this.getBase()}/presente/salvar`;
         // Adiciona 100ms de espera antes de disparar
@@ -48,4 +43,18 @@ export class PresenteService {
     validarKey(token: string): Observable<any> {
         return this.getResumo(token);
     }
+
+    getNiveis(nivel: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.getBase()}/presente/niveis/${nivel}`);
+    }
+
+    validarDado(campo: string, valor: any): Observable<boolean> {
+        return this.http.get<boolean>(`${this.getBase()}/presente/validar`, { params: { campo, valor } });
+    }
+
+    // Realiza o login completo
+    login(dados: any): Observable<{ token: string }> {
+        return this.http.post<{ token: string }>(`${this.getBase()}/presente/login`, dados);
+    }
+
 }

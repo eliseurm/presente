@@ -25,6 +25,8 @@ public class Pessoa {
 
     private String nome;
 
+    private LocalDateTime nascimento;
+
     @NotBlank(message = "Cpf é obrigatório")
     @Pattern(regexp = "^\\+?\\d{11}$", message = "O CPF deve ter sempre 11 numeros.")
     @Column(unique = true, nullable = false)

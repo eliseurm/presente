@@ -1148,7 +1148,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
     }
 
 
-    public ProgressoTarefaDto iniciaEnvioEmails(Long eventoId) {
+    public ProgressoTarefaDto iniciaEnvioEmails(Long eventoId, List<Long> eventoPessoaIdList, String baseUrl) {
         // 1. Busca o evento e valida as pessoas (fora da thread para resposta rápida)
         Evento evento = eventoRepository.findByIdExpandedAll(eventoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado"));
@@ -1169,7 +1169,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         // 3. Dispara a thread manual (mesmo objeto usado no CSV)
         thread = new Thread(() -> {
-            executarProcessamentoEnvioEmails(eventoId);
+            executarProcessamentoEnvioEmails(eventoId, eventoPessoaIdList, baseUrl);
         });
         thread.start();
 
@@ -1181,12 +1181,14 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                 .build();
     }
 
-    private void executarProcessamentoEnvioEmails(Long eventoId) {
+    private void executarProcessamentoEnvioEmails(Long eventoId, List<Long> eventoPessoaIdList, String baseUrl) {
         // Busca o evento dentro da thread para garantir que os dados estejam frescos
         Evento evento = eventoRepository.findByIdExpandedAll(eventoId).orElse(null);
         if (evento == null) return;
 
-        List<EventoPessoa> eventoPessoaList = evento.getEventoPessoas();
+
+//        List<EventoPessoa> eventoPessoaList = evento.getEventoPessoas();
+        List<EventoPessoa> eventoPessoaList = eventoPessoaRepository.findAllByIdsWithPessoa(eventoPessoaIdList);
         List<String> logs = new ArrayList<>();
 
         try {
@@ -1211,7 +1213,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                     else {
                         try {
                             // Envia o e-mail (Método privado que você já possui)
-                            enviarEmailIndividual(ep, evento, logs);
+                            enviarEmailIndividual(ep, evento, baseUrl, logs);
                         }
                         catch (Exception e) {
                             logs.add("Erro ao enviar para " + ep.getPessoa().getEmail() + ": " + e.getMessage());
@@ -1235,12 +1237,12 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         }
     }
 
-    private void enviarEmailIndividual(EventoPessoa ep, Evento evento, List<String> logs) {
+    private void enviarEmailIndividual(EventoPessoa ep, Evento evento, String baseUrl, List<String> logs) {
         try {
             Context context = new Context();
             context.setVariable("nome", ep.getPessoa().getNome());
             context.setVariable("eventoNome", evento.getNome());
-            context.setVariable("linkMagico", "http://localhost:8080/presente/" + ep.getNomeMagicNumber());
+            context.setVariable("linkMagico", baseUrl + "/" + ep.getNomeMagicNumber());
 
             String body = templateEngine.process("carta_convite", context);
 

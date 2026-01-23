@@ -103,9 +103,7 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
 
     gerarRelatorioPdf(filter: EventoReportFilter): Observable<Blob> {
         // É crucial definir 'responseType' como 'blob' para o Angular não tentar ler como JSON
-        return this.http.post(`${this.apiUrl}/relatorio/pdf`, filter, {
-            responseType: 'blob'
-        });
+        return this.http.post(`${this.apiUrl}/relatorio/pdf`, filter, {responseType: 'blob'});
     }
 
     iniciaImportacaoArquivoCsv(eventoId: number, file: File): Observable<any> {
@@ -114,11 +112,10 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         return this.http.post(`${this.apiUrl}/${eventoId}/importar-csv`, formData);
     }
 
-    iniciaEnvioEmails(eventoId: number | undefined): Observable<void> {
-        if(!eventoId){
-            return throwError(() => new Error('O ID do evento é obrigatório para realizar a busca.'));
-        }
-        return this.http.post<void>(`${this.apiUrl}/${eventoId}/enviar-emails`, {});
+    iniciaEnvioEmails(eventoId: number | undefined, urlPresente: string, eventoPessoaIdList: number[]): Observable<void> {
+        const requestEmail = urlPresente ? { baseUrl: urlPresente, idList: eventoPessoaIdList } : {};
+
+        return this.http.post<void>(`${this.apiUrl}/${eventoId}/enviar-emails`, requestEmail);
     }
 
     getStatusProgresso(eventoId: number | undefined): Observable<ProgressoTarefaDto> {

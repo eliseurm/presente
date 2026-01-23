@@ -175,6 +175,7 @@
                 <p-tabpanel value="pessoa">
                     <div class="flex flex-col gap-3 mb-3">
                         <div class="flex items-center justify-between">
+
                             <div>
                                 <div>
                                     <input #fileInput type="file" accept=".csv" class="hidden"
@@ -188,7 +189,9 @@
                                             label="Ações"
                                             class="p-button-outlined p-button-secondary">
                                     </button>
-                                </div>                            </div>
+                                </div>
+                            </div>
+
                             <div class="flex items-center gap-2">
                                 <button pButton type="button" label="Refresh" icon="pi pi-refresh"
                                         (click)="onRefreshGridPessoas()"
@@ -221,23 +224,23 @@
                         <p-panel header="Filtros de Pessoas" [toggleable]="true" [collapsed]="true" class="mb-3">
                             <div class="flex flex-col gap-3 p-3 border rounded surface-ground bg-gray-50">
                                 <div class="flex flex-wrap gap-2 items-center w-full">
-            <span class="p-input-icon-left flex-1 min-w-[200px]">
-                <i class="pi pi-search"></i>
-                <input pInputText type="search" class="w-full p-inputtext-sm"
-                       placeholder="Buscar por Nome..."
-                       [(ngModel)]="filterEventoPessoa.pessoaNome"
-                       (input)="onSearchInput()"
-                       (search)="filtrarPessoasLocalmente()"/>
-            </span>
+                                    <span class="p-input-icon-left flex-1 min-w-[200px]">
+                                        <i class="pi pi-search"></i>
+                                        <input pInputText type="search" class="w-full p-inputtext-sm"
+                                               placeholder="Buscar por Nome..."
+                                               [(ngModel)]="filterEventoPessoa.pessoaNome"
+                                               (input)="onSearchInput()"
+                                               (search)="filtrarPessoasLocalmente()"/>
+                                    </span>
 
                                     <span class="p-input-icon-left flex-1 min-w-[200px]">
-                <i class="pi pi-id-card"></i>
-                <input pInputText type="search" class="w-full p-inputtext-sm"
-                       placeholder="Buscar por CPF..."
-                       [(ngModel)]="filterEventoPessoa.pessoaCpf"
-                       (input)="onSearchInput()"
-                       (search)="filtrarPessoasLocalmente()"/>
-            </span>
+                                        <i class="pi pi-id-card"></i>
+                                        <input pInputText type="search" class="w-full p-inputtext-sm"
+                                               placeholder="Buscar por CPF..."
+                                               [(ngModel)]="filterEventoPessoa.pessoaCpf"
+                                               (input)="onSearchInput()"
+                                               (search)="filtrarPessoasLocalmente()"/>
+                                    </span>
                                 </div>
 
                                 <div class="flex flex-wrap gap-4 items-center w-full mt-2">
@@ -442,6 +445,7 @@
                             </div>
                         </ng-template>
                     </p-dialog>
+
                 </p-tabpanel>
 
                 <p-tabpanel value="produto">

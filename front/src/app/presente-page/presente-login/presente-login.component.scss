@@ -1,0 +1,40 @@
+/* Garante que o componente Angular ocupe a tela inteira para permitir a centralização */
+:host {
+    display: block;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Wrapper para garantir contexto de posicionamento dos ícones */
+.input-wrapper {
+    position: relative;
+    display: block;
+}
+
+/* Ícone de status posicionado dentro do input */
+.status-icon-container {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+    background-color: transparent;
+}
+
+/* Ajustes profundos nos componentes do PrimeNG */
+:host ::ng-deep {
+    .p-inputtext,
+    .p-inputmask,
+    .p-select {
+        width: 100%;
+    }
+
+    .p-inputtext {
+        padding-right: 2.5rem;
+    }
+
+}

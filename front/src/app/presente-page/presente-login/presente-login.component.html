@@ -1,0 +1,117 @@
+<div
+    class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
+    <div class="flex flex-col items-center justify-center">
+
+        <div class="w-full" style="max-width: 500px;">
+
+            <p-card styleClass="shadow-4 border-round-xl w-full">
+
+                <ng-template pTemplate="header">
+                    <div class="pt-5 px-4 text-center">
+                        <h2 class="text-primary font-bold text-2xl mb-2 mt-0">
+                            Uma pessoa especial merece um presente da Senorita Brasil.
+                        </h2>
+                        <span class="text-600 font-medium text-lg">Validação de Acesso</span>
+                    </div>
+                </ng-template>
+
+                <div class="px-3 pb-2">
+                    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
+
+                        <div class="field mb-4" *ngFor="let i of [1,2,3]">
+                            <label [for]="'nivel' + i" class="font-medium text-900 mb-2 block">Órgão
+                                Nível {{ i }}</label>
+                            <p-select [options]="i === 1 ? niveis1 : (i === 2 ? niveis2 : niveis3)"
+                                      [formControlName]="'organoNivel' + i"
+                                      placeholder="Selecione o nível"
+                                      [id]="'nivel' + i"
+                                      [showClear]="true"
+                                      styleClass="w-full"
+                                      appendTo="body">
+                            </p-select>
+                        </div>
+
+                        <div class="field mb-4">
+                            <label for="nome" class="font-medium text-900 mb-2 block">Nome Completo</label>
+                            <div class="relative w-full input-wrapper">
+                                <input type="text" pInputText formControlName="nome" id="nome"
+                                       placeholder="Digite seu nome completo"
+                                       [class.ng-invalid]="valid['nome'] === false"
+                                       [class.ng-dirty]="valid['nome'] === false"
+                                       class="w-full pr-5">
+
+                                <div class="status-icon-container">
+                                    <i *ngIf="loading['nome']" class="pi pi-spinner pi-spin text-primary"></i>
+                                    <i *ngIf="!loading['nome'] && valid['nome'] === true"
+                                       class="pi pi-check-circle text-green-500 font-bold"></i>
+                                    <i *ngIf="!loading['nome'] && valid['nome'] === false"
+                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                </div>
+                            </div>
+                            <small *ngIf="valid['nome'] === false" class="p-error block mt-1">Nome não
+                                encontrado.</small>
+                        </div>
+
+                        <div class="flex-1">
+                            <label for="nascimento" class="font-medium text-900 mb-2 block">Nascimento</label>
+                            <div class="relative w-full input-wrapper">
+                                <p-inputMask mask="99/99/9999" formControlName="nascimento"
+                                             placeholder="dd/mm/aaaa" id="nascimento"
+                                             [class.ng-invalid]="valid['nascimento'] === false"
+                                             [class.ng-dirty]="valid['nascimento'] === false"
+                                             styleClass="w-full pr-5"></p-inputMask>
+
+                                <div class="status-icon-container">
+                                    <i *ngIf="loading['nascimento']" class="pi pi-spinner pi-spin text-primary"></i>
+                                    <i *ngIf="!loading['nascimento'] && valid['nascimento'] === true"
+                                       class="pi pi-check-circle text-green-500 font-bold"></i>
+                                    <i *ngIf="!loading['nascimento'] && valid['nascimento'] === false"
+                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1">
+                            <label for="cpf" class="font-medium text-900 mb-2 block">CPF</label>
+                            <div class="relative w-full input-wrapper">
+                                <p-inputMask mask="999.999.999-99" formControlName="cpf"
+                                             placeholder="000.000.000-00" id="cpf"
+                                             [class.ng-invalid]="valid['cpf'] === false"
+                                             [class.ng-dirty]="valid['cpf'] === false"
+                                             styleClass="w-full pr-5"></p-inputMask>
+
+                                <div class="status-icon-container">
+                                    <i *ngIf="loading['cpf']" class="pi pi-spinner pi-spin text-primary"></i>
+                                    <i *ngIf="!loading['cpf'] && valid['cpf'] === true"
+                                       class="pi pi-check-circle text-green-500 font-bold"></i>
+                                    <i *ngIf="!loading['cpf'] && valid['cpf'] === false"
+                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-content-center mt-4 mb-2">
+                            <p-button label="ENTRAR" icon="pi pi-sign-in" type="submit"
+                                      styleClass="w-full btn-zao p-button-lg shadow-3"
+                                      [disabled]="loginForm.invalid || isCheckingAny()"></p-button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <ng-template pTemplate="footer">
+                    <div class="surface-50 p-3 border-round text-center text-600 text-sm line-height-3 mx-3 mb-3">
+                        <i class="pi pi-info-circle mr-1"></i> <strong>Instruções:</strong><br>
+                        Preencha os campos. Se ficar <span class="text-green-600 font-bold">verde</span>, está correto.<br>
+                        Se ficar <span class="text-red-500 font-bold">vermelho</span>, verifique o dado.<br>
+                        O login será liberado ao preencher tudo corretamente.
+                    </div>
+                </ng-template>
+
+            </p-card>
+
+        </div>
+    </div>
+</div>
+
+<p-toast position="top-center"></p-toast>

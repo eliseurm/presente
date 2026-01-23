@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,5 +93,46 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
             group by pr.nome, pr.descricao, pr.preco, c.nome, t.tamanho 
             """)
     List<EventoProdutoConsolidadoDto> findByEventoIdProdutosConsolidados(@Param("filtro") EventoReportFilter filtro);
+
+    @Query("SELECT ep FROM EventoPessoa ep JOIN FETCH ep.pessoa p WHERE ep.id IN :ids")
+    List<EventoPessoa> findAllByIdsWithPessoa(@Param("ids") List<Long> ids);
+
+    @Query("SELECT DISTINCT ep.organoNivel1 FROM EventoPessoa ep WHERE ep.evento.status = 'ATIVO' AND ep.organoNivel1 IS NOT NULL")
+    List<String> findDistinctOrganoNivel1ByEventoAtivo();
+
+    @Query("SELECT DISTINCT ep.organoNivel2 FROM EventoPessoa ep WHERE ep.evento.status = 'ATIVO' AND ep.organoNivel2 IS NOT NULL")
+    List<String> findDistinctOrganoNivel2ByEventoAtivo();
+
+    @Query("SELECT DISTINCT ep.organoNivel3 FROM EventoPessoa ep WHERE ep.evento.status = 'ATIVO' AND ep.organoNivel3 IS NOT NULL")
+    List<String> findDistinctOrganoNivel3ByEventoAtivo();
+
+
+    // --- VALIDAÇÃO CAMPO A CAMPO ---
+    boolean existsByPessoaNomeContainingIgnoreCaseAndEvento_Status(String nome, br.eng.eliseu.presente.model.StatusEnum status);
+    boolean existsByPessoaCpfAndEvento_Status(String cpf, br.eng.eliseu.presente.model.StatusEnum status);
+    // Para data de nascimento, convertemos para LocalDate ou String dependendo de como está no banco.
+    // Assumindo que na entidade Pessoa, nascimento é LocalDate:
+    boolean existsByPessoaNascimentoAndEvento_Status(LocalDate nascimento, br.eng.eliseu.presente.model.StatusEnum status);
+
+    // --- LOGIN (Encontrar o Token baseado nos dados) ---
+    @Query("""
+        SELECT ep FROM EventoPessoa ep
+        JOIN ep.pessoa p
+        WHERE ep.evento.status = 'ATIVO'
+        AND ep.organoNivel1 = :nivel1
+        AND ep.organoNivel2 = :nivel2
+        AND ep.organoNivel3 = :nivel3
+        AND LOWER(p.nome) = LOWER(:nome)
+        AND p.cpf = :cpf
+        AND p.nascimento = :nascimento
+    """)
+    Optional<EventoPessoa> findPessoaLogin(
+            @Param("nivel1") String nivel1,
+            @Param("nivel2") String nivel2,
+            @Param("nivel3") String nivel3,
+            @Param("nome") String nome,
+            @Param("cpf") String cpf,
+            @Param("nascimento") LocalDate nascimento
+    );
 
 }
