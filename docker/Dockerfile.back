@@ -1,20 +1,56 @@
 # Multi-stage build for Spring Boot backend
 
 # 1) Build stage
+#FROM maven:3.9.9-eclipse-temurin-17 AS build
+#WORKDIR /workspace
+#COPY back /workspace/back
+#WORKDIR /workspace/back
+# Build and copy only the repackaged (fat) Spring Boot jar to a fixed path
+#RUN mvn -q -DskipTests clean package \
+# && JAR=$(find target -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" ! -name "original-*.jar" | head -n1) \
+# && cp "$JAR" /workspace/app.jar
+
+# 2) Run stage
+#FROM eclipse-temurin:17-jre-jammy
+#ENV JAVA_OPTS=""
+#WORKDIR /app
+# Copy the fat jar with a fixed name to avoid wildcard issues
+#COPY --from=build /workspace/app.jar /app/app.jar
+#EXPOSE 9000
+#ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
+
+
+# 1) Build stage
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
-COPY back /workspace/back
-WORKDIR /workspace/back
-# Build and copy only the repackaged (fat) Spring Boot jar to a fixed path
+
+# --- OTIMIZAÇÃO: Cache de dependências ---
+# Copia apenas o pom.xml primeiro (ajuste o caminho se o pom estiver dentro de 'back')
+COPY back/pom.xml /workspace/pom.xml
+# Baixa as dependências. Se o pom.xml não mudar, o Docker usa o cache aqui na próxima vez
+RUN mvn dependency:go-offline
+
+# --- Copia o código fonte ---
+COPY back/src /workspace/src
+
+# Compila e empacota (gera os .jasper aqui via plugin)
 RUN mvn -q -DskipTests clean package \
  && JAR=$(find target -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" ! -name "original-*.jar" | head -n1) \
  && cp "$JAR" /workspace/app.jar
 
 # 2) Run stage
 FROM eclipse-temurin:17-jre-jammy
+
+# Instala bibliotecas de fonte necessárias para o JasperReports no Linux
+RUN apt-get update && apt-get install -y fontconfig libfreetype6 && rm -rf /var/lib/apt/lists/*
+
 ENV JAVA_OPTS=""
 WORKDIR /app
-# Copy the fat jar with a fixed name to avoid wildcard issues
+
 COPY --from=build /workspace/app.jar /app/app.jar
+
+# Cloud Run geralmente usa 8080, mas se seu app usa 9000 fixo, mantenha 9000
 EXPOSE 9000
+
+# Entrypoint com suporte a sinais de sistema (exec)
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

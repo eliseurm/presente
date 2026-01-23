@@ -25,7 +25,6 @@ set -euo pipefail
 #
 # Example (TCP):
 #   export USE_CONNECTOR=false
-#   export DB_HOST="<IP_PUBLICO_DO_CLOUD_SQL>" DB_PORT=5432
 #   # demais variáveis iguais ao exemplo acima
 #   ./docker/deploy-cloudrun.sh
 
@@ -34,11 +33,22 @@ export PROJECT_ID=presente-project
 export REGION=southamerica-east1
 export SERVICE_BACK=presente-back
 export SERVICE_FRONT=presente-front
-export USE_CONNECTOR=true
+export USE_CONNECTOR=false
 export INSTANCE_CONNECTION_NAME="presente-project:southamerica-east1:presente-sql"
-export DB_NAME=presente_db
+
+# banco cloud sql
+#export DB_HOST="//"
+#export DB_NAME=presente_db
+#export DB_USER=presente_user
+#export DB_PORT=5432
+
+# banco supaBase (Pooler), usar IPv4
+export DB_HOST="aws-0-us-west-2.pooler.supabase.com"
+export DB_NAME=postgres
+export DB_USER=postgres.abmlvyrmenbevbdzwhse
 export SH_NAME=presente_sh
-export DB_USERNAME=presente_user
+export DB_PORT=6543
+
 export DB_PASSWORD='Presente_pwd#123'
 export ADMIN_USERNAME=admin
 export ADMIN_PASSWORD=admin123
@@ -50,16 +60,18 @@ export JWT_SECRET='uma-chave-bem-longa-de-dev-32bytes-min'
 : "${SERVICE_BACK:?Defina SERVICE_BACK presente-back}"
 : "${SERVICE_FRONT:?Defina SERVICE_FRONT presente-front}"
 
+: "${DB_HOST:?Defina DB_HOST}"
+: "${DB_PORT:?Defina DB_PORT}"
 : "${DB_NAME:?Defina DB_NAME}"
 : "${SH_NAME:?Defina SH_NAME}"
-: "${DB_USERNAME:?Defina DB_USERNAME}"
+: "${DB_USER:?Defina DB_USER}"
 : "${DB_PASSWORD:?Defina DB_PASSWORD}"
 : "${ADMIN_USERNAME:?Defina ADMIN_USERNAME}"
 : "${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD}"
 : "${JWT_SECRET:?Defina JWT_SECRET (>=32 bytes)}"
 
 USE_CONNECTOR=${USE_CONNECTOR:-true}
-DB_PORT=${DB_PORT:-5432}
+# DB_PORT=${DB_PORT:-5432}
 
 #IMAGE_BACK="gcr.io/${PROJECT_ID}/${SERVICE_BACK}:latest"
 #IMAGE_FRONT="gcr.io/${PROJECT_ID}/${SERVICE_FRONT}:latest"
@@ -94,14 +106,14 @@ gcloud auth configure-docker southamerica-east1-docker.pkg.dev -q
 # Backend
 # Using explicit Dockerfile for backend
 echo "[cloudrun] Buildando backend localmente (docker/Dockerfile.back) e publicando..."
-#docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
-#docker push "${IMAGE_BACK}"
+docker build -f Dockerfile.back -t "${IMAGE_BACK}" "${ROOT_DIR}"
+docker push "${IMAGE_BACK}"
 
 # Frontend
 # Using explicit Dockerfile for frontend
 echo "[cloudrun] Buildando frontend localmente (docker/Dockerfile.front) e publicando..."
-docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
-docker push "${IMAGE_FRONT}"
+#docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
+#docker push "${IMAGE_FRONT}"
 
 
 # Deploy backend
@@ -115,22 +127,28 @@ BACK_ARGS=(
   --port 9000
 )
 
-ENV_VARS_STRING="SPRING_PROFILES_ACTIVE=prod,DB_NAME=${DB_NAME},DB_USERNAME=${DB_USERNAME},DB_PASSWORD=${DB_PASSWORD},ADMIN_USERNAME=${ADMIN_USERNAME},ADMIN_PASSWORD=${ADMIN_PASSWORD},JWT_SECRET=${JWT_SECRET}"
+ENV_VARS_STRING="SPRING_PROFILES_ACTIVE=prod,DB_NAME=${DB_NAME},DB_USER=${DB_USER},DB_PASSWORD=${DB_PASSWORD},ADMIN_USERNAME=${ADMIN_USERNAME},ADMIN_PASSWORD=${ADMIN_PASSWORD},JWT_SECRET=${JWT_SECRET}"
 
 if [ "${USE_CONNECTOR}" = "true" ]; then
   : "${INSTANCE_CONNECTION_NAME:?Defina INSTANCE_CONNECTION_NAME para USE_CONNECTOR=true}"
   BACK_ARGS+=(
     --add-cloudsql-instances "${INSTANCE_CONNECTION_NAME}"
   )
-#  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=${INSTANCE_CONNECTION_NAME}"
-  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql:///${DB_NAME}?currentSchema=${SH_NAME}&cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+#  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql:///${DB_NAME}?socketFactory=com.google.cloud.sql.postgres.SocketFactory&socketFactoryArg=${INSTANCE_CONNECTION_NAME}"
+  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql:///${DB_NAME}?currentSchema=${SH_NAME}&cloudSqlInstance=${INSTANCE_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+#else
+#  : "${DB_HOST:?Defina DB_HOST quando USE_CONNECTOR=false}"
+#  BACK_ARGS+=(
+#    --set-env-vars DB_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+#  )
+#  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?currentSchema=${SH_NAME}&sslmode=require&prepareThreshold=0"
+#fi
 else
   : "${DB_HOST:?Defina DB_HOST quando USE_CONNECTOR=false}"
-  BACK_ARGS+=(
-    --set-env-vars SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
-  )
-  ENV_VARS_STRING="${ENV_VARS_STRING},SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+
+  ENV_VARS_STRING="${ENV_VARS_STRING},DB_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?currentSchema=${SH_NAME}&sslmode=require&prepareThreshold=0"
 fi
+
 BACK_ARGS+=(
   --set-env-vars "${ENV_VARS_STRING}"
 )

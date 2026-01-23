@@ -845,7 +845,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             filter.setJaEscolheu(filter.getJaEscolheu());
             List<EventoRelatorioDto> dados1 = eventoPessoaRepository.findByEventoIdWithFilter(filter);
 
-            stream = getClass().getResourceAsStream("/relatorios/evento_pessoa_info.jrxml");
+            stream = getClass().getResourceAsStream("/relatorios/evento_pessoa_info.jasper");
 
             dataSource = new JRBeanCollectionDataSource(dados1);
 
@@ -858,7 +858,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
             filter.setJaEscolheu(filter.getJaEscolheu());
             List<EventoRelatorioDto> dados2 = eventoPessoaRepository.findByEventoIdWithFilter(filter);
 
-            stream = getClass().getResourceAsStream("/relatorios/evento_etiqueta.jrxml");
+            stream = getClass().getResourceAsStream("/relatorios/evento_etiqueta.jasper");
 
             dataSource = new JRBeanCollectionDataSource(dados2);
 
@@ -871,7 +871,7 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
             List<EventoProdutoConsolidadoDto> dados = eventoPessoaRepository.findByEventoIdProdutosConsolidados(filter);
 
-            stream = getClass().getResourceAsStream("/relatorios/evento_produtos_consolidados.jrxml");
+            stream = getClass().getResourceAsStream("/relatorios/evento_produtos_consolidados.jasper");
 
             dataSource = new JRBeanCollectionDataSource(dados);
 
@@ -882,9 +882,9 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
 
         }
 
-        JasperReport report = JasperCompileManager.compileReport(stream);
+//        JasperReport report = JasperCompileManager.compileReport(stream);
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);
+        JasperPrint print = JasperFillManager.fillReport(stream, params, dataSource);
 
         return JasperExportManager.exportReportToPdf(print);
     }

@@ -1,0 +1,2 @@
+#net.sf.jasperreports.compiler.class=net.sf.jasperreports.engine.design.JRJdtCompiler
+net.sf.jasperreports.compiler.class=net.sf.jasperreports.engine.design.JRJavacCompiler

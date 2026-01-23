@@ -8,8 +8,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       # Pass the fully composed JDBC URL from the script to avoid compose-time substitution issues
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      DB_USERNAME: ${DB_USERNAME}
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}

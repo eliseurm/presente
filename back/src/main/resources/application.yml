@@ -14,16 +14,19 @@ spring:
   # --- CONFIGURAÇÃO DE BANCO DE DADOS (Sempre ativa por padrão) ---
   datasource:
     # Tenta ler das variáveis de ambiente, se não houver, usa o Supabase como fallback
-#    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres?currentSchema=presente_sh}}
+    url: ${DB_URL:jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:6543/postgres?currentSchema=presente_sh&sslmode=require&prepareThreshold=0}
+    username: ${DB_USER:postgres.abmlvyrmenbevbdzwhse}
+    password: ${DB_PASS:Presente_pwd#123}
 #    username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:postgres.abmlvyrmenbevbdzwhse}}
-    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/presente_db?currentSchema=presente_sh}}
-    username: ${DB_USER:${SPRING_DATASOURCE_USERNAME:presente_user}}
-    password: ${DB_PASS:${SPRING_DATASOURCE_PASSWORD:Presente_pwd#123}}
+#    url: ${DB_URL:jdbc:postgresql://localhost:5432/presente_db?currentSchema=presente_sh}
+#    username: ${DB_USER:presente_user}
+#    password: ${DB_PASS:Presente_pwd#123}
     hikari:
       maximum-pool-size: 10
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+    driver-class-name: org.postgresql.Driver
 
   # --- CONFIGURAÇÃO JPA / HIBERNATE ---
   jpa:
@@ -37,6 +40,7 @@ spring:
     open-in-view: false
     defer-datasource-initialization: true
     show-sql: false
+    database: POSTGRESQL
 
   # --- CONFIGURAÇÃO FLYWAY ---
   flyway:
@@ -87,11 +91,13 @@ spring:
 # --- CONFIGURAÇÃO DE LOGS ---
 logging:
   level:
+    root: INFO
     org:
       hibernate.orm.jdbc.bind: INFO
       springframework:
+        web: INFO
         security: DEBUG
 #        mail: INFO
     # Adicionado para monitorar o Flyway
-    org.flywaydb: INFO
+    org.flywaydb: DEBUG
 

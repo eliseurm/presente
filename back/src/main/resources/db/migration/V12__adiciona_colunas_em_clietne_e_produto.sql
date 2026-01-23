@@ -1,23 +1,38 @@
--- 1. MUDANÇA NA TABELA (Boolean -> Enum String)
--- Adiciona uma coluna temporária para evitar conflitos de tipo durante a transição
-alter table produto add column status_new varchar(20);
+DO $$
+BEGIN
+    -- Verifica se a tabela PRODUTO existe
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'produto' ) THEN
 
--- Aplica a lógica: true -> ATIVO, false -> ENCERRADO
-update produto set status_new = case when status = 'true' or status = 't' or status = '1' then 'ATIVO' else 'ENCERRADO' end;
+        -- Adiciona coluna temporária se não existir
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produto' AND column_name = 'status_new') THEN
+            ALTER TABLE presente_sh.produto ADD COLUMN status_new VARCHAR(20);
+        END IF;
 
--- Remove a coluna booleana antiga e renomeia a nova
-alter table produto drop column status;
-alter table produto rename column status_new to status;
+        -- Atualiza somente se a coluna antiga existir
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produto' AND column_name = 'status') THEN
+            UPDATE presente_sh.produto SET status_new = CASE WHEN status::text IN ('true', 't', '1') THEN 'ATIVO' ELSE 'ENCERRADO' END;
+            -- Remove coluna antiga
+            ALTER TABLE presente_sh.produto DROP COLUMN status;
+            ALTER TABLE presente_sh.produto RENAME COLUMN status_new TO status;
+        END IF;
+    END IF;
 
--- 2. MUDANÇA NA TABELA CLIENTE (String -> Enum String)
--- Adiciona a coluna temporária
-alter table cliente add column status_new varchar(20);
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'cliente') THEN
 
-update cliente set status_new = case
-    when status in ('true', 'T', '1', 'A', 'ATIVO') then 'ATIVO'
-    else 'ENCERRADO'
-end;
+        -- Adiciona coluna temporária se não existir
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cliente' AND column_name = 'status_new') THEN
+            ALTER TABLE presente_sh.cliente ADD COLUMN status_new VARCHAR(20);
+        END IF;
 
--- Remove a coluna de string antiga e renomeia a nova
-alter table cliente drop column status;
-alter table cliente rename column status_new to status;
+        -- Atualiza somente se a coluna antiga existir
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cliente' AND column_name = 'status') THEN
+            UPDATE presente_sh.cliente SET status_new = CASE WHEN UPPER(status) IN ('TRUE', 'T', '1', 'A', 'ATIVO') THEN 'ATIVO' ELSE 'ENCERRADO' END;
+
+            ALTER TABLE presente_sh.cliente DROP COLUMN status;
+            ALTER TABLE presente_sh.cliente RENAME COLUMN status_new TO status;
+        END IF;
+    END IF;
+
+END $$;
+
+
