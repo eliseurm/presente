@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,7 +26,7 @@ public class Pessoa {
 
     private String nome;
 
-    private LocalDateTime nascimento;
+    private LocalDate nascimento;
 
     @NotBlank(message = "Cpf é obrigatório")
     @Pattern(regexp = "^\\+?\\d{11}$", message = "O CPF deve ter sempre 11 numeros.")

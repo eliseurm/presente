@@ -113,7 +113,7 @@ AND query ILIKE '%pessoa%'
 AND pid <> pg_backend_pid();
 REINDEX INDEX presente_sh.uq_pessoa_email;
 
-select * from pessoa where id <= 10;
+select * from pessoa where nome like 'Ellen%';
 
 select telefone, count(*) from pessoa group by telefone having count(*) > 1;
 reindex table presente_sh.pessoa;
@@ -124,8 +124,9 @@ select * from cliente ;
 select * from evento ;
 
 select * from evento_pessoa ;
-select * from evento_pessoa where pessoa_id < 3;
+select * from evento_pessoa where pessoa_id = 4;
 select * from evento_produto ;
+select * from evento_escolha ;
 select *
 from evento_escolha ee
 join evento_pessoa on ee.pessoa_id = evento_pessoa.pessoa_id and ee.evento_id = evento_pessoa.evento_id
@@ -139,6 +140,29 @@ select * from chave_magica ;
 select *
 from evento e
 join cliente c on e.cliente_id=c.id
+;
+
+select *
+from evento_pessoa ep
+join pessoa p on ep.pessoa_id = p.id
+where 1=1
+and ep.organo_nivel_1 = 'Uniao Central'
+and ep.organo_nivel_2 = 'Goiana'
+and ep.organo_nivel_3 = 'Escola Igreja 9'
+and lower(p.nome) = lower('Pessoa 8')
+and p.nascimento = '2026-01-26'
+and p.cpf = '00000000868'
+;
+
+
+
+select
+-- ep.*
+distinct organo_nivel_1, organo_nivel_2, organo_nivel_3
+from evento_pessoa ep
+join evento p on ep.evento_id = p.id
+where 1=1
+-- and ep.organo_nivel_1 is null
 ;
 
 

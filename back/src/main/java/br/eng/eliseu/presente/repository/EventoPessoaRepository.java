@@ -6,6 +6,7 @@ import br.eng.eliseu.presente.model.Pessoa;
 import br.eng.eliseu.presente.model.StatusEnum;
 import br.eng.eliseu.presente.model.dto.EventoProdutoConsolidadoDto;
 import br.eng.eliseu.presente.model.dto.EventoRelatorioDto;
+import br.eng.eliseu.presente.model.dto.PresenteOrganogramaDto;
 import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
 import br.eng.eliseu.presente.model.filter.EventoReportFilter;
 import org.springframework.data.domain.Page;
@@ -108,11 +109,9 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
 
 
     // --- VALIDAÇÃO CAMPO A CAMPO ---
-    boolean existsByPessoaNomeContainingIgnoreCaseAndEvento_Status(String nome, br.eng.eliseu.presente.model.StatusEnum status);
-    boolean existsByPessoaCpfAndEvento_Status(String cpf, br.eng.eliseu.presente.model.StatusEnum status);
-    // Para data de nascimento, convertemos para LocalDate ou String dependendo de como está no banco.
-    // Assumindo que na entidade Pessoa, nascimento é LocalDate:
-    boolean existsByPessoaNascimentoAndEvento_Status(LocalDate nascimento, br.eng.eliseu.presente.model.StatusEnum status);
+    boolean existsByPessoaNomeAndEvento_Status(String nome, StatusEnum status);
+    boolean existsByPessoaCpfAndEvento_Status(String cpf, StatusEnum status);
+    boolean existsByPessoaNascimentoAndEvento_Status(LocalDate nascimento, StatusEnum status);
 
     // --- LOGIN (Encontrar o Token baseado nos dados) ---
     @Query("""
@@ -134,5 +133,15 @@ public interface EventoPessoaRepository extends JpaRepository<EventoPessoa, Long
             @Param("cpf") String cpf,
             @Param("nascimento") LocalDate nascimento
     );
+
+    @Query("""
+            select distinct new br.eng.eliseu.presente.model.dto.PresenteOrganogramaDto(ep.organoNivel1, ep.organoNivel2, ep.organoNivel3)
+            from EventoPessoa ep
+            join ep.evento e
+            where 1=1 
+            and e.status = 'ATIVO'
+            order by 1, 2, 3
+            """)
+    List<PresenteOrganogramaDto> findOrganograma();
 
 }

@@ -1,5 +1,4 @@
-<div
-    class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
     <div class="flex flex-col items-center justify-center">
 
         <div class="w-full" style="max-width: 500px;">
@@ -16,57 +15,91 @@
                 </ng-template>
 
                 <div class="px-3 pb-2">
-                    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
+                    <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" class="p-fluid mt-4">
 
-                        <div class="field mb-4" *ngFor="let i of [1,2,3]">
-                            <label [for]="'nivel' + i" class="font-medium text-900 mb-2 block">Órgão
-                                Nível {{ i }}</label>
-                            <p-select [options]="i === 1 ? niveis1 : (i === 2 ? niveis2 : niveis3)"
-                                      [formControlName]="'organoNivel' + i"
+                        <div class="field mb-4">
+                            <label class="font-medium text-900 mb-2 block">União</label>
+                            <p-select name="organoNivel1"
+                                      [(ngModel)]="loginData.organoNivel1"
+                                      required
+                                      styleClass="w-full"
+                                      [options]="niveis1"
+                                      (onChange)="filtrarNiveis2($event)"
                                       placeholder="Selecione o nível"
-                                      [id]="'nivel' + i"
+                                      [showClear]="true"
+                                      appendTo="body"
+                            ></p-select>
+                        </div>
+
+                        <div class="field mb-4">
+                            <label class="font-medium text-900 mb-2 block">Associação</label>
+                            <p-select name="organoNivel2"
+                                      [(ngModel)]="loginData.organoNivel2"
+                                      required
+                                      [options]="niveis2"
+                                      placeholder="Selecione a Associação"
+                                      (onChange)="filtrarNiveis3($event)"
                                       [showClear]="true"
                                       styleClass="w-full"
-                                      appendTo="body">
-                            </p-select>
+                                      appendTo="body"
+                            ></p-select>
+                        </div>
+
+                        <div class="field mb-4">
+                            <label class="font-medium text-900 mb-2 block">Escola</label>
+                            <p-select name="organoNivel3"
+                                      [(ngModel)]="loginData.organoNivel3"
+                                      required
+                                      [options]="niveis3"
+                                      placeholder="Selecione o nível"
+                                      [showClear]="true"
+                                      styleClass="w-full"
+                                      appendTo="body"
+                            ></p-select>
                         </div>
 
                         <div class="field mb-4">
                             <label for="nome" class="font-medium text-900 mb-2 block">Nome Completo</label>
                             <div class="relative w-full input-wrapper">
-                                <input type="text" pInputText formControlName="nome" id="nome"
+                                <input pInputText
+                                       id="nome"
+                                       name="nome"
+                                       type="text"
+                                       [(ngModel)]="loginData.nome"
+                                       [ngModelOptions]="{ updateOn: 'blur' }"
+                                       (blur)="onFieldChange('nome')"
+                                       required
                                        placeholder="Digite seu nome completo"
                                        [class.ng-invalid]="valid['nome'] === false"
-                                       [class.ng-dirty]="valid['nome'] === false"
                                        class="w-full pr-5">
 
                                 <div class="status-icon-container">
-                                    <i *ngIf="loading['nome']" class="pi pi-spinner pi-spin text-primary"></i>
-                                    <i *ngIf="!loading['nome'] && valid['nome'] === true"
-                                       class="pi pi-check-circle text-green-500 font-bold"></i>
-                                    <i *ngIf="!loading['nome'] && valid['nome'] === false"
-                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                    @if (loading['nome']) { <i class="pi pi-spinner pi-spin text-primary"></i> }
+                                    @if (!loading['nome'] && valid['nome'] === true) { <i class="pi pi-check-circle text-green-500 font-bold"></i> }
+                                    @if (!loading['nome'] && valid['nome'] === false) { <i class="pi pi-times-circle text-red-500 font-bold"></i> }
                                 </div>
                             </div>
-                            <small *ngIf="valid['nome'] === false" class="p-error block mt-1">Nome não
-                                encontrado.</small>
+                            @if (valid['nome'] === false) { <small class="p-error block mt-1">Verifique o nome digitado.</small> }
                         </div>
 
                         <div class="flex-1">
                             <label for="nascimento" class="font-medium text-900 mb-2 block">Nascimento</label>
                             <div class="relative w-full input-wrapper">
-                                <p-inputMask mask="99/99/9999" formControlName="nascimento"
+                                <p-inputMask name="nascimento"
+                                             mask="99/99/9999"
+                                             [(ngModel)]="loginData.nascimento"
+                                             [ngModelOptions]="{ updateOn: 'blur' }"
+                                             (onBlur)="onFieldChange('nascimento')"
+                                             required
                                              placeholder="dd/mm/aaaa" id="nascimento"
                                              [class.ng-invalid]="valid['nascimento'] === false"
-                                             [class.ng-dirty]="valid['nascimento'] === false"
-                                             styleClass="w-full pr-5"></p-inputMask>
+                                             styleClass="w-full pr-5"
+                                ></p-inputMask>
 
                                 <div class="status-icon-container">
-                                    <i *ngIf="loading['nascimento']" class="pi pi-spinner pi-spin text-primary"></i>
-                                    <i *ngIf="!loading['nascimento'] && valid['nascimento'] === true"
-                                       class="pi pi-check-circle text-green-500 font-bold"></i>
-                                    <i *ngIf="!loading['nascimento'] && valid['nascimento'] === false"
-                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                    @if (loading['nascimento']) { <i class="pi pi-spinner pi-spin text-primary"></i> }
+                                    @if (!loading['nascimento'] && valid['nascimento'] === true) { <i class="pi pi-check-circle text-green-500 font-bold"></i> }
+                                    @if (!loading['nascimento'] && valid['nascimento'] === false) { <i class="pi pi-times-circle text-red-500 font-bold"></i> }
                                 </div>
                             </div>
                         </div>
@@ -74,26 +107,39 @@
                         <div class="flex-1">
                             <label for="cpf" class="font-medium text-900 mb-2 block">CPF</label>
                             <div class="relative w-full input-wrapper">
-                                <p-inputMask mask="999.999.999-99" formControlName="cpf"
-                                             placeholder="000.000.000-00" id="cpf"
+                                <p-inputMask name="cpf"
+                                             mask="999.999.999-99"
+                                             [(ngModel)]="loginData.cpf"
+                                             [ngModelOptions]="{ updateOn: 'blur' }"
+                                             (onBlur)="onFieldChange('cpf')"
+                                             required
+                                             placeholder="000.000.000-00"
+                                             id="cpf"
                                              [class.ng-invalid]="valid['cpf'] === false"
-                                             [class.ng-dirty]="valid['cpf'] === false"
-                                             styleClass="w-full pr-5"></p-inputMask>
+                                             styleClass="w-full pr-5">
+                                </p-inputMask>
 
                                 <div class="status-icon-container">
-                                    <i *ngIf="loading['cpf']" class="pi pi-spinner pi-spin text-primary"></i>
-                                    <i *ngIf="!loading['cpf'] && valid['cpf'] === true"
-                                       class="pi pi-check-circle text-green-500 font-bold"></i>
-                                    <i *ngIf="!loading['cpf'] && valid['cpf'] === false"
-                                       class="pi pi-times-circle text-red-500 font-bold"></i>
+                                    @if (loading['cpf']) {
+                                        <i class="pi pi-spinner pi-spin text-primary"></i>
+                                    }
+                                    @if (!loading['cpf'] && valid['cpf'] === true) {
+                                        <i class="pi pi-check-circle text-green-500 font-bold"></i>
+                                    }
+                                    @if (!loading['cpf'] && valid['cpf'] === false) {
+                                        <i class="pi pi-times-circle text-red-500 font-bold"></i>
+                                    }
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex justify-content-center mt-4 mb-2">
-                            <p-button label="ENTRAR" icon="pi pi-sign-in" type="submit"
+                            <p-button label="ENTRAR"
+                                      icon="pi pi-sign-in"
+                                      type="submit"
                                       styleClass="w-full btn-zao p-button-lg shadow-3"
-                                      [disabled]="loginForm.invalid || isCheckingAny()"></p-button>
+                                      [disabled]="loginForm.invalid || isCheckingAny()"
+                            ></p-button>
                         </div>
 
                     </form>

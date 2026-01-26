@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.controller;
 
+import br.eng.eliseu.presente.core.StringUtils;
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.dto.*;
 import br.eng.eliseu.presente.model.mapper.EventoEscolhaMapper;
@@ -9,6 +10,7 @@ import br.eng.eliseu.presente.model.mapper.ProdutoMapper;
 import br.eng.eliseu.presente.security.AuthorizationService;
 import br.eng.eliseu.presente.repository.*;
 import br.eng.eliseu.presente.service.ImagemService;
+import br.eng.eliseu.presente.service.PresenteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -41,10 +43,11 @@ public class PresenteController {
     private final CorRepository corRepository;
     private final AuthorizationService authService;
     private final ImagemService imagemService;
+    private final PresenteService presenteService;
 
-    public static record EscolherRequest(Long produtoId, Long tamanhoId, Long corId) {}
+    public record EscolherRequest(Long produtoId, Long tamanhoId, Long corId) {}
 
-    public static record ResumoResponse(
+    public record ResumoResponse(
             Long eventoId,
             String eventoNome,
             LocalDateTime dataPrevista,
@@ -56,7 +59,7 @@ public class PresenteController {
             String mensagem
     ) {}
 
-    public static record HistoricoResponse(List<EventoEscolha> anteriores) {}
+    public record HistoricoResponse(List<EventoEscolha> anteriores) {}
 
     // GET /presente/{token} (JSON)
     @GetMapping(path = "/{token}", produces = "application/json")
@@ -326,38 +329,19 @@ public class PresenteController {
 
 
 
-    @GetMapping("/niveis/{nivel}")
-    public ResponseEntity<List<String>> getNiveis(@PathVariable Integer nivel) {
-        List<String> lista;
-        switch (nivel) {
-            case 1 -> lista = eventoPessoaRepository.findDistinctOrganoNivel1ByEventoAtivo();
-            case 2 -> lista = eventoPessoaRepository.findDistinctOrganoNivel2ByEventoAtivo();
-            case 3 -> lista = eventoPessoaRepository.findDistinctOrganoNivel3ByEventoAtivo();
-            default -> lista = List.of();
-        }
+    @GetMapping("/organograma")
+    public ResponseEntity<List<PresenteOrganogramaDto>> getOrganograma() {
+
+        List<PresenteOrganogramaDto> lista = eventoPessoaRepository.findOrganograma();
+
         return ResponseEntity.ok(lista);
     }
 
     // --- 2. VALIDAR DADO INDIVIDUALMENTE ---
     @GetMapping("/validar")
-    public ResponseEntity<Boolean> validarDado(
-            @RequestParam String campo,
-            @RequestParam String valor
-    ) {
-        boolean valido = false;
-        try {
-            switch (campo) {
-                case "nome" -> valido = eventoPessoaRepository.existsByPessoaNomeContainingIgnoreCaseAndEvento_Status(valor, StatusEnum.ATIVO);
-                case "cpf" -> valido = eventoPessoaRepository.existsByPessoaCpfAndEvento_Status(valor, StatusEnum.ATIVO);
-                case "nascimento" -> {
-                    // Espera formato dd/MM/yyyy do front
-                    LocalDate data = LocalDate.parse(valor, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                    valido = eventoPessoaRepository.existsByPessoaNascimentoAndEvento_Status(data, StatusEnum.ATIVO);
-                }
-            }
-        } catch (Exception e) {
-            valido = false; // Erro de parse data, etc.
-        }
+    public ResponseEntity<Boolean> validarDado(@RequestParam String campo, @RequestParam String valor) {
+        // Agora delega a responsabilidade para o Service
+        boolean valido = presenteService.validarCampo(campo, valor);
         return ResponseEntity.ok(valido);
     }
 
@@ -368,23 +352,26 @@ public class PresenteController {
     public ResponseEntity<?> realizarLogin(@RequestBody LoginRequest req) {
         try {
             LocalDate dataNasc = LocalDate.parse(req.nascimento(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-
+            String nome = StringUtils.normalizarNome(req.nome());
+            String cpf = req.cpf().replaceAll("\\D", "");
             EventoPessoa ep = eventoPessoaRepository.findPessoaLogin(
                     req.organoNivel1(),
                     req.organoNivel2(),
                     req.organoNivel3(),
-                    req.nome(),
-                    req.cpf(),
+                    nome,
+                    cpf,
                     dataNasc
             ).orElse(null);
 
             if (ep != null) {
                 // Retorna o "Magic Number" que é o token da URL
                 return ResponseEntity.ok(Map.of("token", ep.getNomeMagicNumber()));
-            } else {
+            }
+            else {
                 return ResponseEntity.status(401).body("Dados não conferem com nenhum registro ativo.");
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao processar dados de login.");
         }
     }

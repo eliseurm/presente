@@ -1,5 +1,6 @@
 package br.eng.eliseu.presente.service;
 
+import br.eng.eliseu.presente.core.StringUtils;
 import br.eng.eliseu.presente.model.*;
 import br.eng.eliseu.presente.model.filter.EventoFilter;
 import br.eng.eliseu.presente.model.filter.EventoPessoaFilter;
@@ -746,48 +747,6 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
         return cols[index].trim();
     }
 
-    public static String calcularDigitosVerificadores(String cpf) {
-        if (cpf == null) {
-            throw new IllegalArgumentException("CPF não pode ser nulo");
-        }
-
-        // 1. Remove tudo que não for número
-        String numeros = cpf.replaceAll("\\D", "");
-
-        // 2. Valida se tem o mínimo necessário para calcular (9 dígitos base)
-        if (numeros.length() < 9) {
-            numeros = String.format("%9s", numeros).replace(' ', '0');
-        }
-
-        // Pega apenas os 9 primeiros dígitos para iniciar o cálculo
-        String base = numeros.substring(0, 9);
-
-        // 3. Cálculo do 1º Dígito (peso começa em 10)
-        int digito1 = calcularDigitoRotina(base, 10);
-
-        // 4. Cálculo do 2º Dígito (adiciona o digito1 à base, peso começa em 11)
-        int digito2 = calcularDigitoRotina(base + digito1, 11);
-
-        return base + String.valueOf(digito1) + String.valueOf(digito2);
-    }
-
-    private static int calcularDigitoRotina(String str, int pesoInicial) {
-        int soma = 0;
-        int peso = pesoInicial;
-
-        for (int i = 0; i < str.length(); i++) {
-            // Converte char numérico para int ('0' tem valor 48 na tabela ASCII)
-            int num = str.charAt(i) - '0';
-            soma += num * peso;
-            peso--;
-        }
-
-        int resto = soma % 11;
-
-        // Regra do CPF: Se resto < 2, dígito é 0. Senão, é 11 - resto.
-        return (resto < 2) ? 0 : 11 - resto;
-    }
-
 
     private List<EventoPessoa> parseCsvEventoPessoa(MultipartFile file) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -1023,10 +982,13 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                     eventoRepository.atualizarApenasProgresso(eventoId, i);
                     continue;
                 }
+                else{
+                    nome = StringUtils.normalizarNome(nome);
+                }
 
                 String cpfNumerico = cpfRaw.replaceAll("\\D", "");
                 if (cpfNumerico.length() < 11) {
-                    cpfNumerico = calcularDigitosVerificadores(cpfNumerico);
+                    cpfNumerico = StringUtils.calcularDigitosVerificadoresCpf(cpfNumerico);
                 }
 
                 if (cpfNumerico.length() != 11) {
@@ -1070,6 +1032,13 @@ public class EventoService extends AbstractCrudService<Evento, Long, EventoFilte
                         logs.add("Linha " + (i + 1) + ": Pessoa já cadastrada (" + nome + ").");
                     }
                     else {
+
+                        organoNivel1 = StringUtils.normalizarNome(organoNivel1);
+                        organoNivel2 = StringUtils.normalizarNome(organoNivel2);
+                        organoNivel2 = StringUtils.normalizarNome(organoNivel2);
+                        localTrabalho = StringUtils.normalizarNome(localTrabalho);
+
+
                         EventoPessoa vinculo = EventoPessoa.builder()
                                 .evento(evento)
                                 .pessoa(pessoaCpf)

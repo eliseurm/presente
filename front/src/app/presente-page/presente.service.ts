@@ -2,10 +2,14 @@ import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, switchMap, timer} from 'rxjs';
 import {environment} from '../../environments/environment';
+import {PresenteOrganogramaDto} from "@/shared/model/dto/presente-organograma-dto";
 
 @Injectable({ providedIn: 'root' })
 export class PresenteService {
+
     private http = inject(HttpClient);
+    protected apiUrl = '/api/presente';
+
 
     private getBase(): string {
         return environment.apiUrl || '';
@@ -44,17 +48,17 @@ export class PresenteService {
         return this.getResumo(token);
     }
 
-    getNiveis(nivel: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.getBase()}/presente/niveis/${nivel}`);
+    getOrganograma(): Observable<PresenteOrganogramaDto[]> {
+        return this.http.get<PresenteOrganogramaDto[]>(`${this.apiUrl}/organograma`);
     }
 
     validarDado(campo: string, valor: any): Observable<boolean> {
-        return this.http.get<boolean>(`${this.getBase()}/presente/validar`, { params: { campo, valor } });
+        return this.http.get<boolean>(`${this.apiUrl}/validar`, { params: { campo, valor } });
     }
 
-    // Realiza o login completo
-    login(dados: any): Observable<{ token: string }> {
-        return this.http.post<{ token: string }>(`${this.getBase()}/presente/login`, dados);
+    realizarLogin(dados: any): Observable<any> {
+        // O backend espera um objeto com: organoNivel1, organoNivel2, organoNivel3, nome, cpf, nascimento
+        return this.http.post<any>(`${this.apiUrl}/login`, dados);
     }
 
 }
