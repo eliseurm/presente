@@ -112,8 +112,8 @@ docker push "${IMAGE_BACK}"
 # Frontend
 # Using explicit Dockerfile for frontend
 echo "[cloudrun] Buildando frontend localmente (docker/Dockerfile.front) e publicando..."
-#docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
-#docker push "${IMAGE_FRONT}"
+docker build -f Dockerfile.front -t "${IMAGE_FRONT}" "${ROOT_DIR}"
+docker push "${IMAGE_FRONT}"
 
 
 # Deploy backend

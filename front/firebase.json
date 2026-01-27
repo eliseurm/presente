@@ -1,0 +1,15 @@
+{
+  "hosting": {
+    "site": "presente-project",
+    "public": "public",
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "presente-front",
+          "region": "southamerica-east1"
+        }
+      }
+    ]
+  }
+}
