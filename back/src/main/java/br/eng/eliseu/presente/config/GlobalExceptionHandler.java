@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("code", "FORBIDDEN");
-        body.put("message", "Access Denied");
+        body.put("message", "Acesso negado");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
@@ -100,18 +101,31 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<?> handleDataIntegrity(DataIntegrityViolationException ex) {
+    public ResponseEntity<Object> handleDataIntegrity(DataIntegrityViolationException ex) {
 
+        // 1. Tenta resolver erros genéricos com seu resolver atual
         List<ApiFieldError> errors = constraintViolationResolver.resolve(ex);
+        String mensagem = "Violação de integridade de dados";
 
-        if (errors.isEmpty()) {
-            errors = List.of(new ApiFieldError("global", "Violação de integridade"));
+        // 2. Verifica especificamente o caso do CPF
+        // O "uq_pessoa_cpf" é o nome da constraint que apareceu no seu log anterior
+        if (ex.getMessage() != null && ex.getMessage().contains("uq_pessoa_cpf")) {
+            mensagem = "Este CPF já está cadastrado para outra pessoa.";
+            // Adiciona um erro específico para o campo CPF se a lista estiver vazia
+            if (errors.isEmpty()) {
+                errors = List.of(new ApiFieldError("cpf", mensagem));
+            }
+        }
+        else if (errors.isEmpty()) {
+            // Caso genérico se o resolver não encontrou nada
+            errors = List.of(new ApiFieldError("global", mensagem));
         }
 
         Map<String, Object> body = new HashMap<>();
         body.put("code", "DUPLICATE_KEY");
-        body.put("message", "Violação de integridade de dados");
+        body.put("message", mensagem);
         body.put("errors", errors);
+        body.put("timestamp", LocalDateTime.now()); // Adicionei timestamp que é útil
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
