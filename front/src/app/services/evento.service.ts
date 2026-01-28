@@ -21,6 +21,8 @@ import {EventoReportFilter} from "@/shared/model/filter/evento-report-filter";
 import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
 import {Pessoa} from "@/shared/model/pessoa";
 import {StatusEnum} from "@/shared/model/enum/status.enum";
+import {EventoEscolha} from "@/shared/model/evento-escolha";
+import {EventoEscolhaMapper} from "@/shared/model/mapper/evento-escolha-mapper";
 
 @Injectable({ providedIn: 'root' })
 export class EventoService extends BaseCrudService<Evento, EventoFilter> {
@@ -65,8 +67,12 @@ export class EventoService extends BaseCrudService<Evento, EventoFilter> {
         );
     }
 
-    getUltimaEscolha(eventoId: number, pessoaId: number): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`);
+    getUltimaEscolha(eventoId: number, pessoaId: number): Observable<EventoEscolha> {
+        // return this.http.get<any>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`);
+        return this.http.get<EventoEscolhaDto>(`${this.apiUrl}/${eventoId}/pessoas/${pessoaId}/escolha/ultima`).pipe(
+            map((dto: EventoEscolhaDto) => EventoEscolhaMapper.fromDto(dto)),
+            filter((ee): ee is EventoEscolha => !!ee)
+        );
     }
 
     getHistoricoEscolhas(eventoId: number, pessoaId: number): Observable<EventoEscolhaDto[]> {

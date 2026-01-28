@@ -16,4 +16,17 @@ export abstract class BaseFilter {
     constructor(init?: Partial<BaseFilter>) {
         Object.assign(this, init);
     }
+
+    get first(): number {
+        return (this.page || 0) * (this.size || 10);
+    }
+    set first(value: number) {
+        if (value === 0) {
+            this.page = 0;
+        }
+        else {
+            this.page = Math.floor(value / (this.size || 10));
+        }
+    }
+
 }

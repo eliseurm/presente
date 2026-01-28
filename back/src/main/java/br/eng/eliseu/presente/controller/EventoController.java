@@ -233,11 +233,17 @@ public class EventoController {
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/ultima")
     @PreAuthorize("hasRole('ADMIN') or @authService.isLinkedToClientByEventoId(#id)")
-    public ResponseEntity<EventoEscolha> obterUltimaEscolha(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
-        return eventoEscolhaRepository
-                .findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+    public ResponseEntity<EventoEscolhaDto> obterUltimaEscolha(@PathVariable("id") Long eventoId, @PathVariable Long pessoaId) {
+
+        Optional<EventoEscolha> ee = eventoEscolhaRepository.findTopByEvento_IdAndPessoa_IdOrderByDataEscolhaDesc(eventoId, pessoaId);
+
+        EventoEscolhaDto dto = ee.map(EventoEscolhaMapper::toDto).orElse(null);
+
+        if (dto == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}/pessoas/{pessoaId}/escolha/historico")

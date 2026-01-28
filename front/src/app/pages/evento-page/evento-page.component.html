@@ -301,36 +301,112 @@
                             <e-popup title="Pessoa do Evento" [showTitle]="true" width="900px" height="auto"></e-popup>
 
                             <eo-form [colCount]="1" [useContentProjection]="true">
-                                <p-tabs value="0" class="w-full">
+                                <p-tabs value="epGeral" class="w-full">
                                     <p-tablist>
-                                        <p-tab value="0">Geral</p-tab>
-                                        <p-tab value="1">Escolha atual</p-tab>
-                                        <p-tab value="2">Historico</p-tab>
+                                        <p-tab value="epGeral">Geral</p-tab>
+                                        <p-tab value="epEscolhaAtual">Escolha atual</p-tab>
+                                        <p-tab value="epHistorico">Historico</p-tab>
                                     </p-tablist>
                                     <p-tabpanels>
-                                        <p-tabpanel value="0">
+                                        <p-tabpanel value="epGeral">
                                             <ei-item dataField="pessoa.nome" label="Nome" editorType="template"></ei-item>
                                             <ei-item dataField="pessoa.cpf" label="Cpf" editorType="template"></ei-item>
                                             <ei-item dataField="pessoa.telefone" label="Telefone" editorType="template"></ei-item>
                                             <ei-item dataField="pessoa.email" label="e-Mail" editorType="template"></ei-item>
                                             <ei-item dataField="status" label="Status" editorType="template"></ei-item>
                                         </p-tabpanel>
-                                        <p-tabpanel value="1">
-                                            <div class="grid gap-2">
-                                                <div><b>Data:</b> {{ pessoaUltimaEscolha?.dataEscolha | date:'short' }}
+
+                                        <p-tabpanel header="Escolha Atual" value="epEscolhaAtual">
+
+                                            <div class="w-full overflow-y-auto max-h-[60vh] md:max-h-none pr-1">
+
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+
+                                                    <div class="flex flex-col gap-3">
+                                                        <div class="text-lg font-bold border-b pb-1 mb-2">Detalhes da Escolha</div>
+
+                                                        <div class="flex gap-2">
+                                                            <span class="font-semibold w-24">Data:</span>
+                                                            <span>{{ pessoaUltimaEscolha?.dataEscolha | date:'dd/MM/yyyy HH:mm' }}</span>
+                                                        </div>
+                                                        <div class="flex gap-2">
+                                                            <span class="font-semibold w-24">Produto:</span>
+                                                            <span>{{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}</span>
+                                                        </div>
+                                                        <div class="flex gap-2">
+                                                            <span class="font-semibold w-24">Tamanho:</span>
+                                                            <span>{{ pessoaUltimaEscolha?.tamanho?.tamanho || pessoaUltimaEscolha?.tamanho?.id }}</span>
+                                                        </div>
+                                                        <div class="flex gap-2">
+                                                            <span class="font-semibold w-24">Cor:</span>
+                                                            <span>{{ pessoaUltimaEscolha?.cor?.nome || pessoaUltimaEscolha?.cor?.id }}</span>
+                                                        </div>
+                                                        <div class="flex gap-2">
+                                                            <span class="font-semibold w-24">Preço:</span>
+                                                            <span class="text-green-600 font-bold">
+                        {{ pessoaUltimaEscolha?.produto?.preco | currency:'BRL' }}
+                    </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-col justify-start">
+                                                        <div class="text-lg font-bold border-b pb-1 mb-2">Imagens</div>
+
+                                                        <div *ngIf="loadingImagens; else conteudoImagens" class="flex items-center justify-center h-40 bg-gray-50 border rounded">
+                                                            <p-progressSpinner
+                                                                styleClass="w-10 h-10"
+                                                                strokeWidth="4"
+                                                                fill="var(--surface-ground)"
+                                                                animationDuration=".5s">
+                                                            </p-progressSpinner>
+                                                        </div>
+
+                                                        <ng-template #conteudoImagens>
+
+                                                            <div *ngIf="pessoaUltimaEscolha?.produto?.imagens?.length; else semImagem">
+                                                                <p-galleria
+                                                                    [value]="pessoaUltimaEscolha?.produto?.imagens"
+                                                                    [responsiveOptions]="[{breakpoint: '1024px',numVisible: 5},{breakpoint: '768px',numVisible: 3},{breakpoint: '560px',numVisible: 1}]"
+                                                                    [containerStyle]="{'max-width': '100%'}"
+                                                                    [numVisible]="4"
+                                                                    [circular]="true"
+                                                                    [showItemNavigators]="true"
+                                                                    [showThumbnails]="true"
+                                                                    [autoPlay]="false">
+
+                                                                    <ng-template pTemplate="item" let-item>
+                                                                        <img [src]="item.url"
+                                                                             [alt]="item.nome"
+                                                                             class="w-full block object-contain max-h-[250px] md:max-h-[400px]" />
+                                                                    </ng-template>
+
+                                                                    <ng-template pTemplate="thumbnail" let-item>
+                                                                        <div class="grid gap-1 justify-center">
+                                                                            <img [src]="item.url" [alt]="item.nome"
+                                                                                 style="width: 50px; height: 50px; display: block; object-fit: cover;" />
+                                                                        </div>
+                                                                    </ng-template>
+
+                                                                </p-galleria>
+                                                            </div>
+
+                                                            <ng-template #semImagem>
+                                                                <div class="flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded text-gray-400">
+                                                                    <i class="pi pi-image mr-2 text-2xl"></i>
+                                                                    <span>Sem imagens disponíveis para este produto.</span>
+                                                                </div>
+                                                            </ng-template>
+
+                                                        </ng-template>
+
+                                                    </div>
+
                                                 </div>
-                                                <div>
-                                                    <b>Produto:</b> {{ pessoaUltimaEscolha?.produto?.nome || pessoaUltimaEscolha?.produto?.id }}
-                                                </div>
-                                                <div>
-                                                    <b>Tamanho:</b> {{ pessoaUltimaEscolha?.tamanho?.tamanho || pessoaUltimaEscolha?.tamanho?.id }}
-                                                </div>
-                                                <div>
-                                                    <b>Cor:</b> {{ pessoaUltimaEscolha?.cor?.nome || pessoaUltimaEscolha?.cor?.id }}
-                                                </div>
+
                                             </div>
                                         </p-tabpanel>
-                                        <p-tabpanel value="2">
+
+                                        <p-tabpanel value="epHistorico">
                                             <e-data-grid [dataSource]="pessoaHistorico" [scrollable]="true"
                                                          scrollHeight="400px">
                                                 <ei-column dataField="dataEscolha" caption="Escolha"

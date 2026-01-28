@@ -58,7 +58,11 @@ import {ProgressoTarefaDto} from "@/shared/model/dto/processo-tarefe-dto";
 import {catchError} from "rxjs/operators";
 import {Menu} from "primeng/menu";
 import {Panel} from "primeng/panel";
-import {SelectButton} from "primeng/selectbutton"; // Certifique-se que este arquivo existe
+import {SelectButton} from "primeng/selectbutton";
+import {EventoEscolha} from "@/shared/model/evento-escolha";
+import {GalleriaModule} from "primeng/galleria";
+import {ProgressSpinnerModule} from "primeng/progressspinner";
+import {ImagemService} from "@/services/imagem.service"; // Certifique-se que este arquivo existe
 
 @Component({
     selector: 'evento-page',
@@ -97,7 +101,9 @@ import {SelectButton} from "primeng/selectbutton"; // Certifique-se que este arq
         ProgressBar,
         Menu,
         Panel,
-        SelectButton
+        SelectButton,
+        GalleriaModule,
+        ProgressSpinnerModule
     ],
     templateUrl: './evento-page.component.html',
     styleUrls: ['./evento-page.component.scss', '../../shared/components/crud-base/crud-base.component.scss'],
@@ -133,7 +139,8 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
 
     // ======= Estado do Popup: Escolha/Histórico =======
     pessoaEscolhaLoading = false;
-    pessoaUltimaEscolha: any = null;
+    loadingImagens = false;
+    pessoaUltimaEscolha: any = null as any;
     pessoaHistorico: EventoEscolhaDto[] = [];
 
     // ======= Popup Custom de Adição de Pessoas =======
@@ -180,6 +187,7 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         private pessoaService: PessoaService,
         private produtoService: ProdutoService,
         private clienteService: ClienteService,
+        private imagemService: ImagemService,
         private router: Router,
         private confirmationService: ConfirmationService
     ) {
@@ -410,6 +418,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
             this.eventoService.getUltimaEscolha(eventoId as number, pessoaId as number).subscribe({
                 next: (e) => {
                     this.pessoaUltimaEscolha = e;
+
+                    // LÓGICA DE CARREGAMENTO SOB DEMANDA (LAZY LOAD)
+                    this.verificarImagensDoProduto(e);
+
                 },
                 error: () => (this.pessoaUltimaEscolha = null)
             });
@@ -424,6 +436,44 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
         }
     }
 
+    private verificarImagensDoProduto(escolha: any) {
+        // Se não tiver produto ou ID, aborta
+        if (!escolha?.produto?.id) return;
+
+        // Se já tiver imagens carregadas, apenas garante que as URLs estão lá (caso venha do cache)
+        if (escolha.produto.imagens && escolha.produto.imagens.length > 0) {
+            escolha.produto.imagens.forEach((img: any) => {
+                if (!img.url) {
+                    img.url = this.imagemService.getArquivoUrl(img.id);
+                }
+            });
+            return;
+        }
+
+        // Caso precise buscar do backend
+        this.loadingImagens = true;
+
+        this.produtoService.getProdutoImagem(escolha.produto.id).subscribe({
+            next: (imagens) => {
+                this.loadingImagens = false;
+
+                if (imagens && imagens.length > 0) {
+                    // AQUI ESTÁ A CORREÇÃO: Mapear e criar a URL
+                    const imagensComUrl = imagens.map(img => ({
+                        ...img,
+                        // Usa o serviço para gerar: /api/imagem/{id}/arquivo
+                        url: this.imagemService.getArquivoUrl(img.id)
+                    }));
+
+                    // Atualiza o objeto na memória
+                    this.pessoaUltimaEscolha.produto.imagens = imagensComUrl;
+                }
+            },
+            error: () => {
+                this.loadingImagens = false;
+            }
+        });
+    }
 
     onSalvingEditEventoPessoa(event: any) {
         const row: any = event?.data || {};
@@ -794,10 +844,10 @@ export class EventoPageComponent extends CrudBaseComponent<Evento, EventoFilter>
     searchProdutos() {
         this.loading = true;
         this.produtoService.listar(this.filtroProduto).subscribe({
-            next: (page) => {
-                const produtosDtoSet = page?.content || [];
+            next: (resp) => {
+                const produtosDtoSet = resp?.content || [];
                 this.produtosSugestoes = ProdutoMapper.fromDtoList(produtosDtoSet);
-                this.filtroProduto.totalItens = page.totalElements || 0;
+                this.filtroProduto.totalItens = resp.page?.totalElements || 0;
                 this.loading = false;
             },
             error: (_) => {

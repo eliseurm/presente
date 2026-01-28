@@ -43,24 +43,19 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
             }
 
             if (filtro.getNome() != null && !filtro.getNome().trim().isEmpty()) {
-                predicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("nome")),
-                        "%" + filtro.getNome().toLowerCase() + "%"
-                ));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("nome")), "%" + filtro.getNome().toLowerCase() + "%"));
+            }
+
+            if (filtro.getCpf() != null && !filtro.getCpf().trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.trim(root.get("cpf")), "%" + filtro.getCpf().trim() + "%"));
             }
 
             if (filtro.getEmail() != null && !filtro.getEmail().trim().isEmpty()) {
-                predicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("email")),
-                        "%" + filtro.getEmail().toLowerCase() + "%"
-                ));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + filtro.getEmail().toLowerCase() + "%"));
             }
 
             if (filtro.getTelefone() != null && !filtro.getTelefone().trim().isEmpty()) {
-                predicates.add(criteriaBuilder.like(
-                        root.get("telefone"),
-                        "%" + filtro.getTelefone() + "%"
-                ));
+                predicates.add(criteriaBuilder.like(root.get("telefone"), "%" + filtro.getTelefone() + "%"));
             }
 
             if (filtro.getStatus() != null) {
@@ -79,9 +74,25 @@ public class PessoaService extends AbstractCrudService<Pessoa, Long, PessoaFilte
 
     @Override
     protected void prepararParaAtualizacao(Long id, Pessoa nova, Pessoa existente) {
-        nova.setId(id);
-        nova.setCriadoEm(existente.getCriadoEm());
-        nova.setAlteradoEm(LocalDateTime.now());
+//        nova.setId(id);
+//        nova.setCriadoEm(existente.getCriadoEm());
+//        nova.setAlteradoEm(LocalDateTime.now());
+
+        existente.setCliente(nova.getCliente());
+
+        existente.setNome(nova.getNome());
+        existente.setCpf(nova.getCpf());
+        existente.setEmail(nova.getEmail());
+        existente.setTelefone(nova.getTelefone());
+        existente.setStatus(nova.getStatus());
+
+        existente.setEndereco(nova.getEndereco());
+        existente.setComplemento(nova.getComplemento());
+        existente.setCidade(nova.getCidade());
+        existente.setEstado(nova.getEstado());
+        existente.setCep(nova.getCep());
+
+        existente.setAlteradoEm(LocalDateTime.now());
     }
 
     // Métodos específicos de negócio podem ser adicionados aqui

@@ -49,9 +49,9 @@ export class EventoCrudVM extends AbstractCrud<Evento, EventoFilter> {
                     content: eventos
                 } as PageResponse<any>; // Cast para lidar com o tipo genérico T
             }),
-            tap((page) => {
-                this.dataSource = page.content;
-                this.totalRecords = page.totalElements;
+            tap((resp) => {
+                this.dataSource = resp.content;
+                this.totalRecords = resp.page?.totalElements || 0;
                 this.saveToStorage();
             }),
             catchError((err) => this.handleError<PageResponse<Evento>>(err, 'Falha ao carregar lista'))

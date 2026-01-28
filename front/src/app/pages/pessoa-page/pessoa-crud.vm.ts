@@ -36,9 +36,9 @@ export class PessoaCrudVM extends AbstractCrud<Pessoa, PessoaFilter> {
         }
 
         return this.port.listar(filtroComExpand).pipe(
-            tap((page) => {
-                this.dataSource = page.content;
-                this.totalRecords = page.totalElements;
+            tap((resp) => {
+                this.dataSource = resp.content;
+                this.totalRecords = resp.page?.totalElements || 0;
                 this.saveToStorage();
             }),
             catchError((err) => this.handleError<PageResponse<Pessoa>>(err, 'Falha ao carregar lista'))

@@ -113,7 +113,20 @@ AND query ILIKE '%pessoa%'
 AND pid <> pg_backend_pid();
 REINDEX INDEX presente_sh.uq_pessoa_email;
 
-select * from pessoa where nome like 'Ellen%';
+select * from pessoa
+where 1=1
+and cliente_id = 1
+-- and lower(nome) like '%ellen%'
+and cpf like '%753%'
+;
+
+select p1_0.*
+from presente_sh.pessoa p1_0
+where 1=1
+and p1_0.cliente_id=1
+and trim(BOTH from p1_0.cpf) like '%753%' escape ''
+order by p1_0.id
+;
 
 select telefone, count(*) from pessoa group by telefone having count(*) > 1;
 reindex table presente_sh.pessoa;

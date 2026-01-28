@@ -62,6 +62,7 @@
                 <p-selectButton
                     [options]="opcoesEscolha"
                     [(ngModel)]="filter.jaEscolheu"
+                    [disabled]="disableJaEscolheu"
                     styleClass="w-full"
                     optionLabel="label"
                     optionValue="value">

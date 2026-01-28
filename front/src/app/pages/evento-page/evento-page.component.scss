@@ -9,3 +9,14 @@
     min-width: 2rem;
     height: 2rem;
 }
+
+::ng-deep .p-dialog {
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+}
+
+/* Garante que o corpo do dialog tenha scroll se o conteúdo for grande */
+::ng-deep .p-dialog .p-dialog-content {
+    overflow-y: auto !important;
+    max-height: calc(95vh - 100px) !important; /* Desconta o header/footer */
+}

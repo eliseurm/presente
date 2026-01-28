@@ -63,9 +63,9 @@ export abstract class AbstractCrud<T extends { id?: any; version?: number }, F e
         // aplica expand opcionalmente sem poluir o filtro persistido
         const filtroComExpand = this.attachExpandToFilterIfNeeded();
         return this.port.listar(filtroComExpand).pipe(
-            tap((page) => {
-                this.dataSource = page.content;
-                this.totalRecords = page.totalElements;
+            tap((resp) => {
+                this.dataSource = resp.content;
+                this.totalRecords = resp.page?.totalElements || 0;
                 this.saveToStorage();
             }),
             catchError((err) => this.handleError<PageResponse<T>>(err, 'Falha ao carregar lista'))

@@ -73,6 +73,7 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
     readonly filterFields: FilterField[] = [
         {key: 'clienteId', label: 'Cliente', type: 'select', options: []},
         {key: 'nome', label: 'Nome', type: 'text', placeholder: 'Filtrar por nome'},
+        {key: 'cpf', label: 'Cpf', type: 'text', placeholder: 'Filtrar por cpf'},
         {key: 'email', label: 'E-mail', type: 'text', placeholder: 'Filtrar por e-mail'},
         {key: 'telefone', label: 'Telefone', type: 'text', placeholder: 'Filtrar por telefone'},
         {
@@ -107,12 +108,14 @@ export class PessoaPageComponent extends CrudBaseComponent<Pessoa, PessoaFilter>
     }
 
     onLazyLoad(event: any) {
+
         const page = Math.floor((event.first || 0) / (event.rows || this.vm.filter.size || 10));
         const size = event.rows || this.vm.filter.size || 10;
         this.vm.filter.page = page;
         this.vm.filter.size = size;
         this.vm.filter.order = ['id,asc'];
         this.vm.doFilter().subscribe();
+
     }
 
     onClearFilters() {

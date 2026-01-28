@@ -77,6 +77,7 @@ export class EDataGridComponent implements AfterContentInit, OnChanges {
     // Pagination passthrough
     @Input() paginator: boolean = false;
     @Input() rows: number = 10;
+    @Input() first: number = 0;
     @Input() rowsPerPageOptions: number[] = [];
     @Input() totalRecords: number = 0;
     @Input() lazy: boolean = false;

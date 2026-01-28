@@ -63,9 +63,9 @@ export class ProdutoCrudVM extends AbstractCrud<Produto, ProdutoFilter> {
                     map(() => page) // Retorna a página original, agora com os produtos populados
                 );
             }),
-            tap((page) => {
-                this.dataSource = page.content;
-                this.totalRecords = page.totalElements;
+            tap((resp) => {
+                this.dataSource = resp.content;
+                this.totalRecords = resp.page?.totalElements || 0;
                 this.saveToStorage();
             }),
             catchError((err) => this.handleError<PageResponse<Produto>>(err, 'Falha ao carregar lista'))

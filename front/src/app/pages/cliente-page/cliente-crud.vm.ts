@@ -83,7 +83,7 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
             return new Observable<PageResponse<Cliente>>((subscriber) => {
                 (this.port as ClienteService).getMe().subscribe({
                     next: (list) => {
-                        const page: PageResponse<Cliente> = {
+                        const resp: PageResponse<Cliente> = {
                             content: list || [],
                             totalElements: (list || []).length,
                             totalPages: 1,
@@ -93,10 +93,10 @@ export class ClienteCrudVM extends AbstractCrud<Cliente, ClienteFilter> {
                             last: true,
                             numberOfElements: (list || []).length,
                         } as any;
-                        this.dataSource = page.content;
-                        this.totalRecords = page.totalElements;
+                        this.dataSource = resp.content;
+                        this.totalRecords = resp.page?.totalElements || 0;
                         this.saveToStorage();
-                        subscriber.next(page);
+                        subscriber.next(resp);
                         subscriber.complete();
                     },
                     error: (err) => {

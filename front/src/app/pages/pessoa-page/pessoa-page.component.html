@@ -15,12 +15,13 @@
     <!-- Grid de listagem -->
     <div crud-list-grid class="w-full">
 
-        <e-data-grid
+        <e-data-grid #gridFilter
             [dataSource]="vm.dataSource"
             [paginator]="true"
             [rows]="vm.filter.size || 10"
-            [rowsPerPageOptions]="[10,20,50,100]"
+            [first]="vm.filter.first"
             [totalRecords]="vm.totalRecords"
+            [rowsPerPageOptions]="[10,20,50,100]"
             [lazy]="true"
             (onLazyLoad)="onLazyLoad($event)"
             (rowDblClick)="crudRef.onRowDblClick($event)">
